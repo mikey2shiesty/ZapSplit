@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+jspm_packages/
 
 # Expo
 .expo/
@@ -25,13 +26,17 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+lerna-debug.log*
 
 # macOS
 .DS_Store
 *.pem
 
 # local env files
+.env
+.env.*
 .env*.local
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +44,30 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Logs
+logs
+*.log
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Build outputs
+build/
+out/
+
+# Cache directories
+.cache
+.parcel-cache
+.npm
+.eslintcache
+.stylelintcache
+
+# Various framework outputs
+.next
+.nuxt
+.serverless/
+.firebase/
+.dynamodb/
