@@ -1,12 +1,14 @@
 // src/constants/theme.ts
+// Colors based on ZapSplit logo branding
 export const colors = {
-  primary: '#007AFF',
-  background: '#000000',
-  surface: '#1C1C1E',
-  text: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  success: '#34C759',
-  error: '#FF3B30',
+  primary: '#3B9EFF',        // Bright blue - lightning bolt color
+  background: '#F5F7FA',     // Light gray-blue - clean modern background
+  surface: '#FFFFFF',        // White - cards and surfaces
+  text: '#2C5F8D',           // Dark blue - main text (logo text color)
+  textSecondary: '#6B7B8C',  // Gray - secondary text
+  accent: '#E8EEF9',         // Light blue - logo background color
+  success: '#34C759',        // Green - success states
+  error: '#FF3B30',          // Red - error states
 };
 
 export const spacing = {
