@@ -1,32 +1,20 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../constants/theme';
+import React, { useState } from 'react';
+import SplashScreen from '../screens/auth/SplashScreen';
+import AuthNavigator from './AuthNavigator';
+import HomeScreen from '../screens/main/HomeScreen';
 
-// Placeholder component until we build auth screens
 export default function AppNavigator() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>ZapSplit</Text>
-      <Text style={styles.subtext}>Navigation Setup Complete ✓</Text>
-    </View>
-  );
-}
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: colors.text,
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtext: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-});
+  const handleSplashFinish = (authenticated: boolean) => {
+    setIsAuthenticated(authenticated);
+    setIsLoading(false);
+  };
+
+  if (isLoading) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
+  }
+
+  return isAuthenticated ? <HomeScreen /> : <AuthNavigator />;
+}
