@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing, typography, gradients, radius, shadows } from '../../constants/theme';
-import Card from '../../components/common/Card';
+import { colors, spacing, typography, radius, shadows } from '../../constants/theme';
+import GlassCard from '../../components/common/GlassCard';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
-import Sparkline from '../../components/common/Sparkline';
-import Animated, {
-  FadeInDown,
-  FadeIn,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { VictoryLine, VictoryChart, VictoryArea } from 'victory-native';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -21,13 +19,19 @@ export default function HomeScreen() {
   const [youOwe, setYouOwe] = useState(0);
   const [owedToYou, setOwedToYou] = useState(0);
 
-  // Mock sparkline data (7 days of trend)
-  const youOweData = [12, 18, 15, 22, 18, 12, 0];
-  const owedToYouData = [5, 8, 12, 15, 18, 20, 0];
+  // Mock chart data
+  const balanceData = [
+    { x: 1, y: 0 },
+    { x: 2, y: 0 },
+    { x: 3, y: 0 },
+    { x: 4, y: 0 },
+    { x: 5, y: 0 },
+    { x: 6, y: 0 },
+    { x: 7, y: 0 },
+  ];
 
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Michael';
 
-  // Time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -38,173 +42,212 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     setRefreshing(false);
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        />
-      }
-    >
-      {/* Premium Multi-Layer Gradient Header */}
+    <View style={styles.container}>
+      {/* Premium Mesh Gradient Header */}
       <LinearGradient
-        colors={['#6BB4FF', '#3B9EFF', '#2B7FD9']}
+        colors={['#6BB4FF', '#4DA8FF', '#3B9EFF', '#2B8FE8']}
+        locations={[0, 0.3, 0.7, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
       >
-        <Text style={styles.greeting}>{getGreeting()}, {firstName}! 👋</Text>
-        <Text style={styles.subtitle}>Here's your bill splitting summary</Text>
+        {/* Subtle pattern overlay */}
+        <View style={styles.patternOverlay} />
+
+        <View style={styles.headerContent}>
+          <View style={styles.greetingRow}>
+            <Text style={styles.greeting}>
+              {getGreeting()}, {firstName}!
+            </Text>
+            <Ionicons name="partly-sunny" size={24} color={colors.textInverse} />
+          </View>
+          <Text style={styles.subtitle}>Here's your bill splitting summary</Text>
+        </View>
       </LinearGradient>
 
-      <View style={styles.content}>
-        {/* Premium Balance Card with Gradient Border Effect */}
-        <Animated.View
-          entering={FadeInDown.delay(100).springify()}
-          style={styles.balanceCardWrapper}
-        >
-          <LinearGradient
-            colors={['#6BB4FF', '#3B9EFF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.balanceCardGradient}
-          >
-            <View style={styles.balanceCardInner}>
-              <Text style={styles.balanceLabel}>TOTAL BALANCE</Text>
-              <AnimatedCounter
-                value={balance}
-                style={styles.balanceAmount}
-                prefix="$"
-              />
-
-              <View style={styles.balanceRow}>
-                <View style={styles.balanceItem}>
-                  <View style={styles.balanceItemHeader}>
-                    <Text style={styles.balanceItemLabel}>YOU OWE</Text>
-                    <Sparkline
-                      data={youOweData}
-                      width={60}
-                      height={20}
-                      lineColor={colors.error}
-                      gradientColors={[`${colors.error}33`, `${colors.error}00`]}
-                      strokeWidth={1.5}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        <View style={styles.content}>
+          {/* Premium Frosted Glass Balance Card */}
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <GlassCard intensity={30} style={styles.balanceCard}>
+              <View style={styles.balanceCardContent}>
+                {/* Mini chart background */}
+                <View style={styles.chartBackground}>
+                  <VictoryChart
+                    height={180}
+                    width={350}
+                    padding={{ top: 20, bottom: 20, left: 0, right: 0 }}
+                  >
+                    <VictoryArea
+                      data={balanceData}
+                      style={{
+                        data: {
+                          fill: 'rgba(59, 158, 255, 0.1)',
+                          stroke: 'rgba(59, 158, 255, 0.3)',
+                          strokeWidth: 1.5,
+                        },
+                      }}
+                      interpolation="natural"
                     />
-                  </View>
-                  <AnimatedCounter
-                    value={youOwe}
-                    style={[styles.balanceItemValue, { color: colors.error }]}
-                    prefix="$"
-                  />
+                  </VictoryChart>
                 </View>
-                <View style={styles.divider} />
-                <View style={styles.balanceItem}>
-                  <View style={styles.balanceItemHeader}>
-                    <Text style={styles.balanceItemLabel}>OWED TO YOU</Text>
-                    <Sparkline
-                      data={owedToYouData}
-                      width={60}
-                      height={20}
-                      lineColor={colors.success}
-                      gradientColors={[`${colors.success}33`, `${colors.success}00`]}
-                      strokeWidth={1.5}
+
+                <Text style={styles.balanceLabel}>TOTAL BALANCE</Text>
+                <AnimatedCounter
+                  value={balance}
+                  style={styles.balanceAmount}
+                  prefix="$"
+                  decimals={2}
+                />
+
+                <View style={styles.balanceRow}>
+                  <View style={styles.balanceItem}>
+                    <View style={styles.balanceItemHeader}>
+                      <Ionicons name="arrow-up-circle" size={16} color={colors.error} />
+                      <Text style={styles.balanceItemLabel}>YOU OWE</Text>
+                    </View>
+                    <AnimatedCounter
+                      value={youOwe}
+                      style={[styles.balanceItemValue, { color: colors.error }]}
+                      prefix="$"
+                      decimals={2}
                     />
                   </View>
-                  <AnimatedCounter
-                    value={owedToYou}
-                    style={[styles.balanceItemValue, { color: colors.success }]}
-                    prefix="$"
-                  />
+
+                  <View style={styles.divider} />
+
+                  <View style={styles.balanceItem}>
+                    <View style={styles.balanceItemHeader}>
+                      <Ionicons name="arrow-down-circle" size={16} color={colors.success} />
+                      <Text style={styles.balanceItemLabel}>OWED TO YOU</Text>
+                    </View>
+                    <AnimatedCounter
+                      value={owedToYou}
+                      style={[styles.balanceItemValue, { color: colors.success }]}
+                      prefix="$"
+                      decimals={2}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          </LinearGradient>
-        </Animated.View>
+            </GlassCard>
+          </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Button
-            variant="primary"
-            size="large"
-            fullWidth
-            onPress={() => {}}
-          >
-            Create New Split
-          </Button>
-        </Animated.View>
+          {/* Create Split Button */}
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={() => {}}
+              icon={<Ionicons name="add-circle" size={24} color={colors.textInverse} />}
+            >
+              Create New Split
+            </Button>
+          </Animated.View>
 
-        {/* Quick Stats */}
-        <Animated.View entering={FadeInDown.delay(250).springify()}>
-          <Card variant="elevated" gradient={['#F0F8FF', '#FFFFFF']} style={styles.statsCard}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
+          {/* Professional Quick Stats */}
+          <Animated.View entering={FadeInDown.delay(250).springify()} style={styles.statsRow}>
+            <GlassCard intensity={25} style={styles.statCard}>
+              <View style={styles.statContent}>
+                <Ionicons name="documents" size={32} color={colors.primary} />
                 <Text style={styles.statValue}>0</Text>
                 <Text style={styles.statLabel}>Active Splits</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
+            </GlassCard>
+
+            <GlassCard intensity={25} style={styles.statCard}>
+              <View style={styles.statContent}>
+                <Ionicons name="people" size={32} color={colors.primary} />
                 <Text style={styles.statValue}>0</Text>
                 <Text style={styles.statLabel}>Friends</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
+            </GlassCard>
+
+            <GlassCard intensity={25} style={styles.statCard}>
+              <View style={styles.statContent}>
+                <Ionicons name="trending-up" size={32} color={colors.primary} />
                 <Text style={styles.statValue}>$0</Text>
                 <Text style={styles.statLabel}>This Month</Text>
               </View>
-            </View>
-          </Card>
-        </Animated.View>
+            </GlassCard>
+          </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <Card variant="elevated" style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>🎉</Text>
-            <Text style={styles.emptyStateTitle}>Ready to split your first bill?</Text>
-            <Text style={styles.emptyStateText}>
-              Tap the button above to create a split,{'\n'}or scan a receipt to get started!
-            </Text>
-            <View style={styles.emptyStateTip}>
-              <Text style={styles.emptyStateTipIcon}>💡</Text>
-              <Text style={styles.emptyStateTipText}>
-                Tip: Split bills with friends and track who owes what
+          {/* Recent Activity Section */}
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+
+            {/* Ghost Cards - Preview of what transactions will look like */}
+            <GlassCard intensity={20} style={styles.ghostCard}>
+              <View style={styles.ghostTransaction}>
+                <View style={styles.ghostAvatar} />
+                <View style={styles.ghostContent}>
+                  <View style={styles.ghostLine} style={{ width: '60%' }} />
+                  <View style={styles.ghostLine} style={{ width: '40%', height: 12 }} />
+                </View>
+                <View style={styles.ghostAmount} />
+              </View>
+            </GlassCard>
+
+            <GlassCard intensity={20} style={styles.ghostCard}>
+              <View style={styles.ghostTransaction}>
+                <View style={styles.ghostAvatar} />
+                <View style={styles.ghostContent}>
+                  <View style={styles.ghostLine} style={{ width: '50%' }} />
+                  <View style={styles.ghostLine} style={{ width: '35%', height: 12 }} />
+                </View>
+                <View style={styles.ghostAmount} />
+              </View>
+            </GlassCard>
+
+            {/* Empty State Message */}
+            <View style={styles.emptyState}>
+              <Ionicons name="wallet-outline" size={56} color={colors.primary} opacity={0.3} />
+              <Text style={styles.emptyStateTitle}>Your activity will appear here</Text>
+              <Text style={styles.emptyStateText}>
+                Create your first split to start tracking expenses
               </Text>
             </View>
-          </Card>
-        </Animated.View>
+          </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActions}>
-            <Card variant="elevated" onPress={() => {}} style={styles.quickAction}>
-              <View style={styles.quickActionIconContainer}>
-                <Text style={styles.quickActionIcon}>📸</Text>
-              </View>
-              <Text style={styles.quickActionText}>Scan Receipt</Text>
-            </Card>
-            <Card variant="elevated" onPress={() => {}} style={styles.quickAction}>
-              <View style={styles.quickActionIconContainer}>
-                <Text style={styles.quickActionIcon}>👥</Text>
-              </View>
-              <Text style={styles.quickActionText}>Add Friends</Text>
-            </Card>
-          </View>
-        </Animated.View>
-      </View>
-    </ScrollView>
+          {/* Quick Actions */}
+          <Animated.View entering={FadeInDown.delay(350).springify()} style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.quickActions}>
+              <GlassCard intensity={25} onPress={() => {}} style={styles.quickAction}>
+                <View style={styles.quickActionContent}>
+                  <Ionicons name="camera" size={32} color={colors.primary} />
+                  <Text style={styles.quickActionText}>Scan Receipt</Text>
+                </View>
+              </GlassCard>
+
+              <GlassCard intensity={25} onPress={() => {}} style={styles.quickAction}>
+                <View style={styles.quickActionContent}>
+                  <Ionicons name="person-add" size={32} color={colors.primary} />
+                  <Text style={styles.quickActionText}>Add Friends</Text>
+                </View>
+              </GlassCard>
+            </View>
+          </Animated.View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -214,61 +257,77 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: spacing.xl,
-    paddingTop: spacing.xxxl + spacing.md,
-    paddingBottom: spacing.xxl + spacing.md,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 32,
+    paddingHorizontal: spacing.lg,
+  },
+  patternOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.1,
+    backgroundColor: 'transparent',
+  },
+  headerContent: {
+    gap: spacing.xs,
+  },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   greeting: {
-    ...typography.h1,
     fontSize: 34,
-    color: colors.textInverse,
-    marginBottom: spacing.xs,
     fontWeight: '700',
+    color: colors.textInverse,
     letterSpacing: -0.5,
   },
   subtitle: {
-    ...typography.body,
+    fontSize: 16,
+    fontWeight: '400',
     color: colors.textInverse,
     opacity: 0.95,
-    fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     padding: spacing.lg,
-    marginTop: -spacing.xxl,
+    paddingTop: spacing.md,
     gap: spacing.lg,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.xxxl + spacing.xl,
   },
-  // Premium Balance Card with Gradient Border
-  balanceCardWrapper: {
+  balanceCard: {
     ...shadows.high,
   },
-  balanceCardGradient: {
-    borderRadius: radius.lg,
-    padding: 3, // Gradient border thickness
-  },
-  balanceCardInner: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg - 3,
+  balanceCardContent: {
     padding: spacing.xl,
+    position: 'relative',
+  },
+  chartBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.3,
   },
   balanceLabel: {
-    ...typography.caption,
+    fontSize: 11,
     fontWeight: '700',
     color: colors.textSecondary,
-    marginBottom: spacing.sm,
     letterSpacing: 1.2,
+    marginBottom: spacing.sm,
   },
   balanceAmount: {
-    ...typography.numberLarge,
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '800',
     color: colors.text,
+    letterSpacing: -2,
     marginBottom: spacing.lg,
-    letterSpacing: -1.5,
   },
   balanceRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: spacing.md,
   },
   balanceItem: {
     flex: 1,
@@ -277,109 +336,101 @@ const styles = StyleSheet.create({
   balanceItemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: spacing.xs,
   },
   balanceItemLabel: {
-    ...typography.caption,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
     color: colors.textSecondary,
     letterSpacing: 1,
   },
   balanceItemValue: {
-    ...typography.h4,
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   divider: {
     width: 2,
     height: 50,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
     marginHorizontal: spacing.lg,
-    borderRadius: 1,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h4,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  emptyState: {
-    padding: spacing.xxl,
-    alignItems: 'center',
-  },
-  emptyStateIcon: {
-    fontSize: 56,
-    marginBottom: spacing.md,
-  },
-  emptyStateTitle: {
-    ...typography.h5,
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  emptyStateText: {
-    ...typography.body,
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  emptyStateTip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    marginTop: spacing.lg,
-  },
-  emptyStateTipIcon: {
-    fontSize: 20,
-  },
-  emptyStateTipText: {
-    ...typography.bodySmall,
-    fontSize: 13,
-    color: colors.text,
-    flex: 1,
-    lineHeight: 18,
-  },
-  statsCard: {
-    marginBottom: spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    gap: spacing.md,
   },
-  statItem: {
+  statCard: {
     flex: 1,
+  },
+  statContent: {
+    padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
   },
   statValue: {
-    ...typography.h3,
     fontSize: 24,
     fontWeight: '800',
     color: colors.primary,
     letterSpacing: -0.5,
   },
   statLabel: {
-    ...typography.caption,
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 11,
     fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.borderLight,
+  section: {
+    gap: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  ghostCard: {
+    marginBottom: spacing.sm,
+  },
+  ghostTransaction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  ghostAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  ghostContent: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  ghostLine: {
+    height: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: radius.sm,
+  },
+  ghostAmount: {
+    width: 70,
+    height: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: radius.sm,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: spacing.xxl,
+    gap: spacing.md,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   quickActions: {
     flexDirection: 'row',
@@ -387,26 +438,16 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     flex: 1,
-    padding: spacing.lg,
+  },
+  quickActionContent: {
+    padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
   },
-  quickActionIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionIcon: {
-    fontSize: 28,
-  },
   quickActionText: {
-    ...typography.bodySmall,
     fontSize: 14,
-    color: colors.text,
     fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
   },
 });
