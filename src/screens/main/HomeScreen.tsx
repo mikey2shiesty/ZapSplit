@@ -9,7 +9,7 @@ import Button from '../../components/common/Button';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { VictoryChart, VictoryArea } from 'victory-native';
+// Victory charts removed - will add back later with proper setup
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -17,17 +17,6 @@ export default function HomeScreen() {
   const [balance, setBalance] = useState(0);
   const [youOwe, setYouOwe] = useState(0);
   const [owedToYou, setOwedToYou] = useState(0);
-
-  // Mock chart data
-  const balanceData = [
-    { x: 1, y: 0 },
-    { x: 2, y: 0 },
-    { x: 3, y: 0 },
-    { x: 4, y: 0 },
-    { x: 5, y: 0 },
-    { x: 6, y: 0 },
-    { x: 7, y: 0 },
-  ];
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Michael';
 
@@ -86,27 +75,6 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <GlassCard intensity={30} style={styles.balanceCard}>
               <View style={styles.balanceCardContent}>
-                {/* Mini chart background */}
-                <View style={styles.chartBackground}>
-                  <VictoryChart
-                    height={180}
-                    width={350}
-                    padding={{ top: 20, bottom: 20, left: 0, right: 0 }}
-                  >
-                    <VictoryArea
-                      data={balanceData}
-                      style={{
-                        data: {
-                          fill: 'rgba(59, 158, 255, 0.1)',
-                          stroke: 'rgba(59, 158, 255, 0.3)',
-                          strokeWidth: 1.5,
-                        },
-                      }}
-                      interpolation="natural"
-                    />
-                  </VictoryChart>
-                </View>
-
                 <Text style={styles.balanceLabel}>TOTAL BALANCE</Text>
                 <AnimatedCounter
                   value={balance}
@@ -299,15 +267,6 @@ const styles = StyleSheet.create({
   },
   balanceCardContent: {
     padding: spacing.xl,
-    position: 'relative',
-  },
-  chartBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.3,
   },
   balanceLabel: {
     fontSize: 11,
