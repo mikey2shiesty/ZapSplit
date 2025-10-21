@@ -14,6 +14,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import GetStartedCard from '../../components/onboarding/GetStartedCard';
+import RecentSplitCard from '../../components/splits/RecentSplitCard';
+import ActivityItem from '../../components/activity/ActivityItem';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -25,6 +28,10 @@ export default function HomeScreen() {
 
   // Empty state - no data yet
   const balanceData: number[] = [];
+
+  // Track if user is new (no splits created yet)
+  const [isNewUser] = useState(true); // Will be from database/API later
+  const [hasRecentSplits] = useState(false); // Will be from database/API later
 
   const periods = ['1D', '1W', '1M', 'All'];
 
@@ -134,6 +141,49 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </Animated.View>
+
+          {/* Get Started Card - Only for new users */}
+          {isNewUser && (
+            <Animated.View entering={FadeInDown.delay(250).springify()}>
+              <GetStartedCard
+                onInviteFriends={() => console.log('Invite friends')}
+                onScanReceipt={() => console.log('Scan receipt')}
+              />
+            </Animated.View>
+          )}
+
+          {/* Recent Splits - Only when user has splits */}
+          {hasRecentSplits && (
+            <Animated.View entering={FadeInDown.delay(250).springify()}>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Recent Splits</Text>
+                  <TouchableOpacity>
+                    <Text style={styles.viewAllText}>View all</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.splitsContainer}>
+                  <RecentSplitCard
+                    title="Birthday dinner"
+                    paidCount={3}
+                    totalCount={5}
+                    amount={125.50}
+                    date="Dec 20"
+                    onPress={() => console.log('View split')}
+                  />
+                  <RecentSplitCard
+                    title="Weekend trip"
+                    paidCount={2}
+                    totalCount={4}
+                    amount={450.00}
+                    date="Dec 18"
+                    onPress={() => console.log('View split')}
+                  />
+                </View>
+              </View>
+            </Animated.View>
+          )}
 
           {/* Activity List - Empty State */}
           <Animated.View entering={FadeInDown.delay(250).springify()}>
@@ -382,10 +432,23 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.md,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.gray900,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  splitsContainer: {
+    gap: spacing.md,
   },
   activityRow: {
     flexDirection: 'row',
