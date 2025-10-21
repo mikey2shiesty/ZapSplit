@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, typography, radius, shadows } from '../../constants/theme';
@@ -10,7 +9,7 @@ import Button from '../../components/common/Button';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { VictoryLine, VictoryChart, VictoryArea } from 'victory-native';
+import { VictoryChart, VictoryArea } from 'victory-native';
 
 export default function HomeScreen() {
   const { user } = useAuth();
