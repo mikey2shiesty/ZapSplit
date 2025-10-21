@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import AuthNavigator from './AuthNavigator';
-import HomeScreen from '../screens/main/HomeScreen';
+import MainNavigator from './MainNavigator';
 import { colors } from '../constants/theme';
 
 export default function AppNavigator() {
@@ -28,7 +28,7 @@ export default function AppNavigator() {
   }
 
   // Navigate based on auth state - this will automatically update when auth changes!
-  return session ? <HomeScreen /> : <AuthNavigator />;
+  return session ? <MainNavigator /> : <AuthNavigator />;
 }
 
 const styles = StyleSheet.create({
