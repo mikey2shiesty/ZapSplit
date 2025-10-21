@@ -159,7 +159,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.gray50,
   },
   topNav: {
     flexDirection: 'row',
@@ -222,7 +222,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    ...shadows.low,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   balanceAmount: {
     fontSize: 48,
@@ -300,7 +304,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.low,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   primaryButtonText: {
     color: colors.textInverse,
