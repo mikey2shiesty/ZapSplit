@@ -1,7 +1,15 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { colors, shadows, radius, spacing } from '../../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Animated.View);
 
 interface CardProps {
   children: React.ReactNode;
@@ -21,6 +29,7 @@ export default function Card({
   padding = 'md',
 }: CardProps) {
   const paddingValue = spacing[padding];
+  const scale = useSharedValue(1);
 
   const cardStyle = [
     styles.base,
@@ -29,6 +38,19 @@ export default function Card({
     variant === 'outlined' && styles.outlined,
     style,
   ];
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
 
   const content = gradient ? (
     <LinearGradient
@@ -45,14 +67,14 @@ export default function Card({
 
   if (onPress) {
     return (
-      <Pressable
+      <AnimatedPressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         onPress={onPress}
-        style={({ pressed }) => [
-          pressed && styles.pressed,
-        ]}
+        style={animatedStyle}
       >
         {content}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
@@ -72,8 +94,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  pressed: {
-    opacity: 0.7,
   },
 });
