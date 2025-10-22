@@ -1,0 +1,427 @@
+═══════════════════════════════════════════════════════════════
+                    ZAPSPLIT - SPLIT BILL FLOW
+                    Development Plan & Progress
+═══════════════════════════════════════════════════════════════
+
+PROGRESS TRACKER: 3/7 PHASES COMPLETE (43%)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[✓] Phase 1: Database Setup (COMPLETE)
+[✓] Phase 2: Navigation & Screen Structure (COMPLETE)
+[✓] Phase 3: Build UI Components (COMPLETE)
+[ ] Phase 4: Screen Development
+[ ] Phase 5: Business Logic
+[ ] Phase 6: Integration with HomeScreen
+[ ] Phase 7: Testing & Polish
+
+═══════════════════════════════════════════════════════════════
+                        PHASE 1: DATABASE SETUP
+═══════════════════════════════════════════════════════════════
+STATUS: ✅ COMPLETE
+
+WHAT WE DID:
+✓ Verified all Supabase tables exist
+  - profiles
+  - splits
+  - split_participants
+  - friendships
+  - transactions
+  - payments
+  - groups
+  - group_members
+  - split_items
+  - item_assignments
+
+✓ Created checkDb.js script to verify database connection
+✓ Confirmed all 10 tables present in Supabase
+
+GIT COMMITS:
+- Initial setup (pre-existing)
+
+SUCCESS CRITERIA: ✅
+- All tables exist in Supabase
+- Database schema matches requirements
+- Connection verified
+
+═══════════════════════════════════════════════════════════════
+                PHASE 2: NAVIGATION & SCREEN STRUCTURE
+═══════════════════════════════════════════════════════════════
+STATUS: ✅ COMPLETE
+
+WHAT WE DID:
+✓ Created navigation types (src/types/navigation.ts)
+  - SplitFlowParamList with 6 screens
+  - Full TypeScript type safety
+
+✓ Created SplitFlowNavigator.tsx
+  - Modal stack navigator
+  - Coinbase-style presentation
+  - 6 screens: CreateSplit, SelectFriends, SplitMethod,
+    CustomAmounts, ReviewSplit, SplitSuccess
+
+✓ Created placeholder screens:
+  - CreateSplitScreen.tsx
+  - SelectFriendsScreen.tsx
+  - SplitMethodScreen.tsx
+  - CustomAmountsScreen.tsx
+  - ReviewSplitScreen.tsx
+  - SplitSuccessScreen.tsx
+
+✓ Modified MainNavigator.tsx
+  - Added modal stack over tabs
+  - Structure: Stack → MainTabs + SplitFlow modal
+
+✓ Wired HomeScreen Split Bill button
+  - Navigates to SplitFlow modal
+  - Haptic feedback on press
+
+✓ Fixed double header bug
+  - Removed duplicate header from CreateSplitScreen
+  - Moved close button to navigation header
+
+GIT COMMITS:
+- 2bdf84a: "Before Phase 2: Split Bill Flow navigation structure"
+- 6429e96: "Phase 2: Add navigation structure for Split Bill flow"
+- e369733: "Fix double header in CreateSplitScreen"
+
+SUCCESS CRITERIA: ✅
+- Modal slides up from bottom
+- All 6 screens created
+- Navigation between screens works
+- Close button dismisses modal
+- No double headers
+
+═══════════════════════════════════════════════════════════════
+                   PHASE 3: BUILD UI COMPONENTS
+═══════════════════════════════════════════════════════════════
+STATUS: ✅ COMPLETE
+
+WHAT WE DID:
+✓ Created src/components/splits/ directory
+
+✓ Built 5 premium Coinbase-quality components:
+
+1. AmountInput.tsx
+   - Large currency input with auto-formatting
+   - Converts "12345" → displays as "$123.45"
+   - Clear button with backspace icon
+   - Focus states with primary color
+   - Haptic feedback on input
+   - Error state support
+   - Helper text
+
+2. FriendSelector.tsx
+   - 3-column responsive avatar grid
+   - Search bar with real-time filtering
+   - Search by name or email
+   - Checkmark overlays for selection
+   - Selected count badge
+   - Empty states (no friends, no results)
+   - "Add Friend" button
+   - Haptic feedback on selection
+
+3. SplitMethodCard.tsx
+   - Three methods: equal, custom, percentage
+   - Preview calculations for each method
+   - Selected state with blue border
+   - Icons: people, calculator, pie-chart
+   - Haptic feedback on selection
+   - Shows per-person amount or description
+
+4. ParticipantRow.tsx
+   - Avatar with initials fallback
+   - Name and email display
+   - Two modes: display-only and editable
+   - Editable mode has amount input
+   - Status indicators (paid/pending)
+   - Color-coded icons (green checkmark, orange clock)
+   - Highlighted state for current user
+   - Remove button for editable mode
+   - Haptic feedback on interactions
+
+5. SplitSummary.tsx
+   - Comprehensive breakdown card
+   - Title and description
+   - Total amount display (large, primary color)
+   - Split method badge with icon
+   - Progress card (optional):
+     * Payment progress (X/Y paid)
+     * Progress bar visualization
+     * Amount collected vs total
+   - Participant list with ParticipantRow
+   - Statistics card:
+     * Per person average
+     * Remaining amount (if progress shown)
+   - Legend for status colors
+
+✓ Created barrel export (index.ts)
+   - Exports all 5 components
+   - Exports TypeScript interfaces:
+     * Friend
+     * SplitMethod
+     * Participant
+
+✓ Tested all components in CreateSplitScreen
+   - All 5 components render successfully
+   - Zero TypeScript errors
+   - Verified imports work correctly
+   - Tested with mock data
+
+COMPONENT FEATURES:
+- All follow theme system (colors, typography)
+- All include haptic feedback where appropriate
+- All support error states
+- All use Ionicons consistently
+- All follow Coinbase design patterns:
+  * Minimal shadows
+  * Clean card layouts
+  * Professional color usage
+  * Proper spacing and padding
+
+GIT COMMITS:
+- eaa8be4: "Phase 3: Build premium UI components for Split Bill Flow"
+
+SUCCESS CRITERIA: ✅
+- All 5 components created
+- Components follow theme system
+- Zero TypeScript errors
+- Barrel export works
+- Components tested and rendering
+- Haptic feedback integrated
+- Professional Coinbase-style design
+
+═══════════════════════════════════════════════════════════════
+                   PHASE 4: SCREEN DEVELOPMENT
+═══════════════════════════════════════════════════════════════
+STATUS: 🔲 PENDING
+
+OVERVIEW:
+Fill each placeholder screen with the UI components created in Phase 3.
+Implement form validation and navigation logic between screens.
+
+SCREENS TO BUILD:
+
+1. CreateSplitScreen (Entry Point)
+   - AmountInput for bill total
+   - TextInput for split title
+   - TextInput for description (optional)
+   - Continue button (disabled if amount = 0)
+   - Navigate to SelectFriends with params
+
+2. SelectFriendsScreen
+   - FriendSelector component
+   - Load friends from Supabase
+   - Continue button (disabled if no friends selected)
+   - Navigate to SplitMethod with params
+
+3. SplitMethodScreen
+   - Three SplitMethodCard components
+   - Equal split (default selected)
+   - Custom amounts
+   - Percentage split
+   - Preview calculations
+   - Continue button
+   - If "Equal" → go to ReviewSplit
+   - If "Custom" or "Percentage" → go to CustomAmounts
+
+4. CustomAmountsScreen
+   - List of ParticipantRow (editable mode)
+   - Each row shows friend with amount input
+   - Validation: total must equal bill amount
+   - Show remaining amount indicator
+   - Continue button (disabled if totals don't match)
+   - Navigate to ReviewSplit
+
+5. ReviewSplitScreen
+   - SplitSummary component
+   - Show all split details
+   - Participant list with amounts
+   - Edit button (go back to previous screens)
+   - Create Split button
+   - On create: save to Supabase, navigate to SplitSuccess
+
+6. SplitSuccessScreen
+   - Success checkmark animation
+   - "Split created!" message
+   - Show split details
+   - "Done" button → dismiss modal
+   - "View Split" button → navigate to split detail screen
+
+TASKS:
+[ ] Implement CreateSplitScreen form
+[ ] Implement SelectFriendsScreen with Supabase query
+[ ] Implement SplitMethodScreen selection logic
+[ ] Implement CustomAmountsScreen validation
+[ ] Implement ReviewSplitScreen with all data
+[ ] Implement SplitSuccessScreen
+[ ] Test navigation flow end-to-end
+[ ] Commit changes
+
+VALIDATION RULES:
+- Amount must be > 0
+- Title required (min 3 chars)
+- At least 2 participants (including user)
+- Custom amounts must sum to total
+- No negative amounts
+
+GIT STRATEGY:
+- Commit BEFORE Phase 4
+- Commit AFTER Phase 4
+
+═══════════════════════════════════════════════════════════════
+                    PHASE 5: BUSINESS LOGIC
+═══════════════════════════════════════════════════════════════
+STATUS: 🔲 PENDING
+
+OVERVIEW:
+Create hooks and services for split creation, calculation, and Supabase
+integration. This phase focuses on the business logic layer.
+
+TASKS:
+[ ] Create src/hooks/useSplitCalculation.ts
+    - Calculate equal splits
+    - Calculate custom splits
+    - Calculate percentage splits
+    - Validation logic
+
+[ ] Create src/hooks/useFriends.ts
+    - Fetch friends from Supabase
+    - Search/filter friends
+    - Add friend functionality
+
+[ ] Create src/services/splitService.ts
+    - createSplit(data) → save to Supabase
+    - calculateParticipantAmounts(method, total, participants)
+    - validateSplit(data)
+
+[ ] Create src/services/supabase.ts helper functions
+    - getSplits()
+    - createSplit()
+    - updateSplit()
+    - deleteSplit()
+
+[ ] Integrate hooks into screens
+    - Use useSplitCalculation in CustomAmountsScreen
+    - Use useFriends in SelectFriendsScreen
+
+[ ] Add loading states
+[ ] Add error handling
+[ ] Test all business logic
+[ ] Commit changes
+
+GIT STRATEGY:
+- Commit BEFORE Phase 5
+- Commit AFTER Phase 5
+
+═══════════════════════════════════════════════════════════════
+              PHASE 6: INTEGRATION WITH HOMESCREEN
+═══════════════════════════════════════════════════════════════
+STATUS: 🔲 PENDING
+
+OVERVIEW:
+Connect the Split Bill flow to the HomeScreen. Display real splits,
+integrate with existing data, and ensure seamless user experience.
+
+TASKS:
+[ ] Update HomeScreen to fetch real splits
+[ ] Display split cards with real data
+[ ] Add pull-to-refresh
+[ ] Add loading states
+[ ] Update stats (Recent Activity, You Owe, Owed to You)
+[ ] Link split cards to detail screen
+[ ] Test split creation from HomeScreen
+[ ] Test navigation back to HomeScreen
+[ ] Verify data persistence
+[ ] Commit changes
+
+GIT STRATEGY:
+- Commit BEFORE Phase 6
+- Commit AFTER Phase 6
+
+═══════════════════════════════════════════════════════════════
+                   PHASE 7: TESTING & POLISH
+═══════════════════════════════════════════════════════════════
+STATUS: 🔲 PENDING
+
+OVERVIEW:
+Final testing, bug fixes, animations, and polish. Ensure everything
+works perfectly and looks professional like Coinbase.
+
+TASKS:
+[ ] Test entire flow end-to-end
+[ ] Test edge cases (0 amount, 1 friend, etc.)
+[ ] Add animations (modal transitions, success checkmark)
+[ ] Add loading spinners
+[ ] Polish UI (spacing, colors, shadows)
+[ ] Test on iOS
+[ ] Test on Android
+[ ] Fix any bugs
+[ ] Add haptic feedback everywhere
+[ ] Optimize performance
+[ ] Final commit
+
+GIT STRATEGY:
+- Commit AFTER Phase 7
+
+═══════════════════════════════════════════════════════════════
+                         DESIGN REFERENCES
+═══════════════════════════════════════════════════════════════
+
+COINBASE PATTERNS (from Mobbin screenshots):
+- Minimal shadows (barely visible)
+- Clean card layouts with white/gray backgrounds
+- Primary blue color for CTAs and selected states
+- Gray50 page backgrounds for card distinction
+- Proper icon usage (Ionicons, filled vs outline)
+- Professional typography (bold headers, 16px body)
+- Generous padding (20px cards, 24px page padding)
+- Status colors: green (success), orange (pending), red (error)
+
+MOBBIN REFERENCES:
+- Coinbase iOS 0.png - Overall app structure
+- Coinbase iOS 29.png - Split/share patterns
+- Coinbase iOS 34.png - Form inputs
+- Coinbase iOS 50.png - Success states
+- Coinbase iOS 51.png - List views
+- Coinbase iOS 52.png - Settings/detail views
+
+═══════════════════════════════════════════════════════════════
+                         TECH STACK
+═══════════════════════════════════════════════════════════════
+
+CORE:
+- React Native (Expo)
+- TypeScript
+- React Navigation (Stack, Tabs, Modal)
+
+UI:
+- Ionicons
+- expo-haptics
+- Custom theme system (colors, typography, shadows)
+
+BACKEND:
+- Supabase (PostgreSQL)
+- Row Level Security (RLS)
+- Real-time subscriptions
+
+STATE MANAGEMENT:
+- React hooks (useState, useEffect)
+- Context API (for auth)
+- Custom hooks
+
+═══════════════════════════════════════════════════════════════
+                      NEXT STEPS
+═══════════════════════════════════════════════════════════════
+
+Ready to start Phase 4: Screen Development!
+
+This phase will bring the components to life by:
+1. Filling each screen with the components we built
+2. Implementing form validation
+3. Adding navigation logic
+4. Connecting the entire flow
+
+After Phase 4, we'll have a fully functional UI flow (without
+Supabase integration yet - that comes in Phase 5).
+
+═══════════════════════════════════════════════════════════════
