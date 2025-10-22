@@ -1,11 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Text, TextStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
 
 interface AnimatedCounterProps {
   value: number;
@@ -15,8 +9,6 @@ interface AnimatedCounterProps {
   decimals?: number;
 }
 
-const AnimatedText = Animated.createAnimatedComponent(Text);
-
 export default function AnimatedCounter({
   value,
   style,
@@ -24,26 +16,11 @@ export default function AnimatedCounter({
   suffix = '',
   decimals = 2,
 }: AnimatedCounterProps) {
-  const animatedValue = useSharedValue(0);
-
-  useEffect(() => {
-    animatedValue.value = withSpring(value, {
-      damping: 15,
-      stiffness: 100,
-    });
-  }, [value]);
-
-  const animatedProps = useAnimatedProps(() => {
-    const displayValue = animatedValue.value.toFixed(decimals);
-    return {
-      text: `${prefix}${displayValue}${suffix}`,
-    } as any;
-  });
+  const displayValue = value.toFixed(decimals);
 
   return (
-    <AnimatedText
-      style={style}
-      animatedProps={animatedProps}
-    />
+    <Text style={style}>
+      {prefix}{displayValue}{suffix}
+    </Text>
   );
 }

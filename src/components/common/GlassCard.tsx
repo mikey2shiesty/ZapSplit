@@ -1,15 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { colors, radius, shadows } from '../../constants/theme';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -28,27 +21,13 @@ export default function GlassCard({
   style,
   borderGlow = true,
 }: GlassCardProps) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    if (onPress) {
-      scale.value = withSpring(0.98, { damping: 15, stiffness: 400 });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const handlePressOut = () => {
-    if (onPress) {
-      scale.value = withSpring(1, { damping: 15, stiffness: 400 });
-    }
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress?.();
   };
 
   const content = (
-    <AnimatedBlurView
+    <BlurView
       intensity={intensity}
       tint={tint}
       style={[
@@ -56,24 +35,18 @@ export default function GlassCard({
         borderGlow && styles.borderGlow,
         shadows.medium,
         style,
-        onPress && animatedStyle,
       ]}
     >
       <View style={styles.innerBorder} />
       <View style={styles.content}>{children}</View>
-    </AnimatedBlurView>
+    </BlurView>
   );
 
   if (onPress) {
     return (
-      <Animated.View
-        onTouchStart={handlePressIn}
-        onTouchEnd={handlePressOut}
-        onTouchCancel={handlePressOut}
-        onResponderRelease={handlePressOut}
-      >
+      <Pressable onPress={handlePress}>
         {content}
-      </Animated.View>
+      </Pressable>
     );
   }
 

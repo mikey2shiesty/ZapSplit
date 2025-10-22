@@ -12,7 +12,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import GetStartedCard from '../../components/onboarding/GetStartedCard';
 import RecentSplitCard from '../../components/splits/RecentSplitCard';
@@ -85,7 +84,7 @@ export default function HomeScreen() {
       >
         <View style={styles.content}>
           {/* Main Balance Card - Coinbase Style */}
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <View>
             <View style={styles.balanceCard}>
               {/* Huge Balance Number */}
               <Text style={styles.balanceAmount}>
@@ -117,10 +116,10 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Primary Action Buttons - Coinbase Style */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <View>
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.primaryButton}
@@ -140,21 +139,21 @@ export default function HomeScreen() {
                 <Text style={styles.secondaryButtonText}>Request</Text>
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Get Started Card - Only for new users */}
           {isNewUser && (
-            <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <View>
               <GetStartedCard
                 onInviteFriends={() => console.log('Invite friends')}
                 onScanReceipt={() => console.log('Scan receipt')}
               />
-            </Animated.View>
+            </View>
           )}
 
           {/* Recent Splits - Only when user has splits */}
           {hasRecentSplits && (
-            <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <View>
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Recent Splits</Text>
@@ -182,11 +181,11 @@ export default function HomeScreen() {
                   />
                 </View>
               </View>
-            </Animated.View>
+            </View>
           )}
 
           {/* Activity List - Empty State */}
-          <Animated.View entering={FadeInDown.delay(250).springify()}>
+          <View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Activity</Text>
 
@@ -199,7 +198,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
         </View>
       </ScrollView>
     </View>
