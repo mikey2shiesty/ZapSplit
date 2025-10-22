@@ -1,0 +1,71 @@
+import React from 'react';
+import { View, Text, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { ReviewSplitScreenProps } from '../../types/navigation';
+import { colors } from '../../constants/theme';
+
+export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
+  const { amount, title, selectedFriends, splitMethod } = route.params;
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.content}>
+        <Text style={styles.title}>Review Split</Text>
+        <Text style={styles.subtitle}>
+          {title}
+        </Text>
+        <Text style={styles.amount}>
+          ${amount.toFixed(2)}
+        </Text>
+        <Text style={styles.info}>
+          {selectedFriends.length + 1} people • {splitMethod} split
+        </Text>
+        <Text style={styles.placeholder}>
+          Phase 4: Add split summary card with breakdown and Create button
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  amount: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  info: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 32,
+  },
+  placeholder: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+});

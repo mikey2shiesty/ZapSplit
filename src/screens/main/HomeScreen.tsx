@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { HomeScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 import GetStartedCard from '../../components/onboarding/GetStartedCard';
 import RecentSplitCard from '../../components/splits/RecentSplitCard';
 import ActivityItem from '../../components/activity/ActivityItem';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('1W');
@@ -125,6 +126,7 @@ export default function HomeScreen() {
                 style={styles.primaryButton}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  navigation.navigate('SplitFlow');
                 }}
               >
                 <Text style={styles.primaryButtonText}>Split Bill</Text>
