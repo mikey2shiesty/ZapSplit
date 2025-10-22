@@ -1,34 +1,105 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { SplitSuccessScreenProps } from '../../types/navigation';
-import { colors } from '../../constants/theme';
+import { colors, spacing, radius, typography } from '../../constants/theme';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
-  const { amount, participantCount } = route.params;
+  const { splitId, amount, participantCount } = route.params;
+
+  // Haptic feedback on mount
+  useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
 
   const handleDone = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Navigate back to home (dismiss modal)
+    navigation.getParent()?.goBack();
+  };
+
+  const handleViewSplit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Phase 6 will implement split detail view
+    // For now, just go back
     navigation.getParent()?.goBack();
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+
       <View style={styles.content}>
+        {/* Success Icon */}
         <View style={styles.iconContainer}>
-          <Text style={styles.icon}>✓</Text>
+          <Ionicons
+            name="checkmark-circle"
+            size={100}
+            color={colors.success}
+          />
         </View>
+
+        {/* Success Message */}
         <Text style={styles.title}>Split Created!</Text>
-        <Text style={styles.amount}>${amount.toFixed(2)}</Text>
         <Text style={styles.subtitle}>
-          Split between {participantCount} people
-        </Text>
-        <Text style={styles.placeholder}>
-          Phase 4: Add animated checkmark and action buttons
+          Your split has been created successfully
         </Text>
 
-        <TouchableOpacity style={styles.button} onPress={handleDone}>
-          <Text style={styles.buttonText}>Done</Text>
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Total Amount</Text>
+            <Text style={styles.summaryAmount}>${amount.toFixed(2)}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Participants</Text>
+            <Text style={styles.summaryValue}>{participantCount} people</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Per Person</Text>
+            <Text style={styles.summaryValue}>
+              ${(amount / participantCount).toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Info Text */}
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle" size={20} color={colors.primary} />
+          <Text style={styles.infoText}>
+            Participants will be notified about this split
+          </Text>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleDone}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.primaryButtonText}>Done</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={handleViewSplit}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.secondaryButtonText}>View Split</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -44,54 +115,97 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.success + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  icon: {
-    fontSize: 48,
-    color: colors.success,
+    marginBottom: spacing.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...typography.h1,
     color: colors.text,
-    marginBottom: 8,
-  },
-  amount: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: colors.gray,
-    marginBottom: 16,
-  },
-  placeholder: {
-    fontSize: 14,
-    color: colors.gray,
+    color: colors.textSecondary,
+    marginBottom: spacing.xl,
     textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 48,
   },
-  button: {
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    marginBottom: spacing.lg,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  summaryAmount: {
+    ...typography.numberLarge,
+    color: colors.primary,
+  },
+  summaryValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.gray200,
+    marginVertical: spacing.md,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.infoLight,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    width: '100%',
+  },
+  infoText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  buttonContainer: {
+    padding: spacing.lg,
+    width: '100%',
+  },
+  primaryButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
-  buttonText: {
-    color: '#FFFFFF',
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.surface,
+    letterSpacing: 0.5,
+  },
+  secondaryButton: {
+    backgroundColor: colors.gray100,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
 });
