@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,28 +6,27 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ReviewSplitScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 import { SplitSummary, Participant } from '../../components/splits';
+import { createSplit, calculateEqualSplit } from '../../services/splitService';
+import { useFriends } from '../../hooks/useFriends';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
   const { amount, title, description, selectedFriends, splitMethod, customAmounts } = route.params;
 
-  // Mock friends data
-  const mockFriendsData = [
-    { id: '1', name: 'John Doe', email: 'john@example.com' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-    { id: '3', name: 'Alice Johnson', email: 'alice@example.com' },
-    { id: '4', name: 'Bob Wilson', email: 'bob@example.com' },
-    { id: '5', name: 'Emma Davis', email: 'emma@example.com' },
-    { id: '6', name: 'Michael Brown', email: 'michael@example.com' },
-  ];
+  const { user } = useAuth();
+  const { allFriends } = useFriends();
+  const [loading, setLoading] = useState(false);
 
-  // Build participants list
+  // Build participants list from real friends
   const selectedFriendsData = selectedFriends
-    .map(id => mockFriendsData.find(f => f.id === id))
+    .map(id => allFriends.find(f => f.id === id))
     .filter((f): f is { id: string; name: string; email: string } => f !== undefined);
 
   // Calculate amounts based on split method
@@ -36,15 +35,15 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       return customAmounts[participantId] || 0;
     }
     // Equal split
-    return amount / (selectedFriendsData.length + 1);
+    return calculateEqualSplit(amount, selectedFriendsData.length + 1);
   };
 
   const participants: Participant[] = [
     {
-      id: 'current-user',
+      id: user?.id || 'current-user',
       name: 'You',
-      email: 'your@email.com',
-      amount_owed: calculateAmount('current-user'),
+      email: user?.email || 'your@email.com',
+      amount_owed: calculateAmount(user?.id || 'current-user'),
       amount_paid: 0,
       status: 'pending',
     },
@@ -58,16 +57,47 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     })),
   ];
 
-  const handleCreateSplit = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  const handleCreateSplit = async () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to create a split');
+      return;
+    }
 
-    // Phase 5 will save to Supabase
-    // For now, just navigate to success screen
-    navigation.navigate('SplitSuccess', {
-      splitId: 'temp-' + Date.now(),
-      amount,
-      participantCount: participants.length,
-    });
+    try {
+      setLoading(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+      // Prepare participants for database
+      const participantsData = participants.map(p => ({
+        user_id: p.id,
+        amount_owed: p.amount_owed,
+      }));
+
+      // Create split in Supabase
+      const split = await createSplit({
+        title: title.trim(),
+        description: description?.trim(),
+        total_amount: amount,
+        currency: 'AUD',
+        split_method: splitMethod,
+        participants: participantsData,
+      });
+
+      // Navigate to success screen with real split ID
+      navigation.navigate('SplitSuccess', {
+        splitId: split.id,
+        amount,
+        participantCount: participants.length,
+      });
+    } catch (error) {
+      console.error('Error creating split:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to create split. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = () => {
@@ -99,7 +129,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
             title={title}
             totalAmount={amount}
             participants={participants}
-            currentUserId="current-user"
+            currentUserId={user?.id || 'current-user'}
             description={description}
             splitMethod={splitMethod}
             showProgress={false}
@@ -110,13 +140,18 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       {/* Create Split Button - Fixed at Bottom */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.createButton}
+          style={[styles.createButton, loading && styles.createButtonDisabled]}
           onPress={handleCreateSplit}
           activeOpacity={0.7}
+          disabled={loading}
         >
-          <Text style={styles.createButtonText}>
-            Create Split
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={colors.surface} />
+          ) : (
+            <Text style={styles.createButtonText}>
+              Create Split
+            </Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.helperText}>
@@ -186,6 +221,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.surface,
     letterSpacing: 0.5,
+  },
+  createButtonDisabled: {
+    opacity: 0.6,
   },
   helperText: {
     fontSize: 12,

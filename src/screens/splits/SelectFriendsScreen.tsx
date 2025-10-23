@@ -6,24 +6,19 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SelectFriendsScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
-import { FriendSelector, Friend } from '../../components/splits';
+import { FriendSelector } from '../../components/splits';
+import { useFriends } from '../../hooks/useFriends';
 
 export default function SelectFriendsScreen({ navigation, route }: SelectFriendsScreenProps) {
   const { amount, title, description } = route.params;
 
-  // Mock friends data (Phase 5 will load from Supabase)
-  const mockFriends: Friend[] = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', avatar_url: undefined },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com', avatar_url: undefined },
-    { id: '3', name: 'Alice Johnson', email: 'alice@example.com', avatar_url: undefined },
-    { id: '4', name: 'Bob Wilson', email: 'bob@example.com', avatar_url: undefined },
-    { id: '5', name: 'Emma Davis', email: 'emma@example.com', avatar_url: undefined },
-    { id: '6', name: 'Michael Brown', email: 'michael@example.com', avatar_url: undefined },
-  ];
+  // Load real friends from Supabase
+  const { friends, loading, error } = useFriends();
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
 
@@ -71,14 +66,44 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           </Text>
         </View>
 
+        {/* Loading State */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading friends...</Text>
+          </View>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorHint}>
+              Try adding friends from your profile first
+            </Text>
+          </View>
+        )}
+
         {/* Friend Selector */}
-        <View style={styles.friendSelectorContainer}>
-          <FriendSelector
-            friends={mockFriends}
-            selectedFriendIds={selectedFriendIds}
-            onToggleFriend={handleToggleFriend}
-          />
-        </View>
+        {!loading && !error && (
+          <View style={styles.friendSelectorContainer}>
+            <FriendSelector
+              friends={friends}
+              selectedFriendIds={selectedFriendIds}
+              onToggleFriend={handleToggleFriend}
+            />
+          </View>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && friends.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No friends yet</Text>
+            <Text style={styles.emptyHint}>
+              Add friends to start splitting bills together
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Continue Button - Fixed at Bottom */}
@@ -180,5 +205,50 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: colors.gray400,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.error,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  errorHint: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  emptyHint: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
