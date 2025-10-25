@@ -164,10 +164,16 @@ export async function uploadSplitImage(uri: string, splitId: string): Promise<st
   return publicUrl;
 }
 
+export interface SplitWithParticipants extends Split {
+  participants: SplitParticipant[];
+  participant_count: number;
+  paid_count: number;
+}
+
 /**
- * Get all splits for current user (as creator or participant)
+ * Get all splits for current user (as creator or participant) with participant data
  */
-export async function getUserSplits(): Promise<Split[]> {
+export async function getUserSplits(): Promise<SplitWithParticipants[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
@@ -190,25 +196,46 @@ export async function getUserSplits(): Promise<Split[]> {
 
   const participantSplitIds = participantSplits?.map(p => p.split_id) || [];
 
-  if (participantSplitIds.length === 0) {
-    return createdSplits || [];
+  let participatedSplits: Split[] = [];
+  if (participantSplitIds.length > 0) {
+    const { data, error: participatedError } = await supabase
+      .from('splits')
+      .select('*')
+      .in('id', participantSplitIds)
+      .order('created_at', { ascending: false });
+
+    if (participatedError) throw participatedError;
+    participatedSplits = data || [];
   }
 
-  const { data: participatedSplits, error: participatedError } = await supabase
-    .from('splits')
-    .select('*')
-    .in('id', participantSplitIds)
-    .order('created_at', { ascending: false });
-
-  if (participatedError) throw participatedError;
-
   // Combine and deduplicate
-  const allSplits = [...(createdSplits || []), ...(participatedSplits || [])];
+  const allSplits = [...(createdSplits || []), ...participatedSplits];
   const uniqueSplits = Array.from(
     new Map(allSplits.map(split => [split.id, split])).values()
   );
 
-  return uniqueSplits;
+  // Fetch participants for each split
+  const splitsWithParticipants = await Promise.all(
+    uniqueSplits.map(async (split) => {
+      const { data: participants, error } = await supabase
+        .from('split_participants')
+        .select('*')
+        .eq('split_id', split.id);
+
+      if (error) throw error;
+
+      const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+
+      return {
+        ...split,
+        participants: participants || [],
+        participant_count: participants?.length || 0,
+        paid_count: paidCount,
+      };
+    })
+  );
+
+  return splitsWithParticipants;
 }
 
 /**

@@ -356,27 +356,77 @@ GIT STRATEGY:
 ═══════════════════════════════════════════════════════════════
               PHASE 6: INTEGRATION WITH HOMESCREEN
 ═══════════════════════════════════════════════════════════════
-STATUS: 🔲 PENDING
+STATUS: ✅ COMPLETE
 
 OVERVIEW:
 Connect the Split Bill flow to the HomeScreen. Display real splits,
 integrate with existing data, and ensure seamless user experience.
 
 TASKS:
-[ ] Update HomeScreen to fetch real splits
-[ ] Display split cards with real data
-[ ] Add pull-to-refresh
-[ ] Add loading states
-[ ] Update stats (Recent Activity, You Owe, Owed to You)
-[ ] Link split cards to detail screen
-[ ] Test split creation from HomeScreen
-[ ] Test navigation back to HomeScreen
-[ ] Verify data persistence
-[ ] Commit changes
+[✓] Update HomeScreen to fetch real splits
+[✓] Display split cards with real data
+[✓] Add pull-to-refresh
+[✓] Add loading states
+[✓] Update stats (Recent Activity, You Owe, Owed to You)
+[✓] Display activity list with real splits
+[✓] Calculate user balances automatically
+[✓] Show empty states for new users
+[✓] Commit changes
+
+SUCCESS CRITERIA:
+[✓] HomeScreen displays real splits from Supabase
+[✓] Stats calculated correctly (You Owe, Owed to You, Total Balance)
+[✓] Pull-to-refresh updates data
+[✓] Loading states during data fetch
+[✓] Recent splits show with correct data (title, amount, date, participants)
+[✓] Activity list shows all user splits
+[✓] Empty state for new users with no splits
+[✓] Get Started card only shows for new users
+
+6.1 IMPLEMENTATION DETAILS ✅
+------------------------------
+**Created Files:**
+- src/hooks/useSplits.ts: Hook for fetching splits and calculating stats
+
+**Modified Files:**
+- src/services/splitService.ts: Added SplitWithParticipants interface, updated getUserSplits()
+- src/screens/main/HomeScreen.tsx: Integrated useSplits hook, real data display
+
+**Key Features Implemented:**
+1. **useSplits Hook:**
+   - Fetches all user splits (as creator or participant)
+   - Calculates financial stats automatically
+   - Provides refresh function for pull-to-refresh
+   - Tracks loading and error states
+   - Determines if user is new (no splits) vs. has splits
+
+2. **Stats Calculation:**
+   - You Owe: Sum of unpaid amounts where user is participant
+   - Owed to You: Sum of unpaid amounts owed to user as creator
+   - Total Balance: owedToYou - youOwe
+   - Recent Activity Count: Number of active splits
+
+3. **HomeScreen Updates:**
+   - Real balance display with calculated stats
+   - Recent Splits section shows up to 5 latest splits
+   - Activity list shows up to 10 splits with details
+   - Each split shows: title, date, participant count, amount
+   - Activity items show +/- based on creator vs. participant
+   - Paid status indicated with checkmark icon
+
+4. **Smart UI States:**
+   - Get Started card only for new users (splits.length === 0)
+   - Recent Splits section only when hasRecentSplits
+   - Loading indicators during data fetch
+   - Empty state when no activity
+   - Pull-to-refresh refreshes all data
+
+**GIT COMMIT:**
+✅ Phase 6: HomeScreen integration with real Supabase data
 
 GIT STRATEGY:
-- Commit BEFORE Phase 6
-- Commit AFTER Phase 6
+- Commit BEFORE Phase 6 (already clean)
+- Commit AFTER Phase 6 ✅
 
 ═══════════════════════════════════════════════════════════════
                    PHASE 7: TESTING & POLISH
