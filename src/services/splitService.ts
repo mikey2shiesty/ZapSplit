@@ -52,6 +52,7 @@ export async function createSplit(data: CreateSplitData): Promise<Split> {
       description: data.description,
       total_amount: data.total_amount,
       currency: data.currency,
+      split_type: data.split_method, // Map split_method to split_type column
       image_url: data.image_url,
       status: 'active',
     })
