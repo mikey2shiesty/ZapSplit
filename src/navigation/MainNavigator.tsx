@@ -1,4 +1,5 @@
 import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +7,15 @@ import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
 import SplitsScreen from '../screens/main/SplitsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import SplitFlowNavigator from './SplitFlowNavigator';
 import { colors } from '../constants/theme';
+import { RootStackParamList } from '../types/navigation';
 
+const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
-export default function MainNavigator() {
+// Tab Navigator Component
+function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -88,5 +93,29 @@ export default function MainNavigator() {
         }}
       />
     </Tab.Navigator>
+  );
+}
+
+// Main Navigator with Modal Stack
+export default function MainNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      {/* Main Tab Navigator */}
+      <Stack.Screen name="Main" component={MainTabs} />
+
+      {/* Split Flow Modal */}
+      <Stack.Screen
+        name="SplitFlow"
+        component={SplitFlowNavigator}
+        options={{
+          presentation: 'modal', // Modal presentation style (slides up from bottom)
+          headerShown: false,
+        }}
+      />
+    </Stack.Navigator>
   );
 }

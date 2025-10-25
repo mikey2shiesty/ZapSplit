@@ -8,37 +8,33 @@ import {
   Platform,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { useSplits } from '../../hooks/useSplits';
+import { HomeScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import GetStartedCard from '../../components/onboarding/GetStartedCard';
 import RecentSplitCard from '../../components/splits/RecentSplitCard';
 import ActivityItem from '../../components/activity/ActivityItem';
+import { format } from 'date-fns';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
+  const { splits, loading, stats, refresh, hasRecentSplits, isNewUser } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('1W');
-  const [totalBalance] = useState(0);
-  const [youOwe] = useState(0);
-  const [owedToYou] = useState(0);
 
-  // Empty state - no data yet
-  const balanceData: number[] = [];
-
-  // Track if user is new (no splits created yet)
-  const [isNewUser] = useState(true); // Will be from database/API later
-  const [hasRecentSplits] = useState(false); // Will be from database/API later
+  const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
 
   const periods = ['1D', '1W', '1M', 'All'];
 
   const onRefresh = async () => {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await refresh();
     setRefreshing(false);
   };
 
@@ -85,7 +81,7 @@ export default function HomeScreen() {
       >
         <View style={styles.content}>
           {/* Main Balance Card - Coinbase Style */}
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <View>
             <View style={styles.balanceCard}>
               {/* Huge Balance Number */}
               <Text style={styles.balanceAmount}>
@@ -117,15 +113,16 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Primary Action Buttons - Coinbase Style */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <View>
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  navigation.navigate('SplitFlow');
                 }}
               >
                 <Text style={styles.primaryButtonText}>Split Bill</Text>
@@ -140,21 +137,21 @@ export default function HomeScreen() {
                 <Text style={styles.secondaryButtonText}>Request</Text>
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Get Started Card - Only for new users */}
           {isNewUser && (
-            <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <View>
               <GetStartedCard
                 onInviteFriends={() => console.log('Invite friends')}
                 onScanReceipt={() => console.log('Scan receipt')}
               />
-            </Animated.View>
+            </View>
           )}
 
           {/* Recent Splits - Only when user has splits */}
           {hasRecentSplits && (
-            <Animated.View entering={FadeInDown.delay(250).springify()}>
+            <View>
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Recent Splits</Text>
@@ -163,43 +160,84 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.splitsContainer}>
-                  <RecentSplitCard
-                    title="Birthday dinner"
-                    paidCount={3}
-                    totalCount={5}
-                    amount={125.50}
-                    date="Dec 20"
-                    onPress={() => console.log('View split')}
-                  />
-                  <RecentSplitCard
-                    title="Weekend trip"
-                    paidCount={2}
-                    totalCount={4}
-                    amount={450.00}
-                    date="Dec 18"
-                    onPress={() => console.log('View split')}
-                  />
-                </View>
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  </View>
+                ) : (
+                  <View style={styles.splitsContainer}>
+                    {splits.slice(0, 5).map((split) => (
+                      <RecentSplitCard
+                        key={split.id}
+                        title={split.title}
+                        paidCount={split.paid_count}
+                        totalCount={split.participant_count}
+                        amount={split.total_amount}
+                        date={format(new Date(split.created_at), 'MMM d')}
+                        onPress={() => console.log('View split', split.id)}
+                      />
+                    ))}
+                  </View>
+                )}
               </View>
-            </Animated.View>
+            </View>
           )}
 
-          {/* Activity List - Empty State */}
-          <Animated.View entering={FadeInDown.delay(250).springify()}>
+          {/* Activity List */}
+          <View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Activity</Text>
 
-              {/* Empty State */}
-              <View style={styles.emptyState}>
-                <Ionicons name="document-text-outline" size={64} color={colors.gray300} />
-                <Text style={styles.emptyStateTitle}>No activity yet</Text>
-                <Text style={styles.emptyStateSubtitle}>
-                  Create your first split to get started
-                </Text>
-              </View>
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : splits.length === 0 ? (
+                /* Empty State */
+                <View style={styles.emptyState}>
+                  <Ionicons name="document-text-outline" size={64} color={colors.gray300} />
+                  <Text style={styles.emptyStateTitle}>No activity yet</Text>
+                  <Text style={styles.emptyStateSubtitle}>
+                    Create your first split to get started
+                  </Text>
+                </View>
+              ) : (
+                /* Activity List */
+                <View style={styles.activityList}>
+                  {splits.slice(0, 10).map((split) => {
+                    const userParticipant = split.participants.find(p => p.user_id === user?.id);
+                    const amountOwed = userParticipant ? userParticipant.amount_owed : 0;
+                    const isPaid = userParticipant?.status === 'paid';
+
+                    return (
+                      <View key={split.id} style={styles.activityRow}>
+                        <View style={[styles.activityIcon, { backgroundColor: colors.primary + '20' }]}>
+                          <Ionicons name="receipt-outline" size={20} color={colors.primary} />
+                        </View>
+                        <View style={styles.activityContent}>
+                          <Text style={styles.activityTitle}>{split.title}</Text>
+                          <Text style={styles.activitySubtitle}>
+                            {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
+                          </Text>
+                        </View>
+                        <View style={styles.activityRight}>
+                          <Text style={[
+                            styles.activityAmount,
+                            { color: split.creator_id === user?.id ? colors.success : colors.error }
+                          ]}>
+                            {split.creator_id === user?.id ? '+' : '-'}${amountOwed.toFixed(2)}
+                          </Text>
+                          {isPaid && (
+                            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
             </View>
-          </Animated.View>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -442,11 +480,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.gray900,
   },
-  viewAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
   splitsContainer: {
     gap: spacing.md,
   },
@@ -499,5 +532,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.gray500,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityList: {
+    gap: spacing.sm,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
