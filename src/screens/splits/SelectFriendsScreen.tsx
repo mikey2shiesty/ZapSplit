@@ -84,8 +84,8 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           </View>
         )}
 
-        {/* Friend Selector */}
-        {!loading && !error && (
+        {/* Friend Selector - Only show when friends exist */}
+        {!loading && !error && friends.length > 0 && (
           <View style={styles.friendSelectorContainer}>
             <FriendSelector
               friends={friends}
@@ -95,12 +95,12 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           </View>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - Only show when no friends */}
         {!loading && !error && friends.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No friends yet</Text>
             <Text style={styles.emptyHint}>
-              Add friends to start splitting bills together
+              Add friends from your profile to start splitting bills
             </Text>
           </View>
         )}
