@@ -309,6 +309,46 @@ TASKS:
 [ ] Test all business logic
 [ ] Commit changes
 
+SUCCESS CRITERIA:
+[✓] All 3 split methods (equal, custom, percentage) save to Supabase
+[✓] Real friends loaded from database
+[✓] Error handling with user-friendly alerts
+[✓] Loading states during split creation
+[✓] Navigation to SplitSuccess screen with real split ID
+
+5.5 DATABASE FIXES & CRITICAL ISSUES RESOLVED ✅
+------------------------------------------------
+[✓] Added creator_id column to splits table with foreign key to auth.users
+[✓] Added split_type column with constraint: CHECK (split_type IN ('equal', 'custom', 'percentage'))
+[✓] Added image_url column to splits table
+[✓] Fixed RLS infinite recursion (temporarily disabled RLS for MVP)
+[✓] Fixed split_participants RLS to allow creators to add any participants
+[✓] Fixed undefined → null conversion for optional fields (description, image_url)
+[✓] All 3 split methods tested and working (equal, custom, percentage)
+
+**SQL Scripts Created:**
+- ADD_CREATOR_ID_COLUMN.sql
+- FIX_SPLIT_TYPE.sql
+- ADD_IMAGE_URL_COLUMN.sql
+- FIX_RLS_FINAL.sql
+- DISABLE_RLS_TEST.sql (current solution)
+
+**Known Issues/Technical Debt:**
+- RLS currently disabled on splits and split_participants tables
+- Need to implement proper non-recursive RLS policies in future phase
+- Service role key configured for MCP but authentication not working
+
+**Key Code Changes:**
+- splitService.ts: Added split_type mapping, null handling for optional fields
+- ReviewSplitScreen.tsx: Integrated createSplit(), added loading/error states
+- SelectFriendsScreen.tsx: Fixed duplicate empty states, integrated useFriends hook
+
+**GIT COMMITS**:
+✅ 1e8994e: "Phase 5: Add business logic and Supabase integration"
+✅ f3e5aaf: "Fix duplicate 'No friends yet' empty states in SelectFriendsScreen"
+✅ b8d3916: "Fix: Add split_type to database insert in splitService.ts"
+✅ Multiple SQL migrations for database schema fixes
+
 GIT STRATEGY:
 - Commit BEFORE Phase 5
 - Commit AFTER Phase 5

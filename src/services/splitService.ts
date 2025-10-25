@@ -37,25 +37,32 @@ export interface SplitParticipant {
 
 /**
  * Create a new split in the database with participants
+ *
+ * NOTE: RLS is currently disabled on splits and split_participants tables
+ * This is a temporary solution for MVP to avoid infinite recursion issues
+ * TODO: Re-implement proper non-recursive RLS policies in Phase 6/7
  */
 export async function createSplit(data: CreateSplitData): Promise<Split> {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
+  // Prepare split data for insertion (handle undefined values)
+  const splitData = {
+    creator_id: user.id,
+    title: data.title,
+    description: data.description || null,
+    total_amount: data.total_amount,
+    currency: data.currency,
+    split_type: data.split_method, // Map split_method to split_type column
+    image_url: data.image_url || null,
+    status: 'active' as const,
+  };
+
   // Insert split record
-  const { data: split, error: splitError } = await supabase
+  const { data: split, error: splitError} = await supabase
     .from('splits')
-    .insert({
-      creator_id: user.id,
-      title: data.title,
-      description: data.description,
-      total_amount: data.total_amount,
-      currency: data.currency,
-      split_type: data.split_method, // Map split_method to split_type column
-      image_url: data.image_url,
-      status: 'active',
-    })
+    .insert(splitData)
     .select()
     .single();
 
