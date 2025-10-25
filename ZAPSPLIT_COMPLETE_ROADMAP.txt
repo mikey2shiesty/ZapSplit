@@ -1,0 +1,818 @@
+═══════════════════════════════════════════════════════════════
+                    ZAPSPLIT - COMPLETE APP ROADMAP
+                    From MVP to Production Launch
+═══════════════════════════════════════════════════════════════
+
+CURRENT STATUS: Split Bill Flow Complete ✅
+- Users can create splits (equal, custom, percentage)
+- View splits on HomeScreen with real-time stats
+- All data persists in Supabase
+
+═══════════════════════════════════════════════════════════════
+                        DEVELOPMENT PHASES
+═══════════════════════════════════════════════════════════════
+
+TOTAL TIMELINE: 25-35 development days (5-7 weeks)
+TOTAL COST (Year 1): ~$500-600
+
+PRIORITY LEGEND:
+🔴 CRITICAL - Cannot launch without this
+🟡 HIGH - Important for launch
+🟢 MEDIUM - Nice to have
+⚪ LOW - Post-launch feature
+
+═══════════════════════════════════════════════════════════════
+    PHASE 8: RECEIPT SCANNING & ITEM ASSIGNMENT 🔴 CRITICAL
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🔴 CRITICAL - THE CORE FEATURE OF ZAPSPLIT
+TIMELINE: 4-5 days
+STATUS: 🔲 NOT STARTED
+
+⚠️ THIS IS THE #1 PRIORITY - APP CANNOT LAUNCH WITHOUT THIS ⚠️
+
+OVERVIEW:
+This is the killer feature that differentiates ZapSplit. Users scan a
+receipt, AI extracts all items, then participants check off what they
+ordered. The app auto-calculates who owes what and sends payment requests.
+
+FEATURES TO BUILD:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CAMERA/UPLOAD INTEGRATION
+   [✓] expo-camera for taking photos
+   [✓] expo-image-picker for selecting from gallery
+   [✓] Image preview before upload
+   [✓] Crop/rotate functionality
+   [✓] Upload to Supabase Storage bucket: 'receipts/'
+   [✓] Generate unique filename: {userId}/{splitId}-{timestamp}.jpg
+
+2. AI-POWERED RECEIPT PARSING (OpenAI Vision API)
+   [✓] Send receipt image to OpenAI GPT-4 Vision
+   [✓] Extract structured data:
+       - Merchant name
+       - Date and time
+       - Individual line items (name, quantity, price)
+       - Subtotal
+       - Tax amount
+       - Tip (if applicable)
+       - Total amount
+   [✓] Handle errors (blurry receipt, unreadable text)
+   [✓] Allow manual editing of extracted data
+
+   API Call Example:
+   POST https://api.openai.com/v1/chat/completions
+   {
+     "model": "gpt-4-vision-preview",
+     "messages": [{
+       "role": "user",
+       "content": [
+         {"type": "text", "text": "Extract all items, prices, tax, and total from this receipt as JSON"},
+         {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,..."}}
+       ]
+     }]
+   }
+
+   Expected Response:
+   {
+     "merchant": "Chipotle",
+     "date": "2025-01-15",
+     "items": [
+       {"name": "Chicken Burrito", "price": 12.50, "quantity": 1},
+       {"name": "Guacamole", "price": 3.25, "quantity": 2},
+       {"name": "Chips & Salsa", "price": 4.00, "quantity": 1}
+     ],
+     "subtotal": 23.00,
+     "tax": 2.07,
+     "tip": 4.00,
+     "total": 29.07
+   }
+
+3. ITEM ASSIGNMENT CHECKLIST SCREEN
+   [✓] Display all extracted items in a list
+   [✓] For each item, show checkboxes for each participant
+   [✓] Multiple people can select the same item (shared items)
+   [✓] Show running total for each person as they check items
+   [✓] Handle shared items:
+       - If 2 people select Guacamole ($3.25), each pays $1.63
+       - If 3 people select Chips ($4.00), each pays $1.33
+   [✓] Tax/tip distribution:
+       - Option A: Split tax/tip equally among all participants
+       - Option B: Split tax/tip proportionally based on item totals
+   [✓] Allow unchecking items
+   [✓] Visual feedback when items selected
+   [✓] Summary card showing each person's total at bottom
+
+   SCREEN LAYOUT:
+   ┌─────────────────────────────────────┐
+   │ Who ordered what?                   │
+   ├─────────────────────────────────────┤
+   │ Chicken Burrito - $12.50            │
+   │ [✓] John  [✓] Sarah  [ ] Mike       │
+   │ → John: $6.25  Sarah: $6.25         │
+   ├─────────────────────────────────────┤
+   │ Guacamole - $3.25                   │
+   │ [ ] John  [✓] Sarah  [✓] Mike       │
+   │ → Sarah: $1.63  Mike: $1.62         │
+   ├─────────────────────────────────────┤
+   │ Chips & Salsa - $4.00               │
+   │ [✓] John  [✓] Sarah  [✓] Mike       │
+   │ → Each: $1.33                       │
+   ├─────────────────────────────────────┤
+   │ Tax ($2.07) + Tip ($4.00)           │
+   │ Split equally: $2.02 each           │
+   ├─────────────────────────────────────┤
+   │ TOTALS:                             │
+   │ John owes:  $9.60                   │
+   │ Sarah owes: $11.23                  │
+   │ Mike owes:  $8.24                   │
+   │                                     │
+   │ [ Continue to Payment ]             │
+   └─────────────────────────────────────┘
+
+4. PAYMENT REQUEST FLOW
+   [✓] After item assignment, show review screen
+   [✓] Display each person's total with breakdown
+   [✓] "Send Payment Requests" button
+   [✓] Integrate with payment apps (Venmo, PayPal, Cash App)
+   [✓] Deep link to payment app with pre-filled amount
+   [✓] Track payment status (pending → paid)
+   [✓] Send notifications when payment received
+
+5. DATABASE SCHEMA (Already exists!)
+   ✅ split_items table:
+      - id, split_id, name, price, quantity
+
+   ✅ item_assignments table:
+      - id, item_id, user_id, share_percentage
+      - Example: If 2 people share an item, each has share_percentage = 50
+
+6. SERVICES TO CREATE
+   [✓] src/services/receiptService.ts
+       - uploadReceipt(imageUri, splitId)
+       - parseReceiptWithAI(imageUrl)
+       - extractItems(parsedData)
+
+   [✓] src/services/itemService.ts
+       - createSplitItems(splitId, items)
+       - assignItemToUser(itemId, userId, sharePercentage)
+       - calculateUserTotal(splitId, userId)
+       - getItemAssignments(splitId)
+
+7. SCREENS TO CREATE
+   [✓] ScanReceiptScreen.tsx - Camera/upload interface
+   [✓] ReviewReceiptScreen.tsx - Verify extracted data
+   [✓] ItemAssignmentScreen.tsx - Checklist for who ordered what
+   [✓] PaymentRequestScreen.tsx - Send payment requests
+
+8. COST ESTIMATE
+   - OpenAI API: ~$0.01-0.03 per receipt scan
+   - Supabase Storage: ~$0.021 per GB (receipts are small)
+   - Expected: $10-20/month for 1000 scans
+
+SUCCESS CRITERIA:
+[✓] User can take photo of receipt OR upload from gallery
+[✓] AI extracts items with 90%+ accuracy
+[✓] User can manually edit extracted items
+[✓] Multiple participants can select same item
+[✓] App calculates fair split (including tax/tip)
+[✓] Payment requests sent via Venmo/PayPal/Cash App
+[✓] Payment status tracked in database
+[✓] Works on both iOS and Android
+
+DEPENDENCIES:
+- OpenAI API key (sign up at platform.openai.com)
+- Supabase Storage bucket configured
+- expo-camera installed
+- expo-image-picker installed
+
+GIT STRATEGY:
+- Commit BEFORE Phase 8
+- Commit after camera integration
+- Commit after AI parsing
+- Commit after item assignment UI
+- Commit after payment integration
+- Commit AFTER Phase 8 complete
+
+═══════════════════════════════════════════════════════════════
+         PHASE 7: SPLIT DETAIL & MANAGEMENT 🟡 HIGH
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🟡 HIGH
+TIMELINE: 2-3 days
+STATUS: 🔲 NOT STARTED
+
+OVERVIEW:
+Users need to view split details, mark payments as received, edit splits,
+and delete splits they no longer need.
+
+FEATURES TO BUILD:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SPLIT DETAIL SCREEN
+   [✓] Display full split information:
+       - Title and description
+       - Total amount and currency
+       - Created by (creator name)
+       - Created date
+       - Receipt image (if uploaded)
+       - Split method (equal, custom, percentage, receipt scan)
+   [✓] List all participants with:
+       - Name and avatar
+       - Amount owed
+       - Amount paid
+       - Payment status (pending/paid)
+       - Payment method used
+   [✓] Timeline/activity log:
+       - "John marked as paid - 2h ago"
+       - "Split created by Sarah - 1d ago"
+   [✓] Action buttons:
+       - Mark as Paid (for each participant)
+       - Edit Split
+       - Delete Split
+       - Share Split (via SMS/email)
+
+2. MARK AS PAID FUNCTIONALITY
+   [✓] Button for each unpaid participant
+   [✓] Confirmation dialog: "Mark John as paid $25.50?"
+   [✓] Update split_participants table:
+       - amount_paid = amount_owed
+       - status = 'paid'
+       - paid_at = now()
+   [✓] Update split status if all paid:
+       - If all participants paid → split.status = 'settled'
+   [✓] Send notification to participant
+   [✓] Show success animation
+
+3. EDIT SPLIT
+   [✓] Navigate to EditSplitScreen (similar to CreateSplit)
+   [✓] Pre-fill all existing data
+   [✓] Allow changes to:
+       - Title and description
+       - Amount (recalculates participant shares)
+       - Participants (add/remove)
+       - Split method
+   [✓] Validation: Can't edit if any payments received
+   [✓] Save changes to database
+   [✓] Update all related records
+
+4. DELETE SPLIT
+   [✓] Delete button (destructive action)
+   [✓] Confirmation dialog: "Are you sure? This cannot be undone"
+   [✓] Check: Only creator can delete
+   [✓] Check: Warn if any payments received
+   [✓] Cascade delete:
+       - Delete from split_participants
+       - Delete from split_items (if receipt scan)
+       - Delete from item_assignments
+       - Delete receipt image from storage
+       - Delete from splits table
+   [✓] Navigate back to HomeScreen
+   [✓] Show toast: "Split deleted"
+
+5. SHARE SPLIT
+   [✓] Share via SMS, Email, WhatsApp
+   [✓] Generate shareable message:
+       "Sarah added you to a split: Team Lunch ($120.00). You owe $30.00. View in ZapSplit app."
+   [✓] Deep link to split detail (if app installed)
+   [✓] Web link fallback (if app not installed)
+
+SCREENS TO CREATE:
+[✓] SplitDetailScreen.tsx
+[✓] EditSplitScreen.tsx (reuse CreateSplit components)
+
+SERVICES TO CREATE:
+[✓] src/services/splitService.ts (extend existing)
+    - getSplitById(splitId)
+    - markParticipantPaid(participantId, amount)
+    - updateSplit(splitId, changes)
+    - deleteSplit(splitId)
+    - shareSplit(splitId)
+
+SUCCESS CRITERIA:
+[✓] Tap split on HomeScreen → Opens detail view
+[✓] All split info displayed accurately
+[✓] Mark as Paid updates database and UI
+[✓] Edit split works for all fields
+[✓] Delete cascades correctly
+[✓] Share generates proper deep links
+
+═══════════════════════════════════════════════════════════════
+        PHASE 9: PAYMENT INTEGRATION 🔴 CRITICAL
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🔴 CRITICAL
+TIMELINE: 4-5 days
+STATUS: 🔲 NOT STARTED
+
+OVERVIEW:
+Enable users to send/request money via Venmo, PayPal, Cash App, or Zelle.
+This is essential for the "send payment request through the app" feature.
+
+FEATURES TO BUILD:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. PAYMENT METHOD SETUP
+   [✓] User selects preferred payment app in Settings:
+       - Venmo
+       - PayPal
+       - Cash App
+       - Zelle (manual)
+   [✓] Store payment handle/username:
+       - Venmo: @username
+       - PayPal: email or @username
+       - Cash App: $cashtag
+       - Zelle: phone or email
+   [✓] Save to profiles table:
+       - payment_method (enum)
+       - payment_handle (string)
+   [✓] Verify handle format
+
+2. SEND PAYMENT REQUEST
+   [✓] From SplitDetailScreen or ItemAssignmentScreen
+   [✓] Button: "Send Payment Request to John ($25.50)"
+   [✓] Check if John has payment method set up
+   [✓] If yes → Generate deep link
+   [✓] If no → Send in-app notification to set up payment
+
+3. DEEP LINKING TO PAYMENT APPS
+
+   VENMO:
+   [✓] Deep link format:
+       venmo://paycharge?txn=pay&recipients={username}&amount={amount}&note={note}
+       Example: venmo://paycharge?txn=pay&recipients=John-Doe&amount=25.50&note=Team%20Lunch
+   [✓] Fallback to web: https://venmo.com/{username}?txn=pay&amount={amount}
+
+   PAYPAL:
+   [✓] Deep link format:
+       paypal://paymentrequest?recipient={email}&amount={amount}&note={note}
+   [✓] Fallback to web: https://paypal.me/{username}/{amount}
+
+   CASH APP:
+   [✓] Deep link format:
+       cashme://{cashtag}/{amount}
+       Example: cashme://$johndoe/25.50
+   [✓] Fallback to web: https://cash.app/$johndoe/25.50
+
+   ZELLE:
+   [✓] No deep link (bank-dependent)
+   [✓] Show manual instructions:
+       "Send $25.50 to john@email.com via your bank's Zelle feature"
+   [✓] Copy amount and email to clipboard
+
+4. PAYMENT TRACKING
+   [✓] After sending request, save to payments table:
+       - split_id, payer_id, receiver_id, amount, method, status='pending'
+   [✓] User manually marks as paid (we can't auto-detect)
+   [✓] Update split_participants when paid
+   [✓] Send confirmation notification
+
+5. IN-APP PAYMENT REQUEST NOTIFICATION
+   [✓] When payment request sent:
+       - Create notification record
+       - Send push notification (Phase 10)
+       - Show in Notifications tab
+   [✓] Notification content:
+       "Sarah requested $25.50 for Team Lunch. [Pay Now]"
+   [✓] Tap notification → Opens payment app
+
+6. PAYMENT HISTORY
+   [✓] Screen showing all payment requests sent/received
+   [✓] Filter by status: All, Pending, Paid
+   [✓] Show payment method and date
+
+SCREENS TO CREATE:
+[✓] PaymentMethodSetupScreen.tsx (in Settings)
+[✓] PaymentRequestScreen.tsx (send request)
+[✓] PaymentHistoryScreen.tsx (view all payments)
+
+SERVICES TO CREATE:
+[✓] src/services/paymentService.ts
+    - sendPaymentRequest(splitId, userId, amount, method)
+    - generateDeepLink(method, handle, amount, note)
+    - recordPayment(paymentData)
+    - markPaymentPaid(paymentId)
+    - getPaymentHistory(userId)
+
+DATABASE TABLES (Already exist!):
+✅ payments table:
+   - id, split_id, payer_id, receiver_id, amount, method, status, created_at, paid_at
+
+SUCCESS CRITERIA:
+[✓] User can set payment method in Settings
+[✓] Payment request opens Venmo/PayPal/Cash App with pre-filled data
+[✓] Deep links work on iOS and Android
+[✓] Fallback to web if app not installed
+[✓] Payment tracked in database
+[✓] Notifications sent when payment requested
+
+DEPENDENCIES:
+- Venmo, PayPal, Cash App accounts for testing
+- Deep link configuration in app.json
+
+COST:
+- Free (we're not processing payments, just deep linking)
+
+═══════════════════════════════════════════════════════════════
+         PHASE 11: FRIENDS & GROUPS 🟡 HIGH
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🟡 HIGH
+TIMELINE: 3-4 days
+STATUS: 🔲 NOT STARTED
+
+OVERVIEW:
+Users need to manage their friends and create recurring groups for
+common split scenarios (roommates, work lunch crew, etc).
+
+FEATURES TO BUILD:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. FRIENDS MANAGEMENT
+   [✓] Add friends by:
+       - Email address
+       - Phone number
+       - Username search
+   [✓] Friend request flow:
+       - Send request → Pending state
+       - Receiver accepts/declines
+       - Update friendships table status
+   [✓] Friends list with search
+   [✓] Unfriend action
+   [✓] View friend's profile:
+       - Name, avatar
+       - Splits history together
+       - Total owed/owing between you two
+
+2. GROUPS FEATURE
+   [✓] Create group with name and members
+   [✓] Add/remove members
+   [✓] Quick split with entire group
+   [✓] Group activity history
+   [✓] Example groups:
+       - "Roommates" (4 people)
+       - "Work Lunch" (6 people)
+       - "Trip to Vegas" (8 people)
+
+3. FRIEND RECOMMENDATIONS
+   [✓] "Add from contacts" (with permission)
+   [✓] "People you may know" (mutual friends)
+   [✓] Import from social media (future)
+
+SCREENS TO CREATE:
+[✓] FriendsScreen.tsx (list, search, add)
+[✓] AddFriendScreen.tsx (search and send request)
+[✓] FriendRequestsScreen.tsx (pending requests)
+[✓] GroupsScreen.tsx (list of groups)
+[✓] CreateGroupScreen.tsx (name, members)
+[✓] GroupDetailScreen.tsx (members, activity)
+
+DATABASE TABLES (Already exist!):
+✅ friendships: user_id, friend_id, status, created_at
+✅ groups: id, name, created_by, created_at
+✅ group_members: group_id, user_id, joined_at
+
+SUCCESS CRITERIA:
+[✓] User can send/accept/decline friend requests
+[✓] Friends list populated from database
+[✓] Can create groups with multiple members
+[✓] Quick split with group works
+[✓] Search friends by name/email
+
+═══════════════════════════════════════════════════════════════
+       PHASE 10: NOTIFICATIONS & REMINDERS 🟢 MEDIUM
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🟢 MEDIUM
+TIMELINE: 2-3 days
+STATUS: 🔲 NOT STARTED
+
+OVERVIEW:
+Send push notifications for split activity and payment reminders.
+
+FEATURES TO BUILD:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. PUSH NOTIFICATION SETUP
+   [✓] expo-notifications integration
+   [✓] Request permission on first launch
+   [✓] Get device push token
+   [✓] Store in profiles table: push_token field
+
+2. NOTIFICATION TRIGGERS
+   [✓] Added to a split
+   [✓] Payment requested
+   [✓] Someone paid their share
+   [✓] Reminder for unpaid split (3 days, 7 days)
+   [✓] Friend request received
+
+3. IN-APP NOTIFICATIONS
+   [✓] NotificationsScreen with list
+   [✓] Unread badge count
+   [✓] Mark as read
+   [✓] Tap to navigate to related split
+
+4. NOTIFICATION PREFERENCES
+   [✓] Settings to enable/disable each type
+   [✓] Quiet hours (don't send 11pm-8am)
+
+DATABASE:
+[✓] Add push_token to profiles table
+[✓] Create notifications table:
+    - id, user_id, type, title, body, data, read, created_at
+
+SERVICES:
+- Expo Push Notification Service (free tier)
+
+═══════════════════════════════════════════════════════════════
+       PHASE 14: SECURITY & PRIVACY 🔴 CRITICAL
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🔴 CRITICAL
+TIMELINE: 1-2 days
+STATUS: 🔲 NOT STARTED
+
+OVERVIEW:
+Secure the app for production launch. Fix RLS policies we disabled.
+
+TASKS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. RE-ENABLE RLS POLICIES
+   [✓] Fix infinite recursion issues from Phase 5
+   [✓] Implement proper non-recursive policies:
+       - Users can only see splits they created or participate in
+       - Users can only see their own payment info
+       - Users can only see friends they're connected to
+   [✓] Test thoroughly with multiple users
+
+2. INPUT VALIDATION
+   [✓] Sanitize all user inputs
+   [✓] Prevent SQL injection
+   [✓] Validate amounts (no negative numbers)
+   [✓] Validate emails and phone numbers
+
+3. RATE LIMITING
+   [✓] Limit API calls per user (prevent abuse)
+   [✓] Limit receipt scans (prevent OpenAI cost explosion)
+   [✓] Implement with Supabase Edge Functions
+
+4. PRIVACY FEATURES
+   [✓] Hide split amounts from non-participants
+   [✓] Private splits option (invite-only)
+   [✓] Block/report users
+   [✓] Delete account (GDPR compliance)
+
+SUCCESS CRITERIA:
+[✓] RLS enabled and working
+[✓] No security vulnerabilities
+[✓] User data protected
+[✓] Rate limits prevent abuse
+
+⚠️ CRITICAL: Must complete before launch!
+
+═══════════════════════════════════════════════════════════════
+        PHASE 13: SETTINGS & PROFILE 🟢 MEDIUM
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🟢 MEDIUM
+TIMELINE: 2 days
+STATUS: 🔲 NOT STARTED
+
+FEATURES:
+[✓] Profile screen (edit name, email, photo)
+[✓] Settings screen (notifications, payment method, theme)
+[✓] Change password
+[✓] Logout
+[✓] Delete account
+
+═══════════════════════════════════════════════════════════════
+        PHASE 12: ANALYTICS & INSIGHTS ⚪ LOW
+═══════════════════════════════════════════════════════════════
+PRIORITY: ⚪ LOW - POST-LAUNCH FEATURE
+TIMELINE: 2 days
+STATUS: 🔲 NOT STARTED
+
+FEATURES:
+[✓] Total spent this month
+[✓] Charts (spending over time, split breakdown)
+[✓] Top split partners
+[✓] Export to CSV
+
+NOTE: Can launch without this, add in v1.1
+
+═══════════════════════════════════════════════════════════════
+        PHASE 15: POLISH & UX REFINEMENT 🟡 HIGH
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🟡 HIGH
+TIMELINE: 3-4 days
+STATUS: 🔲 NOT STARTED
+
+TASKS:
+[✓] Smooth animations (Lottie, React Native Reanimated)
+[✓] Loading skeletons
+[✓] Error handling and retry logic
+[✓] Offline mode support
+[✓] Accessibility (screen reader, high contrast)
+[✓] Performance optimization
+[✓] Image optimization
+
+SUCCESS CRITERIA:
+[✓] App feels smooth and responsive
+[✓] Professional animations
+[✓] Handles errors gracefully
+[✓] Works offline (cached data)
+
+═══════════════════════════════════════════════════════════════
+              PHASE 16: TESTING 🔴 CRITICAL
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🔴 CRITICAL
+TIMELINE: 3-4 days
+STATUS: 🔲 NOT STARTED
+
+TESTING STRATEGY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. UNIT TESTS
+   [✓] Test all service functions
+   [✓] Test calculation logic (split amounts, tax distribution)
+   [✓] Test validation functions
+   [✓] Framework: Jest
+
+2. INTEGRATION TESTS
+   [✓] Test API calls to Supabase
+   [✓] Test OpenAI Vision API integration
+   [✓] Test payment deep links
+   [✓] Test image upload/download
+
+3. E2E TESTS
+   [✓] Complete user flows:
+       - Sign up → Create split → Scan receipt → Assign items → Send payment
+       - Accept friend request → Create group → Quick split with group
+   [✓] Framework: Detox or Maestro
+
+4. MANUAL TESTING
+   [✓] Test on real iOS device (iPhone 12+, latest iOS)
+   [✓] Test on real Android device (Pixel, Samsung)
+   [✓] Test all payment deep links
+   [✓] Test receipt scanning with 20+ real receipts
+   [✓] Test edge cases:
+       - 1 person split (should fail)
+       - 20 people split (stress test)
+       - Receipt with 50+ items
+       - Blurry/damaged receipt
+       - Non-English receipt
+
+5. BETA TESTING
+   [✓] TestFlight beta (iOS)
+   [✓] Google Play Internal Testing (Android)
+   [✓] Recruit 10-20 beta testers
+   [✓] Collect feedback
+   [✓] Fix critical bugs
+
+SUCCESS CRITERIA:
+[✓] 90% code coverage
+[✓] All E2E tests pass
+[✓] No critical bugs
+[✓] Beta testers satisfied
+
+⚠️ CRITICAL: Do not skip testing!
+
+═══════════════════════════════════════════════════════════════
+            PHASE 17: DEPLOYMENT 🔴 CRITICAL
+═══════════════════════════════════════════════════════════════
+PRIORITY: 🔴 CRITICAL
+TIMELINE: 2-3 days
+STATUS: 🔲 NOT STARTED
+
+DEPLOYMENT TASKS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. PRODUCTION SUPABASE SETUP
+   [✓] Create production project (separate from dev)
+   [✓] Migrate database schema
+   [✓] Set up RLS policies
+   [✓] Configure storage buckets
+   [✓] Set environment variables
+   [✓] Enable database backups
+
+2. IOS SUBMISSION (App Store)
+   [✓] Apple Developer account ($99/year)
+   [✓] App Store Connect setup
+   [✓] Create app listing:
+       - App name: ZapSplit
+       - Description, keywords, category
+       - Screenshots (6.7", 6.5", 5.5")
+       - App icon (1024x1024)
+       - Privacy policy URL
+   [✓] Build with EAS Build:
+       eas build --platform ios --profile production
+   [✓] Upload to TestFlight
+   [✓] Internal testing (1 week)
+   [✓] Submit for App Review
+   [✓] Wait for approval (2-7 days)
+   [✓] Release to App Store
+
+3. ANDROID SUBMISSION (Google Play)
+   [✓] Google Play Console account ($25 one-time)
+   [✓] Create app listing:
+       - App name, description, category
+       - Screenshots, feature graphic
+       - Privacy policy
+   [✓] Build signed AAB:
+       eas build --platform android --profile production
+   [✓] Upload to Internal Testing track
+   [✓] Test on multiple devices
+   [✓] Promote to Production
+   [✓] Submit for review (faster than iOS)
+   [✓] Release to Google Play
+
+4. BACKEND DEPLOYMENT
+   [✓] Production Supabase URL and anon key
+   [✓] OpenAI API key (production rate limits)
+   [✓] Environment variables in EAS:
+       EXPO_PUBLIC_SUPABASE_URL
+       EXPO_PUBLIC_SUPABASE_ANON_KEY
+       EXPO_PUBLIC_OPENAI_API_KEY
+   [✓] Set up monitoring (Sentry for error tracking)
+   [✓] Set up analytics (Expo Analytics or Mixpanel)
+
+5. APP STORE ASSETS
+   [✓] App Icon (1024x1024, no transparency)
+   [✓] Screenshots (iPhone 15 Pro Max, iPad Pro)
+   [✓] Feature graphic (Android only)
+   [✓] App preview video (optional but recommended)
+   [✓] Privacy policy page (required)
+   [✓] Terms of service
+
+6. LAUNCH CHECKLIST
+   [✓] All features tested
+   [✓] No critical bugs
+   [✓] Privacy policy published
+   [✓] Support email set up
+   [✓] Push notification certificates configured
+   [✓] Deep links configured (for sharing splits)
+   [✓] Social media accounts created (optional)
+   [✓] Landing page live (optional)
+
+SUCCESS CRITERIA:
+[✓] App approved on App Store
+[✓] App approved on Google Play
+[✓] Production backend stable
+[✓] Monitoring and analytics working
+
+COST BREAKDOWN:
+- Apple Developer: $99/year
+- Google Play: $25 one-time
+- Expo EAS Build: $29/month (or free tier: 30 builds/month)
+- Supabase Pro: $25/month (production)
+- OpenAI API: Pay-as-you-go (~$20-50/month depending on usage)
+- Domain (optional): $12/year
+- Total Year 1: ~$500-600
+
+═══════════════════════════════════════════════════════════════
+                    RECOMMENDED LAUNCH ORDER
+═══════════════════════════════════════════════════════════════
+
+FOR FASTEST LAUNCH (MVP+ in 3-4 weeks):
+
+WEEK 1:
+✅ Phase 8: Receipt Scanning & Item Assignment (CORE FEATURE)
+✅ Phase 7: Split Detail & Management
+
+WEEK 2:
+✅ Phase 9: Payment Integration (Send requests via app)
+✅ Phase 11: Friends & Groups (Friend management)
+
+WEEK 3:
+✅ Phase 14: Security (Re-enable RLS)
+✅ Phase 15: Polish & UX
+✅ Phase 13: Settings & Profile
+
+WEEK 4:
+✅ Phase 16: Testing (Comprehensive)
+✅ Phase 17: Deployment (App Store + Google Play)
+
+LAUNCH WITHOUT (Add in v1.1-1.3):
+⚪ Phase 10: Notifications (can add post-launch)
+⚪ Phase 12: Analytics (post-launch feature)
+
+═══════════════════════════════════════════════════════════════
+                        FINAL NOTES
+═══════════════════════════════════════════════════════════════
+
+🔴 CANNOT LAUNCH WITHOUT:
+1. Receipt scanning with AI (Phase 8) - THE CORE DIFFERENTIATOR
+2. Item assignment checklist (Phase 8)
+3. Payment request integration (Phase 9)
+4. Security/RLS (Phase 14)
+5. Testing (Phase 16)
+
+🟡 IMPORTANT BUT CAN WAIT:
+- Push notifications (can add in v1.1)
+- Analytics dashboard (v1.2)
+- Advanced group features (v1.2)
+
+⚪ NICE TO HAVE:
+- Export to CSV
+- Dark mode
+- Multiple currencies
+
+REMEMBER: The receipt scanner + item checklist + payment request
+is what makes ZapSplit different from Splitwise and Venmo. This is
+your killer feature. Nail this and the app will succeed.
+
+Good luck! 🚀
