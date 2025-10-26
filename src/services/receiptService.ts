@@ -32,7 +32,7 @@ export async function uploadReceiptToStorage(
   try {
     // Read the image file as base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: 'base64',
     });
 
     // Generate unique filename
@@ -82,7 +82,7 @@ export async function parseReceiptWithAI(
 
     // Read image as base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: 'base64',
     });
 
     // Prepare the request to OpenAI Vision API
