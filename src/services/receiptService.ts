@@ -5,7 +5,7 @@
  * and receipt image storage in Supabase
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import {
   ParsedReceipt,
