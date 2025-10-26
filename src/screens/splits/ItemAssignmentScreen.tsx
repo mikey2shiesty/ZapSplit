@@ -16,6 +16,7 @@ import { ReceiptItem } from '../../types/receipt';
 import {
   UserItemSelections,
   calculateYourTotal,
+  calculateYourItemShare,
   formatCurrency,
 } from '../../utils/splitCalculations';
 
@@ -31,7 +32,7 @@ const SPLIT_OPTIONS = [
 export default function ItemAssignmentScreen({ navigation, route }: ItemAssignmentScreenProps) {
   const { receipt } = route.params;
 
-  // State: Item selections { itemId: { selected, splitWith } }
+  // State: Item selections { itemId: { selected, yourQuantity?, splitWith? } }
   const [selections, setSelections] = useState<UserItemSelections>({});
 
   // Calculate your total
@@ -69,7 +70,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   };
 
   /**
-   * Update split quantity for an item
+   * Update split quantity for an item (for single items)
    */
   const updateSplitQuantity = (itemId: string, splitWith: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -77,9 +78,25 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
     setSelections((prev) => ({
       ...prev,
       [itemId]: {
-        ...prev[itemId],
         selected: true, // Auto-select when changing split
         splitWith,
+        yourQuantity: undefined, // Clear quantity when setting split
+      },
+    }));
+  };
+
+  /**
+   * Update your quantity for an item (for multiple items)
+   */
+  const updateYourQuantity = (itemId: string, yourQuantity: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    setSelections((prev) => ({
+      ...prev,
+      [itemId]: {
+        selected: true, // Auto-select when changing quantity
+        yourQuantity,
+        splitWith: undefined, // Clear split when setting quantity
       },
     }));
   };
@@ -138,9 +155,8 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         {/* Items List */}
         <View style={styles.section}>
           {receipt.items.map((item) => {
-            const selection = selections[item.id] || { selected: false, splitWith: 1 };
-            const itemTotal = item.price * item.quantity;
-            const yourShare = selection.selected ? itemTotal / selection.splitWith : 0;
+            const selection = selections[item.id] || { selected: false };
+            const yourShare = selection.selected ? calculateYourItemShare(item, selection) : 0;
 
             return (
               <ItemCard
@@ -150,6 +166,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
                 yourShare={yourShare}
                 onToggle={() => toggleSelection(item.id)}
                 onChangeSplit={(splitWith) => updateSplitQuantity(item.id, splitWith)}
+                onChangeQuantity={(qty) => updateYourQuantity(item.id, qty)}
               />
             );
           })}
@@ -209,13 +226,14 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 // Item Card Component
 interface ItemCardProps {
   item: ReceiptItem;
-  selection: { selected: boolean; splitWith: number };
+  selection: { selected: boolean; yourQuantity?: number; splitWith?: number };
   yourShare: number;
   onToggle: () => void;
   onChangeSplit: (splitWith: number) => void;
+  onChangeQuantity: (quantity: number) => void;
 }
 
-function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit }: ItemCardProps) {
+function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit, onChangeQuantity }: ItemCardProps) {
   return (
     <View style={styles.itemCard}>
       {/* Item Header */}
@@ -245,32 +263,64 @@ function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit }: ItemC
         </Text>
       </TouchableOpacity>
 
-      {/* Split Selector (only show when selected) */}
+      {/* Quantity/Split Selector (only show when selected) */}
       {selection.selected && (
         <View style={styles.splitContainer}>
-          <Text style={styles.splitLabel}>Split with:</Text>
-          <View style={styles.splitOptions}>
-            {SPLIT_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.splitOption,
-                  selection.splitWith === option.value && styles.splitOptionActive,
-                ]}
-                onPress={() => onChangeSplit(option.value)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.splitOptionText,
-                    selection.splitWith === option.value && styles.splitOptionTextActive,
-                  ]}
-                >
-                  {option.value === 1 ? 'Just me' : `${option.value}`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {item.quantity > 1 ? (
+            /* Quantity Selector: For multiple items */
+            <>
+              <Text style={styles.splitLabel}>How many did you get?</Text>
+              <View style={styles.splitOptions}>
+                {Array.from({ length: item.quantity }, (_, i) => i + 1).map((qty) => (
+                  <TouchableOpacity
+                    key={qty}
+                    style={[
+                      styles.splitOption,
+                      selection.yourQuantity === qty && styles.splitOptionActive,
+                    ]}
+                    onPress={() => onChangeQuantity(qty)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.splitOptionText,
+                        selection.yourQuantity === qty && styles.splitOptionTextActive,
+                      ]}
+                    >
+                      {qty}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          ) : (
+            /* Split Selector: For single items */
+            <>
+              <Text style={styles.splitLabel}>Did you share this?</Text>
+              <View style={styles.splitOptions}>
+                {SPLIT_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.splitOption,
+                      selection.splitWith === option.value && styles.splitOptionActive,
+                    ]}
+                    onPress={() => onChangeSplit(option.value)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.splitOptionText,
+                        selection.splitWith === option.value && styles.splitOptionTextActive,
+                      ]}
+                    >
+                      {option.value === 1 ? 'Just me' : `${option.value}`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
         </View>
       )}
 
@@ -280,7 +330,10 @@ function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit }: ItemC
           <Ionicons name="person-outline" size={14} color={colors.success} />
           <Text style={styles.shareText}>
             Your share: {formatCurrency(yourShare)}
-            {selection.splitWith > 1 && ` (${formatCurrency(item.price * item.quantity)} ÷ ${selection.splitWith})`}
+            {item.quantity > 1 && selection.yourQuantity &&
+              ` (${selection.yourQuantity} out of ${item.quantity})`}
+            {item.quantity === 1 && selection.splitWith && selection.splitWith > 1 &&
+              ` (split with ${selection.splitWith})`}
           </Text>
         </View>
       )}

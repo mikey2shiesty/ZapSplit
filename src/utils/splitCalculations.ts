@@ -353,22 +353,54 @@ export function getPersonBreakdown(
  */
 
 /**
- * Item selection for single user with split quantity
+ * Item selection for single user with quantity or split
  */
 export type ItemSelection = {
-  selected: boolean; // Did I order this item?
-  splitWith: number; // How many people split this item? (1-5)
+  selected: boolean;      // Did I order this item?
+  yourQuantity?: number;  // How many items you got (for quantity > 1)
+  splitWith?: number;     // How many people split it (for quantity = 1)
 };
 
 /**
- * Map of item selections: { [itemId]: { selected, splitWith } }
+ * Map of item selections: { [itemId]: { selected, yourQuantity?, splitWith? } }
  */
 export type UserItemSelections = {
   [itemId: string]: ItemSelection;
 };
 
 /**
- * Calculate your subtotal from selected items with split quantities
+ * Calculate your share for a single item
+ *
+ * @param item - Receipt item
+ * @param selection - Your selection for this item
+ * @returns Your share of this item
+ */
+export function calculateYourItemShare(
+  item: ReceiptItem,
+  selection: ItemSelection
+): number {
+  const itemTotal = item.price * item.quantity;
+
+  // If multiple items (quantity > 1) and you specified how many you got
+  if (item.quantity > 1 && selection.yourQuantity) {
+    // You got X out of Y items
+    // Your share = (price per item) × (your quantity)
+    const pricePerItem = item.price;
+    return pricePerItem * selection.yourQuantity;
+  }
+
+  // If single item or you specified split
+  if (selection.splitWith) {
+    // Item split between X people
+    return itemTotal / selection.splitWith;
+  }
+
+  // Default: you get the whole item
+  return itemTotal;
+}
+
+/**
+ * Calculate your subtotal from selected items
  *
  * @param items - Array of receipt items
  * @param selections - Your item selections
@@ -383,9 +415,7 @@ export function calculateYourSubtotal(
   items.forEach((item) => {
     const selection = selections[item.id];
     if (selection && selection.selected) {
-      const itemTotal = item.price * item.quantity;
-      const yourShare = itemTotal / selection.splitWith;
-      subtotal += yourShare;
+      subtotal += calculateYourItemShare(item, selection);
     }
   });
 
