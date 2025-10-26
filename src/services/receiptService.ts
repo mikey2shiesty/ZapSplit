@@ -44,7 +44,7 @@ export async function uploadReceiptToStorage(
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('receipts')
+      .from('split-receipts')
       .upload(filename, arrayBuffer, {
         contentType: 'image/jpeg',
         upsert: false,
@@ -56,7 +56,7 @@ export async function uploadReceiptToStorage(
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('receipts')
+      .from('split-receipts')
       .getPublicUrl(filename);
 
     return urlData.publicUrl;
