@@ -1,6 +1,7 @@
 import { StackScreenProps } from '@react-navigation/stack';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { ParsedReceipt } from './receipt';
 
 // Main App Navigation Types
 export type RootStackParamList = {
@@ -24,13 +25,12 @@ export type SplitFlowParamList = {
     imageUri: string;
   };
   ItemAssignment: {
-    splitId: string;
-    items: any[]; // Will type properly later
-    selectedFriends: string[];
-    tax: number;
-    tip: number;
-    subtotal: number;
-    total: number;
+    receipt: ParsedReceipt;
+    selectedFriends: Array<{
+      id: string;
+      name: string;
+      email?: string;
+    }>;
   };
   SelectFriends: {
     amount: number;

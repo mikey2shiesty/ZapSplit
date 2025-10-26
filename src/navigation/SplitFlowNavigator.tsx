@@ -9,6 +9,7 @@ import { colors } from '../constants/theme';
 import CreateSplitScreen from '../screens/splits/CreateSplitScreen';
 import ScanReceiptScreen from '../screens/splits/ScanReceiptScreen';
 import ReviewReceiptScreen from '../screens/splits/ReviewReceiptScreen';
+import ItemAssignmentScreen from '../screens/splits/ItemAssignmentScreen';
 import SelectFriendsScreen from '../screens/splits/SelectFriendsScreen';
 import SplitMethodScreen from '../screens/splits/SplitMethodScreen';
 import CustomAmountsScreen from '../screens/splits/CustomAmountsScreen';
@@ -66,6 +67,14 @@ export default function SplitFlowNavigator() {
         component={ReviewReceiptScreen}
         options={{
           title: 'Review Receipt',
+          headerShown: false, // Custom header in screen
+        }}
+      />
+      <Stack.Screen
+        name="ItemAssignment"
+        component={ItemAssignmentScreen}
+        options={{
+          title: 'Item Assignment',
           headerShown: false, // Custom header in screen
         }}
       />

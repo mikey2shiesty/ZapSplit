@@ -154,14 +154,21 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
       return;
     }
 
-    // TODO: Navigate to ItemAssignment screen with receipt data
-    // For now, just show success message
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Receipt Approved!',
-      'Item assignment screen coming in Phase 8.3',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
+
+    // TODO: Phase 8.4 - Add proper friend selection
+    // For now, use mock friends for testing
+    const mockFriends = [
+      { id: 'user1', name: 'You', email: 'you@example.com' },
+      { id: 'user2', name: 'Sarah', email: 'sarah@example.com' },
+      { id: 'user3', name: 'Mike', email: 'mike@example.com' },
+    ];
+
+    // Navigate to ItemAssignment
+    navigation.navigate('ItemAssignment', {
+      receipt: receipt,
+      selectedFriends: mockFriends,
+    });
   };
 
   // Loading state
