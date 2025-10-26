@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
@@ -19,6 +20,10 @@ import {
   calculateYourItemShare,
   formatCurrency,
 } from '../../utils/splitCalculations';
+import { createReceiptSplit } from '../../services/splitService';
+import { createSplitItems, createUserItemAssignments } from '../../services/itemService';
+import { uploadReceiptToStorage } from '../../services/receiptService';
+import { supabase } from '../../services/supabase';
 
 // Split options for the dropdown
 const SPLIT_OPTIONS = [
@@ -30,10 +35,11 @@ const SPLIT_OPTIONS = [
 ];
 
 export default function ItemAssignmentScreen({ navigation, route }: ItemAssignmentScreenProps) {
-  const { receipt } = route.params;
+  const { receipt, imageUri } = route.params;
 
   // State: Item selections { itemId: { selected, yourQuantity?, splitWith? } }
   const [selections, setSelections] = useState<UserItemSelections>({});
+  const [saving, setSaving] = useState(false);
 
   // Calculate your total
   const yourTotal = calculateYourTotal(
@@ -102,9 +108,9 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   };
 
   /**
-   * Handle continue button press
+   * Handle continue button press - Save to database
    */
-  const handleContinue = () => {
+  const handleContinue = async () => {
     // Check if any items selected
     const hasSelections = Object.values(selections).some((s) => s.selected);
 
@@ -117,14 +123,76 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      setSaving(true);
 
-    // TODO: Phase 8.4 - Save to database and continue to payment
-    Alert.alert(
-      'Your Total: ' + formatCurrency(yourTotal.total),
-      'Phase 8.4 (Database + Payment) coming next!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Upload receipt image to storage
+      const receiptImageUrl = await uploadReceiptToStorage(imageUri, user.id);
+
+      // 2. Create the split record
+      const splitData = {
+        title: receipt.merchant || 'Receipt Split',
+        description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
+        total_amount: receipt.total,
+        currency: 'USD',
+        split_method: 'receipt' as const,
+        participants: [
+          {
+            user_id: user.id,
+            amount_owed: yourTotal.total,
+          },
+        ],
+        image_url: receiptImageUrl,
+        receipt_data: {
+          subtotal: receipt.subtotal,
+          tax: receipt.tax,
+          tip: receipt.tip,
+        },
+      };
+
+      const split = await createReceiptSplit(splitData, receipt.items, []);
+
+      // 3. Create split items in database
+      const splitItems = await createSplitItems(split.id, receipt.items);
+
+      // 4. Create user's item assignments
+      await createUserItemAssignments(user.id, splitItems, receipt.items, selections);
+
+      // Success!
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      Alert.alert(
+        'Split Created!',
+        `Your total: ${formatCurrency(yourTotal.total)}\n\nYour items have been saved. Other participants can now scan the same receipt and mark their items.`,
+        [
+          {
+            text: 'Done',
+            onPress: () => {
+              // Navigate back to home
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'CreateSplit' }],
+              });
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error saving split:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to save split. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -207,16 +275,27 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         <TouchableOpacity
           style={[
             styles.continueButton,
-            yourTotal.total === 0 && styles.continueButtonDisabled,
+            (yourTotal.total === 0 || saving) && styles.continueButtonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={yourTotal.total === 0}
+          disabled={yourTotal.total === 0 || saving}
           activeOpacity={0.8}
         >
-          <Text style={styles.continueButtonText}>
-            Continue to Payment • {formatCurrency(yourTotal.total)}
-          </Text>
-          <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+          {saving ? (
+            <>
+              <ActivityIndicator size="small" color={colors.surface} />
+              <Text style={[styles.continueButtonText, { marginLeft: spacing.sm }]}>
+                Saving split...
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.continueButtonText}>
+                Continue to Payment • {formatCurrency(yourTotal.total)}
+              </Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

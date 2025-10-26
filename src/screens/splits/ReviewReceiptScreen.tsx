@@ -160,6 +160,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
     // Each person will mark their own items independently!
     navigation.navigate('ItemAssignment', {
       receipt: receipt,
+      imageUri: imageUri,
     });
   };
 

@@ -5,12 +5,17 @@ export interface CreateSplitData {
   description?: string;
   total_amount: number;
   currency: string;
-  split_method: 'equal' | 'custom' | 'percentage';
+  split_method: 'equal' | 'custom' | 'percentage' | 'receipt';
   participants: {
     user_id: string;
     amount_owed: number;
   }[];
   image_url?: string;
+  receipt_data?: {
+    subtotal: number;
+    tax: number;
+    tip: number;
+  };
 }
 
 export interface Split {
@@ -288,4 +293,45 @@ export function validateTitle(title: string): { valid: boolean; error?: string }
   }
 
   return { valid: true };
+}
+
+/**
+ * Create a receipt-based split with items and assignments
+ *
+ * This is a convenience function that:
+ * 1. Creates the split record
+ * 2. Creates split items
+ * 3. Creates item assignments
+ *
+ * @param data - Split creation data
+ * @param items - Receipt items
+ * @param assignments - Item assignments
+ * @returns Created split
+ */
+export async function createReceiptSplit(
+  data: CreateSplitData,
+  receiptItems: any[],
+  itemAssignments: any[]
+): Promise<Split> {
+  // Import itemService functions (avoid circular dependency)
+  const { createSplitItems, createUserItemAssignments } = require('./itemService');
+
+  // Create the split record first
+  const split = await createSplit(data);
+
+  try {
+    // Create split items (if provided)
+    if (receiptItems && receiptItems.length > 0) {
+      await createSplitItems(split.id, receiptItems);
+    }
+
+    // Note: Item assignments are created separately by each user
+    // when they mark their items, so we don't create them here
+
+    return split;
+  } catch (error) {
+    // Rollback: delete the split if items/assignments creation fails
+    await supabase.from('splits').delete().eq('id', split.id);
+    throw error;
+  }
 }

@@ -26,6 +26,7 @@ export type SplitFlowParamList = {
   };
   ItemAssignment: {
     receipt: ParsedReceipt;
+    imageUri: string; // Receipt image for uploading to storage
     // No selectedFriends needed - each person marks their own items!
   };
   SelectFriends: {
