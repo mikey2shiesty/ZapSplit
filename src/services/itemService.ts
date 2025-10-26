@@ -26,7 +26,7 @@ export interface ItemAssignment {
   id: string;
   item_id: string;
   user_id: string;
-  share_percentage: number;
+  share: number; // Database column is 'share', not 'share_percentage'
   amount: number;
   created_at: string;
 }
@@ -41,7 +41,7 @@ export interface CreateSplitItemData {
 export interface CreateItemAssignmentData {
   item_id: string;
   user_id: string;
-  share_percentage: number;
+  share: number; // Database column is 'share', not 'share_percentage'
   amount: number;
 }
 
@@ -133,7 +133,7 @@ export async function assignItemToUser(
   const assignmentData: CreateItemAssignmentData = {
     item_id: itemId,
     user_id: userId,
-    share_percentage: sharePercentage,
+    share: sharePercentage,
     amount,
   };
 
@@ -189,7 +189,7 @@ export async function createUserItemAssignments(
     assignments.push({
       item_id: splitItem.id,
       user_id: userId,
-      share_percentage: sharePercentage,
+      share: sharePercentage,
       amount: yourShare,
     });
   });
