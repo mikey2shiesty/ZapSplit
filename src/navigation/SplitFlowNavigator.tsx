@@ -8,6 +8,7 @@ import { colors } from '../constants/theme';
 // Import split flow screens
 import CreateSplitScreen from '../screens/splits/CreateSplitScreen';
 import ScanReceiptScreen from '../screens/splits/ScanReceiptScreen';
+import ReviewReceiptScreen from '../screens/splits/ReviewReceiptScreen';
 import SelectFriendsScreen from '../screens/splits/SelectFriendsScreen';
 import SplitMethodScreen from '../screens/splits/SplitMethodScreen';
 import CustomAmountsScreen from '../screens/splits/CustomAmountsScreen';
@@ -58,6 +59,14 @@ export default function SplitFlowNavigator() {
         component={ScanReceiptScreen}
         options={{
           headerShown: false, // Hide header for full-screen camera
+        }}
+      />
+      <Stack.Screen
+        name="ReviewReceipt"
+        component={ReviewReceiptScreen}
+        options={{
+          title: 'Review Receipt',
+          headerShown: false, // Custom header in screen
         }}
       />
       <Stack.Screen

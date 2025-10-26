@@ -106,13 +106,8 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    // Navigate to ReviewReceiptScreen (will create in next step)
-    // For now, just log
-    console.log('Proceeding with image:', capturedImage);
-
-    // TODO: Navigate to ReviewReceiptScreen
-    // navigation.navigate('ReviewReceipt', { imageUri: capturedImage });
-    Alert.alert('Success', 'Image captured! Next: AI will extract items.');
+    // Navigate to ReviewReceiptScreen for AI parsing
+    navigation.navigate('ReviewReceipt', { imageUri: capturedImage });
   };
 
   const handleRetake = () => {
