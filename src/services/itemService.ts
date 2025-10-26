@@ -17,7 +17,7 @@ export interface SplitItem {
   id: string;
   split_id: string;
   name: string;
-  price: number;
+  unit_price: number; // Database column is 'unit_price', not 'price'
   quantity: number;
   created_at: string;
 }
@@ -34,7 +34,7 @@ export interface ItemAssignment {
 export interface CreateSplitItemData {
   split_id: string;
   name: string;
-  price: number;
+  unit_price: number; // Database column is 'unit_price', not 'price'
   quantity: number;
 }
 
@@ -64,7 +64,7 @@ export async function createSplitItems(
   const itemsData: CreateSplitItemData[] = items.map((item) => ({
     split_id: splitId,
     name: item.name,
-    price: item.price,
+    unit_price: item.price,
     quantity: item.quantity,
   }));
 
@@ -173,7 +173,7 @@ export async function createUserItemAssignments(
   splitItems.forEach((splitItem) => {
     // Find matching receipt item by name and price
     const receiptItem = receiptItems.find(
-      (ri) => ri.name === splitItem.name && ri.price === splitItem.price
+      (ri) => ri.name === splitItem.name && ri.price === splitItem.unit_price
     );
 
     if (!receiptItem) return;
@@ -182,7 +182,7 @@ export async function createUserItemAssignments(
     if (!selection || !selection.selected) return;
 
     // Calculate share percentage and amount
-    const itemTotal = splitItem.price * splitItem.quantity;
+    const itemTotal = splitItem.unit_price * splitItem.quantity;
     const yourShare = calculateYourItemShare(receiptItem, selection);
     const sharePercentage = (yourShare / itemTotal) * 100;
 
@@ -325,7 +325,7 @@ export async function calculateUserTotal(
   // Get all items to calculate receipt subtotal
   const allItems = await getSplitItems(splitId);
   const receiptSubtotal = allItems.reduce((sum, item) => {
-    return sum + item.price * item.quantity;
+    return sum + item.unit_price * item.quantity;
   }, 0);
 
   // Calculate proportional tax and tip
@@ -374,7 +374,7 @@ export async function getSplitParticipantTotals(
   // Get receipt subtotal
   const allItems = await getSplitItems(splitId);
   const receiptSubtotal = allItems.reduce((sum, item) => {
-    return sum + item.price * item.quantity;
+    return sum + item.unit_price * item.quantity;
   }, 0);
 
   // Calculate totals for each user
