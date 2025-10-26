@@ -19,6 +19,19 @@ export type MainTabParamList = {
 // Split Flow Navigation Types
 export type SplitFlowParamList = {
   CreateSplit: undefined;
+  ScanReceipt: undefined;
+  ReviewReceipt: {
+    imageUri: string;
+  };
+  ItemAssignment: {
+    splitId: string;
+    items: any[]; // Will type properly later
+    selectedFriends: string[];
+    tax: number;
+    tip: number;
+    subtotal: number;
+    total: number;
+  };
   SelectFriends: {
     amount: number;
     title: string;
@@ -41,8 +54,9 @@ export type SplitFlowParamList = {
     title: string;
     description?: string;
     selectedFriends: string[];
-    splitMethod: 'equal' | 'custom' | 'percentage';
+    splitMethod: 'equal' | 'custom' | 'percentage' | 'receipt';
     customAmounts?: Record<string, number>; // userId -> amount
+    receiptImageUri?: string;
   };
   SplitSuccess: {
     splitId: string;
@@ -55,6 +69,9 @@ export type SplitFlowParamList = {
 
 // Split Flow Screen Props
 export type CreateSplitScreenProps = StackScreenProps<SplitFlowParamList, 'CreateSplit'>;
+export type ScanReceiptScreenProps = StackScreenProps<SplitFlowParamList, 'ScanReceipt'>;
+export type ReviewReceiptScreenProps = StackScreenProps<SplitFlowParamList, 'ReviewReceipt'>;
+export type ItemAssignmentScreenProps = StackScreenProps<SplitFlowParamList, 'ItemAssignment'>;
 export type SelectFriendsScreenProps = StackScreenProps<SplitFlowParamList, 'SelectFriends'>;
 export type SplitMethodScreenProps = StackScreenProps<SplitFlowParamList, 'SplitMethod'>;
 export type CustomAmountsScreenProps = StackScreenProps<SplitFlowParamList, 'CustomAmounts'>;

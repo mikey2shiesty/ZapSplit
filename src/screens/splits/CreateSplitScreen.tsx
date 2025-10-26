@@ -11,6 +11,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CreateSplitScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
@@ -37,6 +38,11 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
     });
   };
 
+  const handleScanReceipt = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    navigation.navigate('ScanReceipt');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -55,8 +61,33 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
           {/* Page Title */}
           <Text style={styles.pageTitle}>Create Split</Text>
           <Text style={styles.pageSubtitle}>
-            Enter the bill amount and details
+            Enter the bill amount and details, or scan a receipt
           </Text>
+
+          {/* Scan Receipt Button */}
+          <TouchableOpacity
+            style={styles.scanReceiptButton}
+            onPress={handleScanReceipt}
+            activeOpacity={0.7}
+          >
+            <View style={styles.scanIconContainer}>
+              <Ionicons name="camera-outline" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.scanTextContainer}>
+              <Text style={styles.scanButtonTitle}>Scan Receipt</Text>
+              <Text style={styles.scanButtonSubtitle}>
+                AI will automatically extract items and split the bill
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or enter manually</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
           {/* Amount Input */}
           <View style={styles.section}>
@@ -253,5 +284,61 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: colors.gray400,
+  },
+  scanReceiptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.primary + '30',
+    marginBottom: spacing.lg,
+    gap: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scanIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scanTextContainer: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  scanButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  scanButtonSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+    gap: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.gray200,
+  },
+  dividerText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
