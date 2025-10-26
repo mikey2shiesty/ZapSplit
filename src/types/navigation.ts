@@ -26,11 +26,7 @@ export type SplitFlowParamList = {
   };
   ItemAssignment: {
     receipt: ParsedReceipt;
-    selectedFriends: Array<{
-      id: string;
-      name: string;
-      email?: string;
-    }>;
+    // No selectedFriends needed - each person marks their own items!
   };
   SelectFriends: {
     amount: number;

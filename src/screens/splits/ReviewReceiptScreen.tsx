@@ -156,18 +156,10 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    // TODO: Phase 8.4 - Add proper friend selection
-    // For now, use mock friends for testing
-    const mockFriends = [
-      { id: 'user1', name: 'You', email: 'you@example.com' },
-      { id: 'user2', name: 'Sarah', email: 'sarah@example.com' },
-      { id: 'user3', name: 'Mike', email: 'mike@example.com' },
-    ];
-
     // Navigate to ItemAssignment
+    // Each person will mark their own items independently!
     navigation.navigate('ItemAssignment', {
       receipt: receipt,
-      selectedFriends: mockFriends,
     });
   };
 

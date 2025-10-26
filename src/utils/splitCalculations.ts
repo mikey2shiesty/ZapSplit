@@ -345,3 +345,141 @@ export function getPersonBreakdown(
     ),
   };
 }
+
+/**
+ * ============================================================================
+ * SINGLE USER CALCULATIONS (for when each person marks their own items)
+ * ============================================================================
+ */
+
+/**
+ * Item selection for single user with split quantity
+ */
+export type ItemSelection = {
+  selected: boolean; // Did I order this item?
+  splitWith: number; // How many people split this item? (1-5)
+};
+
+/**
+ * Map of item selections: { [itemId]: { selected, splitWith } }
+ */
+export type UserItemSelections = {
+  [itemId: string]: ItemSelection;
+};
+
+/**
+ * Calculate your subtotal from selected items with split quantities
+ *
+ * @param items - Array of receipt items
+ * @param selections - Your item selections
+ * @returns Your subtotal
+ */
+export function calculateYourSubtotal(
+  items: ReceiptItem[],
+  selections: UserItemSelections
+): number {
+  let subtotal = 0;
+
+  items.forEach((item) => {
+    const selection = selections[item.id];
+    if (selection && selection.selected) {
+      const itemTotal = item.price * item.quantity;
+      const yourShare = itemTotal / selection.splitWith;
+      subtotal += yourShare;
+    }
+  });
+
+  return subtotal;
+}
+
+/**
+ * Calculate your share of tax based on your items subtotal
+ *
+ * @param yourSubtotal - Your items subtotal
+ * @param receiptSubtotal - Total receipt subtotal
+ * @param totalTax - Total tax amount
+ * @returns Your share of tax
+ */
+export function calculateYourTax(
+  yourSubtotal: number,
+  receiptSubtotal: number,
+  totalTax: number
+): number {
+  if (receiptSubtotal === 0) return 0;
+  const proportion = yourSubtotal / receiptSubtotal;
+  return totalTax * proportion;
+}
+
+/**
+ * Calculate your share of tip based on your items subtotal
+ *
+ * @param yourSubtotal - Your items subtotal
+ * @param receiptSubtotal - Total receipt subtotal
+ * @param totalTip - Total tip amount
+ * @returns Your share of tip
+ */
+export function calculateYourTip(
+  yourSubtotal: number,
+  receiptSubtotal: number,
+  totalTip: number
+): number {
+  if (receiptSubtotal === 0) return 0;
+  const proportion = yourSubtotal / receiptSubtotal;
+  return totalTip * proportion;
+}
+
+/**
+ * Calculate your complete total with breakdown
+ *
+ * @param items - Array of receipt items
+ * @param selections - Your item selections
+ * @param receiptSubtotal - Total receipt subtotal
+ * @param totalTax - Total tax amount
+ * @param totalTip - Total tip amount
+ * @returns Breakdown with subtotal, tax, tip, total
+ */
+export function calculateYourTotal(
+  items: ReceiptItem[],
+  selections: UserItemSelections,
+  receiptSubtotal: number,
+  totalTax: number,
+  totalTip: number
+): {
+  subtotal: number;
+  tax: number;
+  tip: number;
+  total: number;
+} {
+  const yourSubtotal = calculateYourSubtotal(items, selections);
+  const yourTax = calculateYourTax(yourSubtotal, receiptSubtotal, totalTax);
+  const yourTip = calculateYourTip(yourSubtotal, receiptSubtotal, totalTip);
+
+  return {
+    subtotal: roundToTwoDecimals(yourSubtotal),
+    tax: roundToTwoDecimals(yourTax),
+    tip: roundToTwoDecimals(yourTip),
+    total: roundToTwoDecimals(yourSubtotal + yourTax + yourTip),
+  };
+}
+
+/**
+ * Check if all selected items have valid split quantities
+ *
+ * @param items - Array of receipt items
+ * @param selections - Your item selections
+ * @returns True if valid, false otherwise
+ */
+export function areSelectionsValid(
+  items: ReceiptItem[],
+  selections: UserItemSelections
+): boolean {
+  for (const item of items) {
+    const selection = selections[item.id];
+    if (selection && selection.selected) {
+      if (!selection.splitWith || selection.splitWith < 1) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

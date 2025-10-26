@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,76 +14,87 @@ import * as Haptics from 'expo-haptics';
 import { ItemAssignmentScreenProps } from '../../types/navigation';
 import { ReceiptItem } from '../../types/receipt';
 import {
-  ItemAssignments,
-  TaxTipMethod,
-  calculateFinalTotals,
-  areAllItemsAssigned,
-  getUnassignedItems,
-  calculateIndividualAmount,
-  getPersonBreakdown,
+  UserItemSelections,
+  calculateYourTotal,
   formatCurrency,
 } from '../../utils/splitCalculations';
 
+// Split options for the dropdown
+const SPLIT_OPTIONS = [
+  { value: 1, label: 'Just me' },
+  { value: 2, label: 'Split between 2 people' },
+  { value: 3, label: 'Split between 3 people' },
+  { value: 4, label: 'Split between 4 people' },
+  { value: 5, label: 'Split between 5 people' },
+];
+
 export default function ItemAssignmentScreen({ navigation, route }: ItemAssignmentScreenProps) {
-  const { receipt, selectedFriends } = route.params;
+  const { receipt } = route.params;
 
-  // State: Item assignments { itemId: [userId1, userId2, ...] }
-  const [assignments, setAssignments] = useState<ItemAssignments>({});
+  // State: Item selections { itemId: { selected, splitWith } }
+  const [selections, setSelections] = useState<UserItemSelections>({});
 
-  // State: Tax/Tip distribution method
-  const [taxTipMethod, setTaxTipMethod] = useState<TaxTipMethod>('proportional');
-
-  // Get user IDs
-  const userIds = selectedFriends.map((f) => f.id);
-
-  // Calculate final totals for each person
-  const finalTotals = calculateFinalTotals(
+  // Calculate your total
+  const yourTotal = calculateYourTotal(
     receipt.items,
-    assignments,
+    selections,
+    receipt.subtotal,
     receipt.tax,
-    receipt.tip,
-    userIds,
-    taxTipMethod
+    receipt.tip
   );
 
-  // Check if all items are assigned
-  const allItemsAssigned = areAllItemsAssigned(receipt.items, assignments);
-  const unassignedItems = getUnassignedItems(receipt.items, assignments);
-
   /**
-   * Toggle assignment of a friend to an item
+   * Toggle item selection
    */
-  const toggleAssignment = (itemId: string, userId: string) => {
+  const toggleSelection = (itemId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    setAssignments((prev) => {
-      const currentAssignments = prev[itemId] || [];
-      const isAssigned = currentAssignments.includes(userId);
+    setSelections((prev) => {
+      const current = prev[itemId];
 
-      if (isAssigned) {
-        // Remove user from item
+      if (current && current.selected) {
+        // Deselect item
         return {
           ...prev,
-          [itemId]: currentAssignments.filter((id) => id !== userId),
+          [itemId]: { selected: false, splitWith: 1 },
         };
       } else {
-        // Add user to item
+        // Select item with default split of 1
         return {
           ...prev,
-          [itemId]: [...currentAssignments, userId],
+          [itemId]: { selected: true, splitWith: 1 },
         };
       }
     });
   };
 
   /**
+   * Update split quantity for an item
+   */
+  const updateSplitQuantity = (itemId: string, splitWith: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    setSelections((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        selected: true, // Auto-select when changing split
+        splitWith,
+      },
+    }));
+  };
+
+  /**
    * Handle continue button press
    */
   const handleContinue = () => {
-    if (!allItemsAssigned) {
+    // Check if any items selected
+    const hasSelections = Object.values(selections).some((s) => s.selected);
+
+    if (!hasSelections) {
       Alert.alert(
-        'Unassigned Items',
-        `${unassignedItems.length} item(s) haven't been assigned to anyone. Please assign all items before continuing.`,
+        'No Items Selected',
+        'Please select at least one item that you ordered.',
         [{ text: 'OK' }]
       );
       return;
@@ -93,8 +104,8 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 
     // TODO: Phase 8.4 - Save to database and continue to payment
     Alert.alert(
-      'Item Assignment Complete!',
-      'Phase 8.4 (Database Integration) coming next!',
+      'Your Total: ' + formatCurrency(yourTotal.total),
+      'Phase 8.4 (Database + Payment) coming next!',
       [{ text: 'OK', onPress: () => navigation.goBack() }]
     );
   };
@@ -107,9 +118,9 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Who ordered what?</Text>
+          <Text style={styles.headerTitle}>What did you order?</Text>
           <Text style={styles.headerSubtitle}>
-            {receipt.items.length} items • {selectedFriends.length} people
+            Check off your items • {receipt.items.length} total items
           </Text>
         </View>
         <View style={{ width: 24 }} />
@@ -120,137 +131,54 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         <View style={styles.infoBanner}>
           <Ionicons name="information-circle" size={20} color={colors.info} />
           <Text style={styles.infoText}>
-            Check off who ordered each item. Shared items will be split automatically!
+            Select what you ordered. If you shared an item, choose how many people split it.
           </Text>
         </View>
 
         {/* Items List */}
         <View style={styles.section}>
-          {receipt.items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              friends={selectedFriends}
-              assignments={assignments[item.id] || []}
-              onToggle={(userId) => toggleAssignment(item.id, userId)}
-            />
-          ))}
-        </View>
-
-        {/* Tax & Tip Distribution */}
-        {(receipt.tax > 0 || receipt.tip > 0) && (
-          <View style={styles.taxTipCard}>
-            <Text style={styles.taxTipTitle}>Tax & Tip Distribution</Text>
-            <View style={styles.taxTipAmounts}>
-              <View style={styles.taxTipRow}>
-                <Text style={styles.taxTipLabel}>Tax:</Text>
-                <Text style={styles.taxTipValue}>{formatCurrency(receipt.tax)}</Text>
-              </View>
-              <View style={styles.taxTipRow}>
-                <Text style={styles.taxTipLabel}>Tip:</Text>
-                <Text style={styles.taxTipValue}>{formatCurrency(receipt.tip)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.methodOptions}>
-              <TouchableOpacity
-                style={[
-                  styles.methodOption,
-                  taxTipMethod === 'proportional' && styles.methodOptionActive,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setTaxTipMethod('proportional');
-                }}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.radio,
-                    taxTipMethod === 'proportional' && styles.radioActive,
-                  ]}
-                >
-                  {taxTipMethod === 'proportional' && (
-                    <View style={styles.radioDot} />
-                  )}
-                </View>
-                <View style={styles.methodText}>
-                  <Text style={styles.methodLabel}>Proportional</Text>
-                  <Text style={styles.methodDescription}>
-                    Based on what each person ordered
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.methodOption,
-                  taxTipMethod === 'equal' && styles.methodOptionActive,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setTaxTipMethod('equal');
-                }}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[styles.radio, taxTipMethod === 'equal' && styles.radioActive]}
-                >
-                  {taxTipMethod === 'equal' && <View style={styles.radioDot} />}
-                </View>
-                <View style={styles.methodText}>
-                  <Text style={styles.methodLabel}>Split Equally</Text>
-                  <Text style={styles.methodDescription}>
-                    Same amount for everyone
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Totals Summary */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Summary</Text>
-          {selectedFriends.map((friend) => {
-            const breakdown = getPersonBreakdown(
-              friend.id,
-              receipt.items,
-              assignments,
-              receipt.tax,
-              receipt.tip,
-              userIds,
-              taxTipMethod
-            );
+          {receipt.items.map((item) => {
+            const selection = selections[item.id] || { selected: false, splitWith: 1 };
+            const itemTotal = item.price * item.quantity;
+            const yourShare = selection.selected ? itemTotal / selection.splitWith : 0;
 
             return (
-              <View key={friend.id} style={styles.personRow}>
-                <View style={styles.personInfo}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {friend.name.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.personDetails}>
-                    <Text style={styles.personName}>{friend.name}</Text>
-                    <Text style={styles.personBreakdown}>
-                      Items: {formatCurrency(breakdown.subtotal)} • Tax:{' '}
-                      {formatCurrency(breakdown.tax)} • Tip:{' '}
-                      {formatCurrency(breakdown.tip)}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.personTotal}>{formatCurrency(breakdown.total)}</Text>
-              </View>
+              <ItemCard
+                key={item.id}
+                item={item}
+                selection={selection}
+                yourShare={yourShare}
+                onToggle={() => toggleSelection(item.id)}
+                onChangeSplit={(splitWith) => updateSplitQuantity(item.id, splitWith)}
+              />
             );
           })}
+        </View>
+
+        {/* Your Total Summary */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Your Total</Text>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Items</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.subtotal)}</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tax</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.tax)}</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tip</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.tip)}</Text>
+          </View>
 
           <View style={styles.divider} />
-          <View style={styles.grandTotalRow}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
-            <Text style={styles.grandTotalValue}>
-              {formatCurrency(receipt.total)}
-            </Text>
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>You owe</Text>
+            <Text style={styles.totalValue}>{formatCurrency(yourTotal.total)}</Text>
           </View>
         </View>
 
@@ -259,24 +187,18 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 
       {/* Footer */}
       <View style={styles.footer}>
-        {!allItemsAssigned && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="alert-circle" size={16} color={colors.warning} />
-            <Text style={styles.warningText}>
-              {unassignedItems.length} item(s) need to be assigned
-            </Text>
-          </View>
-        )}
         <TouchableOpacity
           style={[
             styles.continueButton,
-            !allItemsAssigned && styles.continueButtonDisabled,
+            yourTotal.total === 0 && styles.continueButtonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={!allItemsAssigned}
+          disabled={yourTotal.total === 0}
           activeOpacity={0.8}
         >
-          <Text style={styles.continueButtonText}>Continue to Payment</Text>
+          <Text style={styles.continueButtonText}>
+            Continue to Payment • {formatCurrency(yourTotal.total)}
+          </Text>
           <Ionicons name="arrow-forward" size={20} color={colors.surface} />
         </TouchableOpacity>
       </View>
@@ -287,20 +209,16 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 // Item Card Component
 interface ItemCardProps {
   item: ReceiptItem;
-  friends: Array<{ id: string; name: string }>;
-  assignments: string[];
-  onToggle: (userId: string) => void;
+  selection: { selected: boolean; splitWith: number };
+  yourShare: number;
+  onToggle: () => void;
+  onChangeSplit: (splitWith: number) => void;
 }
 
-function ItemCard({ item, friends, assignments, onToggle }: ItemCardProps) {
-  const numberOfPeople = assignments.length;
-  const amountPerPerson =
-    numberOfPeople > 0
-      ? calculateIndividualAmount(item.price, item.quantity, numberOfPeople)
-      : 0;
-
+function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit }: ItemCardProps) {
   return (
     <View style={styles.itemCard}>
+      {/* Item Header */}
       <View style={styles.itemHeader}>
         <View style={styles.itemInfo}>
           {item.quantity > 1 && (
@@ -313,47 +231,56 @@ function ItemCard({ item, friends, assignments, onToggle }: ItemCardProps) {
         <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
       </View>
 
-      <View style={styles.checkboxContainer}>
-        {friends.map((friend) => {
-          const isSelected = assignments.includes(friend.id);
+      {/* Checkbox */}
+      <TouchableOpacity
+        style={[styles.checkbox, selection.selected && styles.checkboxSelected]}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.checkboxBox, selection.selected && styles.checkboxBoxSelected]}>
+          {selection.selected && <Ionicons name="checkmark" size={18} color={colors.surface} />}
+        </View>
+        <Text style={[styles.checkboxLabel, selection.selected && styles.checkboxLabelSelected]}>
+          I ordered this
+        </Text>
+      </TouchableOpacity>
 
-          return (
-            <TouchableOpacity
-              key={friend.id}
-              style={[styles.checkbox, isSelected && styles.checkboxSelected]}
-              onPress={() => onToggle(friend.id)}
-              activeOpacity={0.7}
-            >
-              <View
+      {/* Split Selector (only show when selected) */}
+      {selection.selected && (
+        <View style={styles.splitContainer}>
+          <Text style={styles.splitLabel}>Split with:</Text>
+          <View style={styles.splitOptions}>
+            {SPLIT_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
                 style={[
-                  styles.checkboxBox,
-                  isSelected && styles.checkboxBoxSelected,
+                  styles.splitOption,
+                  selection.splitWith === option.value && styles.splitOptionActive,
                 ]}
+                onPress={() => onChangeSplit(option.value)}
+                activeOpacity={0.7}
               >
-                {isSelected && (
-                  <Ionicons name="checkmark" size={16} color={colors.surface} />
-                )}
-              </View>
-              <Text
-                style={[
-                  styles.checkboxLabel,
-                  isSelected && styles.checkboxLabelSelected,
-                ]}
-              >
-                {friend.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+                <Text
+                  style={[
+                    styles.splitOptionText,
+                    selection.splitWith === option.value && styles.splitOptionTextActive,
+                  ]}
+                >
+                  {option.value === 1 ? 'Just me' : `${option.value}`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
-      {numberOfPeople > 0 && (
-        <View style={styles.splitInfo}>
-          <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-          <Text style={styles.splitText}>
-            {numberOfPeople === 1
-              ? `${friends.find((f) => f.id === assignments[0])?.name} pays ${formatCurrency(amountPerPerson)}`
-              : `Split ${numberOfPeople} ways → ${formatCurrency(amountPerPerson)} each`}
+      {/* Your Share Display */}
+      {selection.selected && (
+        <View style={styles.shareInfo}>
+          <Ionicons name="person-outline" size={14} color={colors.success} />
+          <Text style={styles.shareText}>
+            Your share: {formatCurrency(yourShare)}
+            {selection.splitWith > 1 && ` (${formatCurrency(item.price * item.quantity)} ÷ ${selection.splitWith})`}
           </Text>
         </View>
       )}
@@ -453,31 +380,21 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '700',
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
   checkbox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.gray300,
-    backgroundColor: colors.surface,
-    gap: spacing.xs,
+    borderRadius: radius.md,
+    gap: spacing.sm,
   },
   checkboxSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + '08',
   },
   checkboxBox: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     borderRadius: radius.xs,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.gray400,
     justifyContent: 'center',
     alignItems: 'center',
@@ -487,7 +404,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   checkboxLabel: {
-    ...typography.bodySmall,
+    ...typography.body,
     color: colors.textSecondary,
     fontWeight: '500',
   },
@@ -495,7 +412,47 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  splitInfo: {
+  splitContainer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray200,
+  },
+  splitLabel: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    fontWeight: '600',
+  },
+  splitOptions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  splitOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.gray300,
+    backgroundColor: colors.surface,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  splitOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '15',
+  },
+  splitOptionText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  splitOptionTextActive: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  shareInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.md,
@@ -504,88 +461,11 @@ const styles = StyleSheet.create({
     borderTopColor: colors.gray200,
     gap: spacing.xs,
   },
-  splitText: {
+  shareText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.success,
     fontStyle: 'italic',
-  },
-  taxTipCard: {
-    backgroundColor: colors.surface,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    ...shadows.low,
-  },
-  taxTipTitle: {
-    ...typography.h6,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  taxTipAmounts: {
-    flexDirection: 'row',
-    gap: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  taxTipRow: {
-    flex: 1,
-  },
-  taxTipLabel: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginBottom: spacing.xxs,
-  },
-  taxTipValue: {
-    ...typography.h5,
-    color: colors.text,
-  },
-  methodOptions: {
-    gap: spacing.sm,
-  },
-  methodOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.gray300,
-    backgroundColor: colors.surface,
-    gap: spacing.md,
-  },
-  methodOptionActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.gray400,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  radioActive: {
-    borderColor: colors.primary,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
-  },
-  methodText: {
-    flex: 1,
-  },
-  methodLabel: {
-    ...typography.body,
-    color: colors.text,
     fontWeight: '600',
-    marginBottom: spacing.xxs,
-  },
-  methodDescription: {
-    ...typography.caption,
-    color: colors.textSecondary,
   },
   summaryCard: {
     backgroundColor: colors.surface,
@@ -600,65 +480,36 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.md,
   },
-  personRow: {
+  summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
-  personInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    flex: 1,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    ...typography.h6,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  personDetails: {
-    flex: 1,
-  },
-  personName: {
+  summaryLabel: {
     ...typography.body,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.xxs,
-  },
-  personBreakdown: {
-    ...typography.caption,
     color: colors.textSecondary,
   },
-  personTotal: {
-    ...typography.h5,
+  summaryValue: {
+    ...typography.h6,
     color: colors.text,
-    fontWeight: '700',
   },
   divider: {
     height: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.md,
   },
-  grandTotalRow: {
+  totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  grandTotalLabel: {
+  totalLabel: {
     ...typography.h5,
     color: colors.text,
     fontWeight: '700',
   },
-  grandTotalValue: {
+  totalValue: {
     ...typography.h4,
     color: colors.primary,
     fontWeight: '700',
@@ -668,20 +519,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-  },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.warningLight,
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  warningText: {
-    ...typography.caption,
-    color: colors.warning,
-    fontWeight: '600',
   },
   continueButton: {
     flexDirection: 'row',
@@ -700,6 +537,6 @@ const styles = StyleSheet.create({
   continueButtonText: {
     ...typography.button,
     color: colors.surface,
-    fontSize: 18,
+    fontSize: 16,
   },
 });
