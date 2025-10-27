@@ -174,7 +174,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                         totalCount={split.participant_count}
                         amount={split.total_amount}
                         date={format(new Date(split.created_at), 'MMM d')}
-                        onPress={() => console.log('View split', split.id)}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          navigation.navigate('SplitFlow', {
+                            screen: 'SplitDetail',
+                            params: { splitId: split.id },
+                          });
+                        }}
                       />
                     ))}
                   </View>
