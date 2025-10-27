@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
+import { SplitDetailScreenProps } from '../../types/navigation';
 import {
   getSplitById,
   markParticipantAsPaid,
@@ -23,16 +24,6 @@ import {
   SplitParticipant,
 } from '../../services/splitService';
 import { supabase } from '../../services/supabase';
-
-// This will be properly typed once we add to navigation
-interface SplitDetailScreenProps {
-  navigation: any;
-  route: {
-    params: {
-      splitId: string;
-    };
-  };
-}
 
 export default function SplitDetailScreen({ navigation, route }: SplitDetailScreenProps) {
   const { splitId } = route.params;

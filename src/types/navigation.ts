@@ -60,6 +60,9 @@ export type SplitFlowParamList = {
     description: string; // e.g., "Your share for dinner at Chipotle"
     splitId?: string;
   };
+  SplitDetail: {
+    splitId: string;
+  };
   SplitSuccess: {
     splitId: string;
     amount: number;
@@ -79,6 +82,7 @@ export type SplitMethodScreenProps = StackScreenProps<SplitFlowParamList, 'Split
 export type CustomAmountsScreenProps = StackScreenProps<SplitFlowParamList, 'CustomAmounts'>;
 export type ReviewSplitScreenProps = StackScreenProps<SplitFlowParamList, 'ReviewSplit'>;
 export type PaymentRequestScreenProps = StackScreenProps<SplitFlowParamList, 'PaymentRequest'>;
+export type SplitDetailScreenProps = StackScreenProps<SplitFlowParamList, 'SplitDetail'>;
 export type SplitSuccessScreenProps = StackScreenProps<SplitFlowParamList, 'SplitSuccess'>;
 
 // Main Tab Screen Props

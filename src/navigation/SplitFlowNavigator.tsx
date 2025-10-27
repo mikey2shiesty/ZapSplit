@@ -11,6 +11,7 @@ import ScanReceiptScreen from '../screens/splits/ScanReceiptScreen';
 import ReviewReceiptScreen from '../screens/splits/ReviewReceiptScreen';
 import ItemAssignmentScreen from '../screens/splits/ItemAssignmentScreen';
 import PaymentRequestScreen from '../screens/splits/PaymentRequestScreen';
+import SplitDetailScreen from '../screens/splits/SplitDetailScreen';
 import SelectFriendsScreen from '../screens/splits/SelectFriendsScreen';
 import SplitMethodScreen from '../screens/splits/SplitMethodScreen';
 import CustomAmountsScreen from '../screens/splits/CustomAmountsScreen';
@@ -112,6 +113,14 @@ export default function SplitFlowNavigator() {
         component={PaymentRequestScreen}
         options={{
           title: 'Payment Request',
+          headerShown: false, // Custom header in screen
+        }}
+      />
+      <Stack.Screen
+        name="SplitDetail"
+        component={SplitDetailScreen}
+        options={{
+          title: 'Split Details',
           headerShown: false, // Custom header in screen
         }}
       />
