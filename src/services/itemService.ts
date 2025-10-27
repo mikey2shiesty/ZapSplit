@@ -17,8 +17,9 @@ export interface SplitItem {
   id: string;
   split_id: string;
   name: string;
-  unit_price: number; // Database column is 'unit_price', not 'price'
+  unit_price: number; // Price per single item
   quantity: number;
+  total_price: number; // unit_price * quantity
   created_at: string;
 }
 
@@ -34,8 +35,9 @@ export interface ItemAssignment {
 export interface CreateSplitItemData {
   split_id: string;
   name: string;
-  unit_price: number; // Database column is 'unit_price', not 'price'
+  unit_price: number; // Price per single item
   quantity: number;
+  total_price: number; // unit_price * quantity (calculated)
 }
 
 export interface CreateItemAssignmentData {
@@ -66,6 +68,7 @@ export async function createSplitItems(
     name: item.name,
     unit_price: item.price,
     quantity: item.quantity,
+    total_price: item.price * item.quantity, // Calculate total
   }));
 
   // Insert all items
@@ -182,7 +185,7 @@ export async function createUserItemAssignments(
     if (!selection || !selection.selected) return;
 
     // Calculate share percentage and amount
-    const itemTotal = splitItem.unit_price * splitItem.quantity;
+    const itemTotal = splitItem.total_price;
     const yourShare = calculateYourItemShare(receiptItem, selection);
     const sharePercentage = (yourShare / itemTotal) * 100;
 
@@ -325,7 +328,7 @@ export async function calculateUserTotal(
   // Get all items to calculate receipt subtotal
   const allItems = await getSplitItems(splitId);
   const receiptSubtotal = allItems.reduce((sum, item) => {
-    return sum + item.unit_price * item.quantity;
+    return sum + item.total_price;
   }, 0);
 
   // Calculate proportional tax and tip
@@ -374,7 +377,7 @@ export async function getSplitParticipantTotals(
   // Get receipt subtotal
   const allItems = await getSplitItems(splitId);
   const receiptSubtotal = allItems.reduce((sum, item) => {
-    return sum + item.unit_price * item.quantity;
+    return sum + item.total_price;
   }, 0);
 
   // Calculate totals for each user
