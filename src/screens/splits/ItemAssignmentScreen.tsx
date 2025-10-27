@@ -162,25 +162,16 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       // 4. Create user's item assignments
       await createUserItemAssignments(user.id, splitItems, receipt.items, selections);
 
-      // Success!
+      // Success! Navigate to payment request screen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      Alert.alert(
-        'Split Created!',
-        `Your total: ${formatCurrency(yourTotal.total)}\n\nYour items have been saved. Other participants can now scan the same receipt and mark their items.`,
-        [
-          {
-            text: 'Done',
-            onPress: () => {
-              // Navigate back to home
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'CreateSplit' }],
-              });
-            },
-          },
-        ]
-      );
+      navigation.navigate('PaymentRequest', {
+        amount: yourTotal.total,
+        description: receipt.merchant
+          ? `Your share at ${receipt.merchant}`
+          : 'Your share for this receipt',
+        splitId: split.id,
+      });
     } catch (error: any) {
       console.error('Error saving split:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

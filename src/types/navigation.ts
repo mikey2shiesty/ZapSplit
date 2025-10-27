@@ -55,6 +55,11 @@ export type SplitFlowParamList = {
     customAmounts?: Record<string, number>; // userId -> amount
     receiptImageUri?: string;
   };
+  PaymentRequest: {
+    amount: number; // Your total amount
+    description: string; // e.g., "Your share for dinner at Chipotle"
+    splitId?: string;
+  };
   SplitSuccess: {
     splitId: string;
     amount: number;
@@ -73,6 +78,7 @@ export type SelectFriendsScreenProps = StackScreenProps<SplitFlowParamList, 'Sel
 export type SplitMethodScreenProps = StackScreenProps<SplitFlowParamList, 'SplitMethod'>;
 export type CustomAmountsScreenProps = StackScreenProps<SplitFlowParamList, 'CustomAmounts'>;
 export type ReviewSplitScreenProps = StackScreenProps<SplitFlowParamList, 'ReviewSplit'>;
+export type PaymentRequestScreenProps = StackScreenProps<SplitFlowParamList, 'PaymentRequest'>;
 export type SplitSuccessScreenProps = StackScreenProps<SplitFlowParamList, 'SplitSuccess'>;
 
 // Main Tab Screen Props

@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
+import { PaymentRequestScreenProps } from '../../types/navigation';
 import {
   PaymentMethod,
   sharePaymentDetails,
@@ -21,18 +22,6 @@ import {
   formatPayID,
   PaymentRequest,
 } from '../../services/paymentService';
-
-// This will be from navigation params in the real implementation
-interface PaymentRequestScreenProps {
-  navigation: any;
-  route: {
-    params: {
-      amount: number; // Your total amount
-      description: string; // e.g., "Your share for dinner at Chipotle"
-      splitId?: string;
-    };
-  };
-}
 
 export default function PaymentRequestScreen({ navigation, route }: PaymentRequestScreenProps) {
   const { amount, description, splitId } = route.params;
