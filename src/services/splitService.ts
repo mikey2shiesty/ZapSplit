@@ -335,3 +335,231 @@ export async function createReceiptSplit(
     throw error;
   }
 }
+
+// ============================================================================
+// PHASE 7: SPLIT DETAIL & MANAGEMENT
+// ============================================================================
+
+/**
+ * Get split by ID with full details (participants, creator, items)
+ *
+ * @param splitId - Split ID
+ * @returns Split with participants and creator details
+ */
+export async function getSplitById(splitId: string): Promise<SplitWithParticipants | null> {
+  // Get the split
+  const { data: split, error: splitError } = await supabase
+    .from('splits')
+    .select('*')
+    .eq('id', splitId)
+    .single();
+
+  if (splitError) throw splitError;
+  if (!split) return null;
+
+  // Get participants with user details
+  const { data: participants, error: participantsError } = await supabase
+    .from('split_participants')
+    .select(`
+      *,
+      user:user_id (
+        id,
+        email,
+        full_name,
+        avatar_url
+      )
+    `)
+    .eq('split_id', splitId);
+
+  if (participantsError) throw participantsError;
+
+  const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+
+  return {
+    ...split,
+    participants: participants || [],
+    participant_count: participants?.length || 0,
+    paid_count: paidCount,
+  };
+}
+
+/**
+ * Mark a participant as paid
+ *
+ * @param participantId - Participant ID from split_participants table
+ * @param splitId - Split ID (for checking if all paid)
+ * @returns Updated participant
+ */
+export async function markParticipantAsPaid(
+  participantId: string,
+  splitId: string
+): Promise<SplitParticipant> {
+  // Update participant to paid
+  const { data: participant, error } = await supabase
+    .from('split_participants')
+    .update({
+      status: 'paid',
+      amount_paid: supabase.raw('amount_owed'), // Set amount_paid = amount_owed
+    })
+    .eq('id', participantId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  // Check if all participants are now paid
+  await checkIfSplitSettled(splitId);
+
+  return participant;
+}
+
+/**
+ * Check if all participants have paid, and mark split as settled
+ *
+ * @param splitId - Split ID
+ * @returns True if split is now settled
+ */
+export async function checkIfSplitSettled(splitId: string): Promise<boolean> {
+  // Get all participants for this split
+  const { data: participants, error } = await supabase
+    .from('split_participants')
+    .select('status')
+    .eq('split_id', splitId);
+
+  if (error) throw error;
+
+  // Check if all are paid
+  const allPaid = participants?.every(p => p.status === 'paid') || false;
+
+  if (allPaid) {
+    // Update split status to settled
+    await supabase
+      .from('splits')
+      .update({ status: 'settled' })
+      .eq('id', splitId);
+  }
+
+  return allPaid;
+}
+
+/**
+ * Update split (title, description, amount)
+ * Only basic fields for MVP
+ *
+ * @param splitId - Split ID
+ * @param updates - Fields to update
+ * @returns Updated split
+ */
+export async function updateSplit(
+  splitId: string,
+  updates: {
+    title?: string;
+    description?: string;
+    total_amount?: number;
+  }
+): Promise<Split> {
+  const { data, error } = await supabase
+    .from('splits')
+    .update(updates)
+    .eq('id', splitId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Delete split with cascade (items, assignments, participants, storage)
+ *
+ * @param splitId - Split ID
+ */
+export async function deleteSplit(splitId: string): Promise<void> {
+  // Get split to check for receipt image
+  const { data: split } = await supabase
+    .from('splits')
+    .select('image_url, split_type')
+    .eq('id', splitId)
+    .single();
+
+  // If receipt split, delete related items and assignments
+  if (split?.split_type === 'receipt') {
+    // Import itemService functions
+    const { deleteSplitItems, deleteItemAssignments } = require('./itemService');
+
+    // Delete item assignments
+    await deleteItemAssignments(splitId);
+
+    // Delete split items
+    await deleteSplitItems(splitId);
+  }
+
+  // Delete receipt image from storage if exists
+  if (split?.image_url) {
+    try {
+      // Extract file path from URL
+      // URL format: https://.../storage/v1/object/public/split-receipts/path/to/file.jpg
+      const urlParts = split.image_url.split('/split-receipts/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        await supabase.storage.from('split-receipts').remove([filePath]);
+      }
+    } catch (storageError) {
+      console.error('Error deleting receipt image:', storageError);
+      // Continue with split deletion even if image deletion fails
+    }
+  }
+
+  // Delete participants
+  await supabase
+    .from('split_participants')
+    .delete()
+    .eq('split_id', splitId);
+
+  // Delete split
+  const { error } = await supabase
+    .from('splits')
+    .delete()
+    .eq('id', splitId);
+
+  if (error) throw error;
+}
+
+/**
+ * Generate shareable message for a split
+ *
+ * @param split - Split with participants
+ * @param currentUserId - Current user ID (to personalize message)
+ * @returns Shareable text message
+ */
+export function generateShareMessage(
+  split: SplitWithParticipants,
+  currentUserId: string
+): string {
+  // Find current user's participant record
+  const userParticipant = split.participants.find(p => p.user_id === currentUserId);
+
+  let message = `💸 Split: ${split.title}\n\n`;
+  message += `Total: $${split.total_amount.toFixed(2)} AUD\n`;
+
+  if (userParticipant) {
+    message += `You owe: $${userParticipant.amount_owed.toFixed(2)}\n`;
+    if (userParticipant.status === 'paid') {
+      message += `Status: ✅ Paid\n`;
+    } else {
+      message += `Status: ⏳ Pending\n`;
+    }
+  }
+
+  if (split.description) {
+    message += `\n${split.description}\n`;
+  }
+
+  message += `\n${split.participant_count} people • `;
+  message += `${split.paid_count} paid • `;
+  message += `${split.participant_count - split.paid_count} pending`;
+
+  message += `\n\nShared via ZapSplit 🇦🇺`;
+
+  return message;
+}
