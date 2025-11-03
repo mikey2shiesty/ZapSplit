@@ -1,0 +1,148 @@
+═══════════════════════════════════════════════════════════════
+    PHASE 9: IN-APP PAYMENT PROCESSING WITH STRIPE
+═══════════════════════════════════════════════════════════════
+
+Goal: Users can send/receive money directly through ZapSplit using
+credit/debit cards, with peer-to-peer transfers and split fees.
+
+Architecture: Stripe Connect (Direct Charges)
+
+How it works:
+1. Each user creates a Stripe Connect account (to receive payments)
+2. User A (payer) enters card via Stripe → Charges $25.50 + $0.52 = $26.02
+3. Stripe transfers to User B → They receive $25.50 - $0.52 = $24.98
+4. ZapSplit never holds money (peer-to-peer)
+
+═══════════════════════════════════════════════════════════════
+    1. BACKEND SETUP (SUPABASE EDGE FUNCTIONS)
+═══════════════════════════════════════════════════════════════
+
+Create Stripe API endpoints:
+- create-connect-account - Onboard users to Stripe Connect
+- create-payment-intent - Process card payments
+- handle-webhooks - Listen for payment events
+- get-payment-status - Check payment state
+
+Why Edge Functions?
+- Can't make Stripe API calls from client (needs secret key)
+- Serverless, built into Supabase
+- Free tier: 500K invocations/month
+
+═══════════════════════════════════════════════════════════════
+    2. USER ONBOARDING FLOW
+═══════════════════════════════════════════════════════════════
+
+ConnectStripeScreen.tsx
+- "Connect your bank to receive payments"
+- Create Stripe Connect account via API
+- Complete Stripe onboarding (bank details, identity)
+- Save stripe_account_id to profiles table
+- Status indicator: "Connected ✅" or "Setup Required"
+
+═══════════════════════════════════════════════════════════════
+    3. PAYMENT SCREENS
+═══════════════════════════════════════════════════════════════
+
+PayScreen.tsx (when paying someone)
+- Show amount + fee breakdown:
+  Split amount:    $25.50
+  Your half of fee: $0.52
+  ----------------------------
+  Total charge:    $26.02
+- Stripe CardField component (secure card entry)
+- "Pay Now" button → Creates payment intent
+- Loading state → Success/Error
+
+PaymentHistoryScreen.tsx
+- List all payments sent/received
+- Status badges: Pending, Succeeded, Failed
+- Filter by date, person
+
+═══════════════════════════════════════════════════════════════
+    4. DATABASE UPDATES
+═══════════════════════════════════════════════════════════════
+
+profiles table:
+ALTER TABLE profiles ADD COLUMN stripe_account_id TEXT;
+ALTER TABLE profiles ADD COLUMN stripe_onboarding_complete BOOLEAN DEFAULT false;
+
+payments table (update existing):
+ALTER TABLE payments ADD COLUMN stripe_payment_id TEXT;
+ALTER TABLE payments ADD COLUMN stripe_transfer_id TEXT;
+ALTER TABLE payments ADD COLUMN fee_amount NUMERIC(10,2);
+ALTER TABLE payments ADD COLUMN payer_total NUMERIC(10,2);
+ALTER TABLE payments ADD COLUMN receiver_total NUMERIC(10,2);
+
+═══════════════════════════════════════════════════════════════
+    5. SERVICES
+═══════════════════════════════════════════════════════════════
+
+src/services/stripeService.ts
+- createConnectAccount(userId) - Onboard to Stripe
+- createPayment(fromUserId, toUserId, amount, splitId) - Process payment
+- getPaymentHistory(userId) - Fetch transactions
+- calculateFees(amount) - Return fee breakdown
+
+All functions call Supabase Edge Functions (which call Stripe API)
+
+═══════════════════════════════════════════════════════════════
+    6. INTEGRATION WITH EXISTING FLOWS
+═══════════════════════════════════════════════════════════════
+
+From SplitDetailScreen:
+- "Pay $25.50" button → Navigate to PayScreen
+- Pre-fill: recipient, amount, split reference
+
+From ItemAssignmentScreen:
+- After marking items → "Pay Your Share" button
+- Direct to PayScreen with calculated total
+
+═══════════════════════════════════════════════════════════════
+    7. COST BREAKDOWN
+═══════════════════════════════════════════════════════════════
+
+Stripe Fees (Australia):
+- 2.9% + $0.30 AUD per transaction
+- Example: $25.50 payment = $1.04 fee
+  - Payer pays: $25.50 + $0.52 = $26.02
+  - Receiver gets: $25.50 - $0.52 = $24.98
+
+Platform Fees (Optional):
+- Can add 1-2% platform fee on top for revenue
+- Not included in this phase
+
+═══════════════════════════════════════════════════════════════
+    8. TESTING STRATEGY
+═══════════════════════════════════════════════════════════════
+
+- Stripe test mode (fake cards)
+- Test successful payment
+- Test failed payment (decline)
+- Test refund flow
+- Test with multiple users
+
+═══════════════════════════════════════════════════════════════
+    TASKS SUMMARY
+═══════════════════════════════════════════════════════════════
+
+1. Set up Stripe account + Connect platform
+2. Create 4 Supabase Edge Functions (backend)
+3. Build ConnectStripeScreen (onboarding)
+4. Build PayScreen (card entry + payment)
+5. Build PaymentHistoryScreen (transaction list)
+6. Update database schema (profiles + payments)
+7. Create stripeService.ts (API wrapper)
+8. Update SplitDetailScreen (add pay button)
+9. Update ItemAssignmentScreen (pay after assignment)
+10. Test end-to-end payment flow
+
+Estimated time: 4-5 days
+Dependencies: Stripe account, Supabase Edge Functions setup
+
+═══════════════════════════════════════════════════════════════
+    NOTE
+═══════════════════════════════════════════════════════════════
+
+The previous PayID/bank transfer UI we built can stay as a "manual
+payment" option for users who prefer that. This adds Stripe as the
+primary in-app method.

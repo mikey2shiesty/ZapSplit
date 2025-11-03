@@ -7,6 +7,8 @@ import { ParsedReceipt } from './receipt';
 export type RootStackParamList = {
   Main: undefined;
   SplitFlow: undefined;
+  ConnectStripe: undefined;
+  PaymentHistory: undefined;
 };
 
 // Bottom Tab Navigation Types
@@ -68,6 +70,18 @@ export type SplitFlowParamList = {
     amount: number;
     participantCount: number;
   };
+  PayScreen: {
+    splitId: string;
+    participantId: string;
+    recipientId: string;
+    amount: number;
+  };
+};
+
+// Settings/Payment Navigation Types
+export type SettingsStackParamList = {
+  ConnectStripe: undefined;
+  PaymentHistory: undefined;
 };
 
 // Screen Props Types
@@ -84,6 +98,11 @@ export type ReviewSplitScreenProps = StackScreenProps<SplitFlowParamList, 'Revie
 export type PaymentRequestScreenProps = StackScreenProps<SplitFlowParamList, 'PaymentRequest'>;
 export type SplitDetailScreenProps = StackScreenProps<SplitFlowParamList, 'SplitDetail'>;
 export type SplitSuccessScreenProps = StackScreenProps<SplitFlowParamList, 'SplitSuccess'>;
+export type PayScreenProps = StackScreenProps<SplitFlowParamList, 'PayScreen'>;
+
+// Settings/Payment Screen Props
+export type ConnectStripeScreenProps = StackScreenProps<SettingsStackParamList, 'ConnectStripe'>;
+export type PaymentHistoryScreenProps = StackScreenProps<SettingsStackParamList, 'PaymentHistory'>;
 
 // Main Tab Screen Props
 export type HomeScreenProps = CompositeScreenProps<

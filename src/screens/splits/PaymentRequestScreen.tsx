@@ -117,6 +117,50 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
           <Text style={styles.amountDescription}>{description}</Text>
         </View>
 
+        {/* Quick Pay with Card Option */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💳 Pay Instantly</Text>
+          <Text style={styles.sectionSubtitle}>Pay now with your credit or debit card</Text>
+
+          <TouchableOpacity
+            style={styles.payNowButton}
+            onPress={() => {
+              // TODO: Need recipientId and participantId in route params
+              // For now, show coming soon alert
+              Alert.alert(
+                'Pay with Card',
+                'Instant card payments coming soon! You\'ll be able to pay directly via Stripe.',
+                [{ text: 'OK' }]
+              );
+              // Future implementation:
+              // navigation.navigate('PayScreen', {
+              //   splitId,
+              //   participantId: currentUserParticipantId,
+              //   recipientId: split.creator_id,
+              //   amount,
+              // });
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.payNowIcon}>
+              <Ionicons name="card-outline" size={24} color={colors.surface} />
+            </View>
+            <Text style={styles.payNowText}>Pay ${amount.toFixed(2)} with Card</Text>
+            <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+          </TouchableOpacity>
+
+          <Text style={styles.payNowNote}>
+            ✓ Secure payment via Stripe • ✓ Instant confirmation
+          </Text>
+        </View>
+
+        {/* OR Divider */}
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         {/* Payment Method Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Choose Payment Method</Text>
@@ -469,6 +513,50 @@ const styles = StyleSheet.create({
   doneButtonText: {
     ...typography.body,
     color: colors.text,
+    fontWeight: '600',
+  },
+  // Pay with Card styles
+  payNowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.sm,
+    ...shadows.small,
+  },
+  payNowIcon: {
+    marginRight: spacing.sm,
+  },
+  payNowText: {
+    flex: 1,
+    ...typography.body,
+    color: colors.surface,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  payNowNote: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    paddingHorizontal: spacing.sm,
     fontWeight: '600',
   },
 });

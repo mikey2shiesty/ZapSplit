@@ -8,6 +8,9 @@ import ScanScreen from '../screens/main/ScanScreen';
 import SplitsScreen from '../screens/main/SplitsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import SplitFlowNavigator from './SplitFlowNavigator';
+// Temporarily commented out to debug
+// import ConnectStripeScreen from '../screens/settings/ConnectStripeScreen';
+// import PaymentHistoryScreen from '../screens/payments/PaymentHistoryScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -116,6 +119,26 @@ export default function MainNavigator() {
           headerShown: false,
         }}
       />
+
+      {/* Stripe Connect Modal - Temporarily commented out to debug */}
+      {/* <Stack.Screen
+        name="ConnectStripe"
+        component={ConnectStripeScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      /> */}
+
+      {/* Payment History Modal - Temporarily commented out to debug */}
+      {/* <Stack.Screen
+        name="PaymentHistory"
+        component={PaymentHistoryScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      /> */}
     </Stack.Navigator>
   );
 }
