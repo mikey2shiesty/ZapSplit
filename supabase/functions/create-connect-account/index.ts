@@ -53,7 +53,7 @@ serve(async (req) => {
     // Check if user already has a Connect account
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_complete')
+      .select('stripe_connect_account_id, stripe_connect_onboarding_complete')
       .eq('id', userId)
       .single();
 
@@ -64,7 +64,7 @@ serve(async (req) => {
       );
     }
 
-    let accountId = profile.stripe_account_id;
+    let accountId = profile.stripe_connect_account_id;
 
     // Create Connect account if doesn't exist
     if (!accountId) {
@@ -87,8 +87,8 @@ serve(async (req) => {
       await supabase
         .from('profiles')
         .update({
-          stripe_account_id: accountId,
-          stripe_onboarding_complete: false,
+          stripe_connect_account_id: accountId,
+          stripe_connect_onboarding_complete: false,
         })
         .eq('id', userId);
     }

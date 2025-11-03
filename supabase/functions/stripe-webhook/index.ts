@@ -58,10 +58,10 @@ serve(async (req) => {
         const { error: updateError } = await supabase
           .from('payments')
           .update({
-            status: 'succeeded',
-            paid_at: new Date().toISOString(),
+            status: 'completed',
+            completed_at: new Date().toISOString(),
           })
-          .eq('stripe_payment_id', paymentIntent.id);
+          .eq('stripe_payment_intent_id', paymentIntent.id);
 
         if (updateError) {
           console.error('Failed to update payment:', updateError);
@@ -70,8 +70,8 @@ serve(async (req) => {
         // Update split_participant status
         const { data: payment } = await supabase
           .from('payments')
-          .select('payer_id, split_id')
-          .eq('stripe_payment_id', paymentIntent.id)
+          .select('from_user_id, split_id')
+          .eq('stripe_payment_intent_id', paymentIntent.id)
           .single();
 
         if (payment) {
@@ -83,7 +83,7 @@ serve(async (req) => {
               payment_method: 'stripe',
             })
             .eq('split_id', payment.split_id)
-            .eq('user_id', payment.payer_id);
+            .eq('user_id', payment.from_user_id);
 
           // Check if all participants paid → mark split as settled
           const { data: participants } = await supabase
@@ -109,8 +109,11 @@ serve(async (req) => {
 
         await supabase
           .from('payments')
-          .update({ status: 'failed' })
-          .eq('stripe_payment_id', paymentIntent.id);
+          .update({
+            status: 'failed',
+            failed_at: new Date().toISOString(),
+          })
+          .eq('stripe_payment_intent_id', paymentIntent.id);
 
         break;
       }
@@ -121,8 +124,11 @@ serve(async (req) => {
 
         await supabase
           .from('payments')
-          .update({ status: 'failed' })
-          .eq('stripe_payment_id', paymentIntent.id);
+          .update({
+            status: 'cancelled',
+            failed_at: new Date().toISOString(),
+          })
+          .eq('stripe_payment_intent_id', paymentIntent.id);
 
         break;
       }
@@ -137,9 +143,9 @@ serve(async (req) => {
         await supabase
           .from('profiles')
           .update({
-            stripe_onboarding_complete: onboardingComplete,
+            stripe_connect_onboarding_complete: onboardingComplete,
           })
-          .eq('stripe_account_id', account.id);
+          .eq('stripe_connect_account_id', account.id);
 
         break;
       }
@@ -152,7 +158,7 @@ serve(async (req) => {
         await supabase
           .from('payments')
           .update({ status: 'refunded' })
-          .eq('stripe_payment_id', charge.payment_intent as string);
+          .eq('stripe_payment_intent_id', charge.payment_intent as string);
 
         break;
       }

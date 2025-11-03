@@ -74,7 +74,7 @@ serve(async (req) => {
     // Get receiver's profile (to check Stripe Connect account)
     const { data: receiver, error: receiverError } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_complete, full_name')
+      .select('stripe_connect_account_id, stripe_connect_onboarding_complete, full_name')
       .eq('id', toUserId)
       .single();
 
@@ -86,7 +86,7 @@ serve(async (req) => {
     }
 
     // Check if receiver has completed Stripe onboarding
-    if (!receiver.stripe_account_id || !receiver.stripe_onboarding_complete) {
+    if (!receiver.stripe_connect_account_id || !receiver.stripe_connect_onboarding_complete) {
       return new Response(
         JSON.stringify({
           error: 'Receiver has not set up their payment account yet',
@@ -130,7 +130,7 @@ serve(async (req) => {
       customer: customerId,
       application_fee_amount: applicationFee,
       transfer_data: {
-        destination: receiver.stripe_account_id,
+        destination: receiver.stripe_connect_account_id,
       },
       metadata: {
         splitId,
@@ -146,14 +146,12 @@ serve(async (req) => {
       .from('payments')
       .insert({
         split_id: splitId,
-        payer_id: fromUserId,
-        receiver_id: toUserId,
+        from_user_id: fromUserId,
+        to_user_id: toUserId,
         amount: amount,
-        fee_amount: (stripeFee / 100).toFixed(2),
-        payer_total: (payerTotal / 100).toFixed(2),
-        receiver_total: (receiverTotal / 100).toFixed(2),
+        stripe_fee_amount: (stripeFee / 100).toFixed(2),
         payment_method: 'stripe',
-        stripe_payment_id: paymentIntent.id,
+        stripe_payment_intent_id: paymentIntent.id,
         status: 'pending',
       })
       .select()

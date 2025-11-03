@@ -51,9 +51,9 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user's Stripe account ID
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError} = await supabase
       .from('profiles')
-      .select('stripe_account_id')
+      .select('stripe_connect_account_id')
       .eq('id', userId)
       .single();
 
@@ -64,7 +64,7 @@ serve(async (req) => {
       );
     }
 
-    if (!profile.stripe_account_id) {
+    if (!profile.stripe_connect_account_id) {
       return new Response(
         JSON.stringify({
           connected: false,
@@ -84,7 +84,7 @@ serve(async (req) => {
     }
 
     // Retrieve account from Stripe
-    const account = await stripe.accounts.retrieve(profile.stripe_account_id);
+    const account = await stripe.accounts.retrieve(profile.stripe_connect_account_id);
 
     // Check if onboarding is complete
     const onboardingComplete = account.details_submitted && account.charges_enabled;
@@ -93,7 +93,7 @@ serve(async (req) => {
     await supabase
       .from('profiles')
       .update({
-        stripe_onboarding_complete: onboardingComplete,
+        stripe_connect_onboarding_complete: onboardingComplete,
       })
       .eq('id', userId);
 
