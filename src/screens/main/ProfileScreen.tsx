@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, typography } from '../../constants/theme';
 import Card from '../../components/common/Card';
@@ -8,6 +10,7 @@ import Button from '../../components/common/Button';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const navigation = useNavigation<any>();
 
   return (
     <ScrollView style={styles.container}>
@@ -29,15 +32,44 @@ export default function ProfileScreen() {
         </Card>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payments</Text>
+
+          <TouchableOpacity onPress={() => navigation.navigate('ConnectStripe')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="card-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Connect Stripe Account</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate('PaymentHistory')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="time-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Payment History</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <Card style={styles.menuCard}>
-            <Text style={styles.menuItem}>Edit Profile</Text>
+            <View style={styles.menuItemRow}>
+              <Ionicons name="person-outline" size={20} color={colors.text} />
+              <Text style={styles.menuItem}>Edit Profile</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </View>
           </Card>
           <Card style={styles.menuCard}>
-            <Text style={styles.menuItem}>Payment Methods</Text>
-          </Card>
-          <Card style={styles.menuCard}>
-            <Text style={styles.menuItem}>Settings</Text>
+            <View style={styles.menuItemRow}>
+              <Ionicons name="settings-outline" size={20} color={colors.text} />
+              <Text style={styles.menuItem}>Settings</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </View>
           </Card>
         </View>
 
@@ -91,8 +123,14 @@ const styles = StyleSheet.create({
   menuCard: {
     marginBottom: spacing.xs,
   },
+  menuItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   menuItem: {
     ...typography.body,
     color: colors.text,
+    flex: 1,
   },
 });
