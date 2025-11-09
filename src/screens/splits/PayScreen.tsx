@@ -271,7 +271,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.gray50,
   },
   content: {
     padding: 20,
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   header: {
     marginBottom: 24,
@@ -293,12 +293,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   card: {
     marginBottom: 16,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.gray[500],
+    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
   recipientName: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 4,
   },
   recipientEmail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   splitSection: {
     padding: 20,
@@ -338,12 +338,12 @@ const styles = StyleSheet.create({
   splitTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 4,
   },
   splitDescription: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.gray600,
     lineHeight: 20,
   },
   breakdownCard: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 16,
   },
   breakdownRow: {
@@ -364,16 +364,16 @@ const styles = StyleSheet.create({
   },
   breakdownLabel: {
     fontSize: 15,
-    color: colors.gray[700],
+    color: colors.gray700,
   },
   breakdownValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.gray900,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray[200],
+    backgroundColor: colors.gray200,
     marginVertical: 12,
   },
   totalRow: {
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
   },
   totalValue: {
     fontSize: 24,
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   feeNote: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.gray500,
     lineHeight: 16,
     marginTop: 8,
   },
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray[700],
+    color: colors.gray700,
     lineHeight: 18,
   },
   payButton: {

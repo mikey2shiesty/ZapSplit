@@ -220,7 +220,7 @@ export default function PaymentHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   header: {
     padding: 20,
@@ -239,12 +239,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   tabs: {
     flexDirection: 'row',
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray[700],
+    color: colors.gray700,
   },
   tabTextActive: {
     color: '#FFFFFF',
@@ -296,17 +296,17 @@ const styles = StyleSheet.create({
   personName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 4,
   },
   splitTitle: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.gray600,
     marginBottom: 4,
   },
   paymentDate: {
     fontSize: 13,
-    color: colors.gray[500],
+    color: colors.gray500,
   },
   paymentRight: {
     alignItems: 'flex-end',
@@ -318,18 +318,18 @@ const styles = StyleSheet.create({
   },
   paymentMethod: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.gray500,
     marginTop: 4,
   },
   feeInfo: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: colors.gray200,
   },
   feeText: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.gray500,
   },
   emptyState: {
     alignItems: 'center',
@@ -343,12 +343,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
   },

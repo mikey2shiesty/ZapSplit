@@ -251,7 +251,7 @@ export default function ConnectStripeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.gray50,
   },
   content: {
     padding: 20,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   header: {
     marginBottom: 24,
@@ -272,12 +272,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.gray600,
     lineHeight: 22,
   },
   card: {
@@ -302,13 +302,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 12,
     textAlign: 'center',
   },
   cardDescription: {
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.gray600,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   benefitItem: {
     fontSize: 15,
-    color: colors.gray[700],
+    color: colors.gray700,
     marginBottom: 8,
     paddingLeft: 8,
   },
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   poweredBy: {
     fontSize: 13,
-    color: colors.gray[500],
+    color: colors.gray500,
   },
   stripeLogo: {
     fontSize: 16,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   accountInfo: {
     width: '100%',
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.gray50,
     borderRadius: 12,
     padding: 16,
     marginVertical: 20,
@@ -360,12 +360,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.gray600,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.gray900,
   },
   statusBadge: {
     backgroundColor: colors.success,
@@ -389,17 +389,17 @@ const styles = StyleSheet.create({
   requirementsTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 8,
   },
   requirementsDescription: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.gray700,
     marginBottom: 12,
   },
   requirementItem: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.gray700,
     marginBottom: 6,
   },
   completeButton: {
@@ -414,12 +414,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray[900],
+    color: colors.gray900,
     marginBottom: 16,
   },
   infoText: {
     fontSize: 15,
-    color: colors.gray[700],
+    color: colors.gray700,
     lineHeight: 22,
     marginBottom: 12,
   },
