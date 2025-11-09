@@ -1,0 +1,231 @@
+═══════════════════════════════════════════════════════════════
+    PHASE 9: STRIPE PAYMENT INTEGRATION - IMPLEMENTATION PLAN
+═══════════════════════════════════════════════════════════════
+
+Goal: Add in-app payment processing using Stripe alongside existing
+Australian payment methods (PayID/Bank Transfer)
+
+═══════════════════════════════════════════════════════════════
+    ~~STEP 1: INSTALL STRIPE DEPENDENCIES (5 min)~~ ✅ COMPLETE
+═══════════════════════════════════════════════════════════════
+
+~~- Install @stripe/stripe-react-native package~~ ✅
+~~- Install expo-crypto for Stripe SDK requirements~~ ✅
+- Configure Stripe provider in App.tsx (TODO: Will do in Step 4)
+
+═══════════════════════════════════════════════════════════════
+    ~~STEP 2: DATABASE SCHEMA UPDATES (15 min)~~ ✅ COMPLETE
+═══════════════════════════════════════════════════════════════
+
+~~Create SQL migration files in supabase/:~~ ✅
+
+~~a) Add Stripe fields to profiles table~~ ✅
+~~b) Create payments table~~ ✅
+~~c) Add payment_method to split_participants~~ ✅
+
+📁 Created: supabase/add-stripe-fields.sql
+
+Note: Execute this SQL file in your Supabase SQL Editor to apply the schema changes.
+
+═══════════════════════════════════════════════════════════════
+    ~~STEP 3: CREATE SUPABASE EDGE FUNCTIONS (45 min)~~ ✅ COMPLETE
+═══════════════════════════════════════════════════════════════
+
+~~Set up supabase/functions/ directory with 4 functions:~~ ✅
+
+~~a) create-payment-intent~~ ✅
+~~b) create-connect-account~~ ✅
+~~c) stripe-webhook~~ ✅
+~~d) get-account-status~~ ✅
+
+📁 Created:
+- supabase/functions/create-payment-intent/index.ts
+- supabase/functions/create-connect-account/index.ts
+- supabase/functions/stripe-webhook/index.ts
+- supabase/functions/get-account-status/index.ts
+
+Note: Deploy these functions using: supabase functions deploy <function-name>
+
+═══════════════════════════════════════════════════════════════
+    ~~STEP 4: CREATE STRIPESERVICE.TS (30 min)~~ ✅ COMPLETE
+═══════════════════════════════════════════════════════════════
+
+📁 Created: src/services/stripeService.ts
+
+~~Functions implemented:~~ ✅
+- calculateFees() - Fee breakdown calculation
+- createConnectAccount() - Create Stripe Connect account
+- checkAccountStatus() - Verify onboarding status
+- createPayment() - Initiate payment with payment sheet
+- getPaymentHistory() - Fetch all transactions
+- getPaymentsSent() - Fetch sent payments
+- getPaymentsReceived() - Fetch received payments
+- getPaymentById() - Fetch specific payment
+
+═══════════════════════════════════════════════════════════════
+    ~~STEP 5: BUILD CONNECTSTRIPESCREEN (45 min)~~ ✅ COMPLETE
+═══════════════════════════════════════════════════════════════
+
+📁 Created: src/screens/settings/ConnectStripeScreen.tsx
+
+~~Features implemented:~~ ✅
+- Check connection status on load
+- Connect Bank Account flow (opens Stripe onboarding)
+- Connected state with account status display
+- Refresh status button
+- Requirements alert (if action needed)
+- "How it works" info section
+- Loading states and error handling
+- Haptic feedback
+
+═══════════════════════════════════════════════════════════════
+    STEP 6: BUILD PAYSCREEN (60 min)
+═══════════════════════════════════════════════════════════════
+
+Location: src/screens/splits/PayScreen.tsx
+
+Features:
+- Display recipient name, avatar, and split details
+- Show fee breakdown:
+  - Split amount: $25.50
+  - Your half of fee: +$0.52
+  - Total charge: $26.02
+- Stripe CardField component (secure card entry)
+- "Pay Now" button with loading state
+- Success animation → Navigate to payment confirmation
+- Error handling (card declined, network issues)
+
+Flow:
+1. Check recipient has Stripe Connect account
+2. If no: Show error "Recipient hasn't set up payments yet"
+3. If yes: Show card entry form
+4. On submit: Create payment intent → Confirm payment → Success
+
+═══════════════════════════════════════════════════════════════
+    STEP 7: BUILD PAYMENTHISTORYSCREEN (30 min)
+═══════════════════════════════════════════════════════════════
+
+Location: src/screens/payments/PaymentHistoryScreen.tsx
+
+Features:
+- List all payments (sent and received)
+- Tabs: "Sent" | "Received" | "All"
+- Each item shows:
+  - Person (name + avatar)
+  - Amount
+  - Date
+  - Status badge (Pending/Succeeded/Failed)
+  - Payment method (Stripe/PayID/Bank)
+- Tap to see details
+- Filter by date range
+
+═══════════════════════════════════════════════════════════════
+    STEP 8: UPDATE EXISTING SCREENS (45 min)
+═══════════════════════════════════════════════════════════════
+
+a) PaymentRequestScreen updates:
+- Add "Pay with Card" option alongside PayID/Bank Transfer
+- Button: "Pay $25.50 with Card" → Navigate to PayScreen
+- Only show if recipient has Stripe connected
+
+b) SplitDetailScreen updates:
+- For each participant, show payment method used
+- If Stripe payment: Show "Paid via Card ✓" with timestamp
+- Add "Request Payment" button → creates payment request
+
+c) ProfileScreen updates:
+- Add "Payment Settings" section
+- Show Stripe connection status
+- Link to ConnectStripeScreen
+- Link to PaymentHistoryScreen
+
+═══════════════════════════════════════════════════════════════
+    STEP 9: UPDATE NAVIGATION (15 min)
+═══════════════════════════════════════════════════════════════
+
+Add to SplitFlowParamList:
+```typescript
+PayScreen: {
+  splitId: string;
+  participantId: string;
+  recipientId: string;
+  amount: number;
+};
+```
+
+Add to MainNavigator:
+```typescript
+ConnectStripe: undefined;
+PaymentHistory: undefined;
+```
+
+Register screens in navigators
+
+═══════════════════════════════════════════════════════════════
+    STEP 10: ENVIRONMENT SETUP (10 min)
+═══════════════════════════════════════════════════════════════
+
+- Get Stripe account (test mode)
+- Add to .env:
+  ```
+  EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+  STRIPE_SECRET_KEY=sk_test_... (for Edge Functions only)
+  ```
+- Add .env.example template
+- Update .gitignore to exclude .env
+
+═══════════════════════════════════════════════════════════════
+    STEP 11: TESTING (30 min)
+═══════════════════════════════════════════════════════════════
+
+Test Cases:
+1. User connects Stripe account (onboarding flow)
+2. User makes payment with test card (4242 4242 4242 4242)
+3. Payment succeeds → Split marked as paid
+4. Test card decline (4000 0000 0000 0002)
+5. Payment history shows transaction
+6. Recipient sees payment in their account
+
+Test Mode: Use Stripe test cards, no real money
+
+═══════════════════════════════════════════════════════════════
+    STEP 12: POLISH & ERROR HANDLING (30 min)
+═══════════════════════════════════════════════════════════════
+
+- Add loading skeletons
+- Improve error messages ("Card declined", "Network error", etc.)
+- Add haptic feedback on success
+- Add success animations (Lottie or confetti)
+- Handle edge cases (no internet, Stripe API down)
+
+═══════════════════════════════════════════════════════════════
+    SUMMARY OF CHANGES
+═══════════════════════════════════════════════════════════════
+
+NEW FILES (9):
+1. src/services/stripeService.ts
+2. src/screens/settings/ConnectStripeScreen.tsx
+3. src/screens/splits/PayScreen.tsx
+4. src/screens/payments/PaymentHistoryScreen.tsx
+5. supabase/migrations/add-stripe-fields.sql
+6. supabase/functions/create-payment-intent/index.ts
+7. supabase/functions/create-connect-account/index.ts
+8. supabase/functions/stripe-webhook/index.ts
+9. supabase/functions/get-account-status/index.ts
+
+MODIFIED FILES (6):
+1. src/types/navigation.ts (add screen types)
+2. src/navigation/SplitFlowNavigator.tsx (add PayScreen)
+3. src/navigation/MainNavigator.tsx (add settings screens)
+4. src/screens/splits/PaymentRequestScreen.tsx (add Stripe option)
+5. src/screens/splits/SplitDetailScreen.tsx (show payment method)
+6. src/screens/profile/ProfileScreen.tsx (add payment settings)
+
+TOTAL ESTIMATED TIME: 5-6 hours of coding
+
+═══════════════════════════════════════════════════════════════
+    NOTE
+═══════════════════════════════════════════════════════════════
+
+This keeps existing PayID/Bank Transfer methods intact and adds
+Stripe as a third "premium" option for instant, secure payments.
