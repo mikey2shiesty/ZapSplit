@@ -47,6 +47,23 @@ export interface Payment {
   status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'refunded';
   created_at: string;
   paid_at: string | null;
+  // Nested relationship data returned by Supabase queries
+  payer?: {
+    id: string;
+    email: string;
+    full_name: string;
+    avatar_url: string | null;
+  };
+  receiver?: {
+    id: string;
+    email: string;
+    full_name: string;
+    avatar_url: string | null;
+  };
+  split?: {
+    id: string;
+    title: string;
+  };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
