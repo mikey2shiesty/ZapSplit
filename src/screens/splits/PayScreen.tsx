@@ -11,7 +11,7 @@ import {
 import { StackScreenProps } from '@react-navigation/stack';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { useStripe } from '@stripe/stripe-react-native';
 import { createPayment, calculateFees, checkAccountStatus } from '../../services/stripeService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -23,6 +23,9 @@ type PayScreenProps = StackScreenProps<SplitFlowParamList, 'PayScreen'>;
 
 export default function PayScreen({ navigation, route }: PayScreenProps) {
   const { splitId, participantId, recipientId, amount } = route.params;
+
+  // Get Stripe functions from hook
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -109,7 +112,14 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Create payment and present Stripe payment sheet
-      const result = await createPayment(currentUserId, recipientId, amount, splitId);
+      const result = await createPayment(
+        currentUserId,
+        recipientId,
+        amount,
+        splitId,
+        initPaymentSheet,
+        presentPaymentSheet
+      );
 
       if (result.success) {
         // Payment successful!

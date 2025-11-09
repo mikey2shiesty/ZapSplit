@@ -46,6 +46,13 @@
         {
           "photosPermission": "Allow ZapSplit to access your photos to upload receipts."
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.yourname.zapsplit",
+          "enableGooglePay": false
+        }
       ]
     ]
   }

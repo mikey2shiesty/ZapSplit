@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { supabase } from './supabase';
-import {  initPaymentSheet, presentPaymentSheet } from '@stripe/stripe-react-native';
+// Note: Stripe functions (initPaymentSheet, presentPaymentSheet) should be
+// accessed via useStripe() hook in components, not imported directly here
 
 export interface PaymentFeeBreakdown {
   amount: number;
@@ -134,7 +135,9 @@ export async function createPayment(
   fromUserId: string,
   toUserId: string,
   amount: number,
-  splitId: string
+  splitId: string,
+  initPaymentSheet: any, // Pass from useStripe() hook
+  presentPaymentSheet: any // Pass from useStripe() hook
 ): Promise<CreatePaymentResult> {
   try {
     // Call Edge Function to create payment intent
