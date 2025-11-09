@@ -169,11 +169,8 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
     return null; // Alert already shown
   }
 
-  const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-
   return (
-    <StripeProvider publishableKey={publishableKey}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Pay with Card</Text>
@@ -268,7 +265,6 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
           style={styles.cancelButton}
         />
       </ScrollView>
-    </StripeProvider>
   );
 }
 
