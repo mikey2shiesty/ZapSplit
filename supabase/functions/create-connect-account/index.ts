@@ -7,7 +7,13 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+// Validate Stripe key is present
+const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+if (!stripeKey) {
+  console.error('CRITICAL: STRIPE_SECRET_KEY environment variable is not set');
+}
+
+const stripe = new Stripe(stripeKey || '', {
   apiVersion: '2023-10-16',
   httpClient: Stripe.createFetchHttpClient(),
 });
@@ -38,6 +44,7 @@ serve(async (req) => {
 
     // Get request body
     const { userId, email, refreshUrl, returnUrl } = await req.json();
+    console.log('Request received for userId:', userId, 'email:', email);
 
     // Validate input
     if (!userId || !email) {
@@ -51,6 +58,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if user already has a Connect account
+    console.log('Fetching profile for user:', userId);
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('stripe_connect_account_id, stripe_connect_onboarding_complete')
@@ -58,67 +66,111 @@ serve(async (req) => {
       .single();
 
     if (profileError) {
+      console.error('Profile fetch error:', profileError);
       return new Response(
-        JSON.stringify({ error: 'User not found' }),
+        JSON.stringify({ error: 'User not found', details: profileError.message }),
         { status: 404, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     let accountId = profile.stripe_connect_account_id;
+    console.log('Existing account ID:', accountId);
 
     // Create Connect account if doesn't exist
     if (!accountId) {
-      const account = await stripe.accounts.create({
-        type: 'express',
-        email: email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: 'individual',
-        metadata: {
-          userId: userId,
-        },
-      });
+      console.log('Creating new Stripe Connect account for:', email);
 
-      accountId = account.id;
+      try {
+        const account = await stripe.accounts.create({
+          type: 'express',
+          email: email,
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+          business_type: 'individual',
+          metadata: {
+            userId: userId,
+          },
+        });
 
-      // Save account ID to profile
-      await supabase
-        .from('profiles')
-        .update({
-          stripe_connect_account_id: accountId,
-          stripe_connect_onboarding_complete: false,
-        })
-        .eq('id', userId);
+        accountId = account.id;
+        console.log('Successfully created Stripe account:', accountId);
+
+        // Save account ID to profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            stripe_connect_account_id: accountId,
+            stripe_connect_onboarding_complete: false,
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Failed to update profile with account ID:', updateError);
+        }
+      } catch (stripeError: any) {
+        console.error('Stripe account creation failed:', {
+          message: stripeError.message,
+          type: stripeError.type,
+          code: stripeError.code,
+          statusCode: stripeError.statusCode,
+          raw: stripeError.raw,
+        });
+        throw stripeError;
+      }
     }
 
     // Create Account Link for onboarding
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: refreshUrl || `exp://zapsplit/connect-stripe?refresh=true`,
-      return_url: returnUrl || `exp://zapsplit/connect-stripe?success=true`,
-      type: 'account_onboarding',
+    console.log('Creating account link for:', accountId);
+    try {
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: refreshUrl || `exp://zapsplit/connect-stripe?refresh=true`,
+        return_url: returnUrl || `exp://zapsplit/connect-stripe?success=true`,
+        type: 'account_onboarding',
+      });
+
+      console.log('Successfully created account link, expires:', accountLink.expires_at);
+
+      return new Response(
+        JSON.stringify({
+          accountId: accountId,
+          onboardingUrl: accountLink.url,
+          expiresAt: accountLink.expires_at,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    } catch (stripeError: any) {
+      console.error('Stripe account link creation failed:', {
+        message: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code,
+        statusCode: stripeError.statusCode,
+        raw: stripeError.raw,
+      });
+      throw stripeError;
+    }
+  } catch (error: any) {
+    console.error('Error creating Connect account:', {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      stack: error.stack,
     });
 
     return new Response(
       JSON.stringify({
-        accountId: accountId,
-        onboardingUrl: accountLink.url,
-        expiresAt: accountLink.expires_at,
+        error: error.message || 'Internal server error',
+        type: error.type || 'unknown',
+        code: error.code || 'unknown',
       }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
-  } catch (error) {
-    console.error('Error creating Connect account:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
       {
         status: 500,
         headers: {
