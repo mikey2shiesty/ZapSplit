@@ -64,9 +64,8 @@ export default function ConnectStripeScreen() {
       // Create Connect account and get onboarding URL
       const result = await createConnectAccount(
         currentUserId,
-        userEmail,
-        'zapsplit://connect-stripe?refresh=true',
-        'zapsplit://connect-stripe?success=true'
+        userEmail
+        // Using default HTTPS URLs from Edge Function
       );
 
       if (!result) {
