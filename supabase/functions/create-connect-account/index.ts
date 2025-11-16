@@ -126,8 +126,8 @@ serve(async (req) => {
     try {
       const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: refreshUrl || `exp://zapsplit/connect-stripe?refresh=true`,
-        return_url: returnUrl || `exp://zapsplit/connect-stripe?success=true`,
+        refresh_url: refreshUrl || `https://zapsplit.app/stripe-refresh`,
+        return_url: returnUrl || `https://zapsplit.app/stripe-return`,
         type: 'account_onboarding',
       });
 
