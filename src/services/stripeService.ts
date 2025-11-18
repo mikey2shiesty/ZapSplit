@@ -107,6 +107,8 @@ export async function createConnectAccount(
 
     if (error) {
       console.error('Error creating Connect account:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error data response:', data);
       throw new Error(error.message);
     }
 
