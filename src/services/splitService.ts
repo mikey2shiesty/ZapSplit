@@ -182,6 +182,8 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
+  console.log('[getUserSplits] Fetching splits for user:', user.id);
+
   // Get splits where user is creator
   const { data: createdSplits, error: createdError } = await supabase
     .from('splits')
@@ -190,6 +192,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     .order('created_at', { ascending: false });
 
   if (createdError) throw createdError;
+  console.log('[getUserSplits] Created splits count:', createdSplits?.length || 0);
 
   // Get splits where user is participant
   const { data: participantSplits, error: participantError } = await supabase
@@ -200,6 +203,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
   if (participantError) throw participantError;
 
   const participantSplitIds = participantSplits?.map(p => p.split_id) || [];
+  console.log('[getUserSplits] Participant split IDs count:', participantSplitIds.length);
 
   let participatedSplits: Split[] = [];
   if (participantSplitIds.length > 0) {
@@ -212,12 +216,14 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     if (participatedError) throw participatedError;
     participatedSplits = data || [];
   }
+  console.log('[getUserSplits] Participated splits count:', participatedSplits.length);
 
   // Combine and deduplicate
   const allSplits = [...(createdSplits || []), ...participatedSplits];
   const uniqueSplits = Array.from(
     new Map(allSplits.map(split => [split.id, split])).values()
   );
+  console.log('[getUserSplits] Total unique splits:', uniqueSplits.length);
 
   // Fetch participants for each split
   const splitsWithParticipants = await Promise.all(
@@ -240,6 +246,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     })
   );
 
+  console.log('[getUserSplits] Returning', splitsWithParticipants.length, 'splits with participants');
   return splitsWithParticipants;
 }
 
