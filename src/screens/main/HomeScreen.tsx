@@ -149,6 +149,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </View>
           )}
 
+          {/* DEBUG: Show split count */}
+          <View style={{padding: 20, backgroundColor: '#ffeb3b', marginVertical: 10}}>
+            <Text style={{fontSize: 16, fontWeight: 'bold'}}>DEBUG INFO:</Text>
+            <Text>Total splits loaded: {splits.length}</Text>
+            <Text>Has recent splits: {hasRecentSplits ? 'YES' : 'NO'}</Text>
+            <Text>Is new user: {isNewUser ? 'YES' : 'NO'}</Text>
+            <Text>Loading: {loading ? 'YES' : 'NO'}</Text>
+          </View>
+
           {/* Recent Splits - Only when user has splits */}
           {hasRecentSplits && (
             <View>
