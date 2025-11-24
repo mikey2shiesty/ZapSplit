@@ -88,6 +88,15 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </View>
           </Card>
+          <TouchableOpacity onPress={() => navigation.navigate('NotificationSettings')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="notifications-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Notification Settings</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
           <Card style={styles.menuCard}>
             <View style={styles.menuItemRow}>
               <Ionicons name="settings-outline" size={20} color={colors.text} />

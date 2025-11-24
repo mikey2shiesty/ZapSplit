@@ -18,6 +18,9 @@ export type RootStackParamList = {
   CreateGroup: undefined;
   GroupDetail: { groupId: string };
   AddGroupMembers: { groupId: string };
+  // Notifications
+  Notifications: undefined;
+  NotificationSettings: undefined;
 };
 
 // Bottom Tab Navigation Types

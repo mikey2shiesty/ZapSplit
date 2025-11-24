@@ -19,6 +19,9 @@ import FriendProfileScreen from '../screens/friends/FriendProfileScreen';
 import GroupsScreen from '../screens/groups/GroupsScreen';
 import CreateGroupScreen from '../screens/groups/CreateGroupScreen';
 import GroupDetailScreen from '../screens/groups/GroupDetailScreen';
+// Notification screens
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import NotificationSettingsScreen from '../screens/notifications/NotificationSettingsScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -204,6 +207,24 @@ export default function MainNavigator() {
         component={GroupDetailScreen}
         options={{
           presentation: 'card',
+          headerShown: false,
+        }}
+      />
+
+      {/* Notification Screens */}
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{
+          presentation: 'modal',
           headerShown: false,
         }}
       />

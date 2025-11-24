@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { HomeScreenProps } from '../../types/navigation';
@@ -20,16 +21,32 @@ import GetStartedCard from '../../components/onboarding/GetStartedCard';
 import RecentSplitCard from '../../components/splits/RecentSplitCard';
 import ActivityItem from '../../components/activity/ActivityItem';
 import { format } from 'date-fns';
+import { getUnreadCount, registerForPushNotifications } from '../../services/notificationService';
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
   const { splits, loading, stats, refresh, hasRecentSplits, isNewUser } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('1W');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
 
   const periods = ['1D', '1W', '1M', 'All'];
+
+  // Register for push notifications on mount
+  useEffect(() => {
+    registerForPushNotifications();
+  }, []);
+
+  // Load unread notification count when screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) {
+        getUnreadCount(user.id).then(setUnreadCount);
+      }
+    }, [user?.id])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -59,10 +76,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Ionicons name="gift-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconButton}>
-          <View style={styles.notificationBadge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('Notifications')}
+        >
+          {unreadCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
           <Ionicons name="notifications-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
       </View>
