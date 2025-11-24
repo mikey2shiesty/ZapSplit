@@ -209,11 +209,26 @@ export default function FriendsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : activeTab === 'friends' ? (
+        <FlatList
+          data={filteredFriends}
+          keyExtractor={(item) => item.friendship_id}
+          renderItem={renderFriendItem}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        />
       ) : (
         <FlatList
-          data={activeTab === 'friends' ? filteredFriends : requests}
+          data={requests}
           keyExtractor={(item) => item.id}
-          renderItem={activeTab === 'friends' ? renderFriendItem : renderRequestItem}
+          renderItem={renderRequestItem}
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={styles.listContent}
           refreshControl={
