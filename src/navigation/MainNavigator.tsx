@@ -15,6 +15,7 @@ const PaymentHistoryScreen = require('../screens/payments/PaymentHistoryScreen')
 import FriendsScreen from '../screens/friends/FriendsScreen';
 import AddFriendScreen from '../screens/friends/AddFriendScreen';
 import FriendRequestsScreen from '../screens/friends/FriendRequestsScreen';
+import FriendProfileScreen from '../screens/friends/FriendProfileScreen';
 import GroupsScreen from '../screens/groups/GroupsScreen';
 import CreateGroupScreen from '../screens/groups/CreateGroupScreen';
 import GroupDetailScreen from '../screens/groups/GroupDetailScreen';
@@ -169,6 +170,14 @@ export default function MainNavigator() {
         component={FriendRequestsScreen}
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="FriendProfile"
+        component={FriendProfileScreen}
+        options={{
+          presentation: 'card',
           headerShown: false,
         }}
       />
