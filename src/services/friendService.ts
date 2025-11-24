@@ -292,14 +292,17 @@ export async function getFriendProfile(userId: string, friendId: string): Promis
 
     if (profileError) throw profileError;
 
-    const { data: friendship, error: friendshipError } = await supabase
+    const { data: friendships, error: friendshipError } = await supabase
       .from('friendships')
       .select('id, favorite')
       .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
       .eq('status', 'accepted')
-      .single();
+      .limit(1);
 
     if (friendshipError) throw friendshipError;
+    if (!friendships || friendships.length === 0) throw new Error('Friendship not found');
+
+    const friendship = friendships[0];
 
     const { data: userSplits } = await supabase
       .from('split_participants')
