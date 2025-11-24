@@ -22,6 +22,9 @@ import GroupDetailScreen from '../screens/groups/GroupDetailScreen';
 // Notification screens
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import NotificationSettingsScreen from '../screens/notifications/NotificationSettingsScreen';
+// Privacy & Security screens
+import PrivacySettingsScreen from '../screens/settings/PrivacySettingsScreen';
+import BlockedUsersScreen from '../screens/settings/BlockedUsersScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -225,6 +228,24 @@ export default function MainNavigator() {
         component={NotificationSettingsScreen}
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+
+      {/* Privacy & Security Screens */}
+      <Stack.Screen
+        name="PrivacySettings"
+        component={PrivacySettingsScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="BlockedUsers"
+        component={BlockedUsersScreen}
+        options={{
+          presentation: 'card',
           headerShown: false,
         }}
       />

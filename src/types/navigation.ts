@@ -21,6 +21,9 @@ export type RootStackParamList = {
   // Notifications
   Notifications: undefined;
   NotificationSettings: undefined;
+  // Privacy & Security
+  PrivacySettings: undefined;
+  BlockedUsers: undefined;
 };
 
 // Bottom Tab Navigation Types

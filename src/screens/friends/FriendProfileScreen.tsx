@@ -17,6 +17,7 @@ import {
   removeFriend,
   FriendProfile
 } from '../../services/friendService';
+import { blockUser, reportUser, ReportReason } from '../../services/privacyService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -113,6 +114,83 @@ export default function FriendProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleBlockUser = () => {
+    Alert.alert(
+      'Block User',
+      `Block ${profile?.full_name}? They won't be able to see your profile or send you requests.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            if (!profile) return;
+
+            try {
+              setActionLoading(true);
+              // Remove friend first
+              await removeFriend(profile.friendship_id);
+              // Then block
+              const result = await blockUser(friendId);
+              if (result.success) {
+                Alert.alert('Blocked', `${profile.full_name} has been blocked.`);
+                navigation.goBack();
+              } else {
+                Alert.alert('Error', result.error || 'Failed to block user');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to block user');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleReportUser = () => {
+    Alert.alert(
+      'Report User',
+      'Why are you reporting this user?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Spam',
+          onPress: () => submitReport('spam'),
+        },
+        {
+          text: 'Harassment',
+          onPress: () => submitReport('harassment'),
+        },
+        {
+          text: 'Fraud',
+          onPress: () => submitReport('fraud'),
+        },
+        {
+          text: 'Other',
+          onPress: () => submitReport('other'),
+        },
+      ]
+    );
+  };
+
+  const submitReport = async (reason: ReportReason) => {
+    try {
+      setActionLoading(true);
+      const result = await reportUser(friendId, reason);
+      if (result.success) {
+        Alert.alert('Report Submitted', 'Thank you for your report. We will review it shortly.');
+      } else {
+        Alert.alert('Error', result.error || 'Failed to submit report');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit report');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading) {
@@ -237,6 +315,8 @@ export default function FriendProfileScreen() {
 
         {/* Danger Zone */}
         <View style={styles.dangerSection}>
+          <Text style={styles.dangerSectionTitle}>Manage</Text>
+
           <TouchableOpacity
             style={styles.dangerButton}
             onPress={handleRemoveFriend}
@@ -244,6 +324,24 @@ export default function FriendProfileScreen() {
           >
             <Ionicons name="person-remove-outline" size={20} color={colors.error} />
             <Text style={styles.dangerButtonText}>Remove Friend</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.dangerButton, styles.blockButton]}
+            onPress={handleBlockUser}
+            disabled={actionLoading}
+          >
+            <Ionicons name="ban-outline" size={20} color={colors.error} />
+            <Text style={styles.dangerButtonText}>Block User</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.dangerButton, styles.reportButton]}
+            onPress={handleReportUser}
+            disabled={actionLoading}
+          >
+            <Ionicons name="flag-outline" size={20} color={colors.warning} />
+            <Text style={[styles.dangerButtonText, { color: colors.warning }]}>Report User</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -414,5 +512,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.error,
+  },
+  dangerSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gray500,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  blockButton: {
+    marginTop: 8,
+  },
+  reportButton: {
+    marginTop: 8,
+    borderColor: colors.warning,
   },
 });

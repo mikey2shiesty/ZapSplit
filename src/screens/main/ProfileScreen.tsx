@@ -97,13 +97,15 @@ export default function ProfileScreen() {
               </View>
             </Card>
           </TouchableOpacity>
-          <Card style={styles.menuCard}>
-            <View style={styles.menuItemRow}>
-              <Ionicons name="settings-outline" size={20} color={colors.text} />
-              <Text style={styles.menuItem}>Settings</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </Card>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacySettings')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Privacy & Security</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
         </View>
 
         <Button
