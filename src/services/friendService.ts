@@ -77,7 +77,18 @@ export async function getFriends(userId: string): Promise<Friend[]> {
     if (error) throw error;
     if (!friendships || friendships.length === 0) return [];
 
-    const friendUserIds = friendships.map(f => f.user_id === userId ? f.friend_id : f.user_id);
+    // Deduplicate: if there are bidirectional records, only keep one per friend
+    const seenFriendIds = new Set<string>();
+    const uniqueFriendships = friendships.filter(f => {
+      const friendId = f.user_id === userId ? f.friend_id : f.user_id;
+      if (seenFriendIds.has(friendId)) {
+        return false;
+      }
+      seenFriendIds.add(friendId);
+      return true;
+    });
+
+    const friendUserIds = uniqueFriendships.map(f => f.user_id === userId ? f.friend_id : f.user_id);
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, email, full_name, username, avatar_url, phone_number')
@@ -85,7 +96,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
 
     if (profileError) throw profileError;
 
-    const friends: Friend[] = friendships.map(friendship => {
+    const friends: Friend[] = uniqueFriendships.map(friendship => {
       const friendId = friendship.user_id === userId ? friendship.friend_id : friendship.user_id;
       const profile = profiles?.find(p => p.id === friendId);
       return {
