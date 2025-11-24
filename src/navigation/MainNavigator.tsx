@@ -11,6 +11,13 @@ import SplitFlowNavigator from './SplitFlowNavigator';
 // Lazy load Stripe screens to avoid initialization errors
 const ConnectStripeScreen = require('../screens/settings/ConnectStripeScreen').default;
 const PaymentHistoryScreen = require('../screens/payments/PaymentHistoryScreen').default;
+// Friends & Groups screens
+import FriendsScreen from '../screens/friends/FriendsScreen';
+import AddFriendScreen from '../screens/friends/AddFriendScreen';
+import FriendRequestsScreen from '../screens/friends/FriendRequestsScreen';
+import GroupsScreen from '../screens/groups/GroupsScreen';
+import CreateGroupScreen from '../screens/groups/CreateGroupScreen';
+import GroupDetailScreen from '../screens/groups/GroupDetailScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -136,6 +143,58 @@ export default function MainNavigator() {
         component={PaymentHistoryScreen}
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+
+      {/* Friends Screens */}
+      <Stack.Screen
+        name="Friends"
+        component={FriendsScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="AddFriend"
+        component={AddFriendScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="FriendRequests"
+        component={FriendRequestsScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+
+      {/* Groups Screens */}
+      <Stack.Screen
+        name="Groups"
+        component={GroupsScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{
+          presentation: 'card',
           headerShown: false,
         }}
       />

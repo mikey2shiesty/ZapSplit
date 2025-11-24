@@ -9,6 +9,15 @@ export type RootStackParamList = {
   SplitFlow: undefined;
   ConnectStripe: undefined;
   PaymentHistory: undefined;
+  // Friends & Groups
+  Friends: undefined;
+  AddFriend: undefined;
+  FriendRequests: undefined;
+  FriendProfile: { friendId: string };
+  Groups: undefined;
+  CreateGroup: undefined;
+  GroupDetail: { groupId: string };
+  AddGroupMembers: { groupId: string };
 };
 
 // Bottom Tab Navigation Types

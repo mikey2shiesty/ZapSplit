@@ -56,6 +56,30 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Social</Text>
+
+          <TouchableOpacity onPress={() => navigation.navigate('Friends')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="people-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Friends</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate('Groups')}>
+            <Card style={styles.menuCard}>
+              <View style={styles.menuItemRow}>
+                <Ionicons name="people-circle-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Groups</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <Card style={styles.menuCard}>
             <View style={styles.menuItemRow}>
