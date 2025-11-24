@@ -179,10 +179,12 @@ export interface SplitWithParticipants extends Split {
  * Get all splits for current user (as creator or participant) with participant data
  */
 export async function getUserSplits(): Promise<SplitWithParticipants[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) {
+    console.error('[getUserSplits] Auth error:', authError);
+    throw new Error('Authentication error');
+  }
   if (!user) throw new Error('User not authenticated');
-
-  console.log('[getUserSplits] Fetching splits for user:', user.id);
 
   // Get splits where user is creator
   const { data: createdSplits, error: createdError } = await supabase
@@ -192,7 +194,6 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     .order('created_at', { ascending: false });
 
   if (createdError) throw createdError;
-  console.log('[getUserSplits] Created splits count:', createdSplits?.length || 0);
 
   // Get splits where user is participant
   const { data: participantSplits, error: participantError } = await supabase
@@ -203,7 +204,6 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
   if (participantError) throw participantError;
 
   const participantSplitIds = participantSplits?.map(p => p.split_id) || [];
-  console.log('[getUserSplits] Participant split IDs count:', participantSplitIds.length);
 
   let participatedSplits: Split[] = [];
   if (participantSplitIds.length > 0) {
@@ -216,14 +216,12 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     if (participatedError) throw participatedError;
     participatedSplits = data || [];
   }
-  console.log('[getUserSplits] Participated splits count:', participatedSplits.length);
 
   // Combine and deduplicate
   const allSplits = [...(createdSplits || []), ...participatedSplits];
   const uniqueSplits = Array.from(
     new Map(allSplits.map(split => [split.id, split])).values()
   );
-  console.log('[getUserSplits] Total unique splits:', uniqueSplits.length);
 
   // Fetch participants for each split
   const splitsWithParticipants = await Promise.all(
@@ -246,8 +244,12 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     })
   );
 
-  console.log('[getUserSplits] Returning', splitsWithParticipants.length, 'splits with participants');
-  return splitsWithParticipants;
+  // Sort by created_at descending to ensure newest first
+  const sortedSplits = splitsWithParticipants.sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  return sortedSplits;
 }
 
 /**
@@ -401,12 +403,21 @@ export async function markParticipantAsPaid(
   participantId: string,
   splitId: string
 ): Promise<SplitParticipant> {
-  // Update participant to paid
+  // First get the participant to know their amount_owed
+  const { data: existingParticipant, error: fetchError } = await supabase
+    .from('split_participants')
+    .select('amount_owed')
+    .eq('id', participantId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Update participant to paid with amount_paid = amount_owed
   const { data: participant, error } = await supabase
     .from('split_participants')
     .update({
       status: 'paid',
-      amount_paid: supabase.raw('amount_owed'), // Set amount_paid = amount_owed
+      amount_paid: existingParticipant.amount_owed,
     })
     .eq('id', participantId)
     .select()

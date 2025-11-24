@@ -36,17 +36,15 @@ export interface ConnectAccountStatus {
 export interface Payment {
   id: string;
   split_id: string;
-  payer_id: string;
-  receiver_id: string;
+  from_user_id: string;
+  to_user_id: string;
   amount: number;
-  fee_amount: number;
-  payer_total: number;
-  receiver_total: number;
+  stripe_fee_amount: number | null;
   payment_method: string;
-  stripe_payment_id: string | null;
-  status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'refunded';
+  stripe_payment_intent_id: string | null;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
   created_at: string;
-  paid_at: string | null;
+  completed_at: string | null;
   // Nested relationship data returned by Supabase queries
   payer?: {
     id: string;
@@ -234,11 +232,11 @@ export async function getPaymentHistory(userId: string): Promise<Payment[]> {
       .from('payments')
       .select(`
         *,
-        payer:payer_id (id, email, full_name, avatar_url),
-        receiver:receiver_id (id, email, full_name, avatar_url),
+        payer:from_user_id (id, email, full_name, avatar_url),
+        receiver:to_user_id (id, email, full_name, avatar_url),
         split:split_id (id, title)
       `)
-      .or(`payer_id.eq.${userId},receiver_id.eq.${userId}`)
+      .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -262,10 +260,10 @@ export async function getPaymentsSent(userId: string): Promise<Payment[]> {
       .from('payments')
       .select(`
         *,
-        receiver:receiver_id (id, email, full_name, avatar_url),
+        receiver:to_user_id (id, email, full_name, avatar_url),
         split:split_id (id, title)
       `)
-      .eq('payer_id', userId)
+      .eq('from_user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -289,10 +287,10 @@ export async function getPaymentsReceived(userId: string): Promise<Payment[]> {
       .from('payments')
       .select(`
         *,
-        payer:payer_id (id, email, full_name, avatar_url),
+        payer:from_user_id (id, email, full_name, avatar_url),
         split:split_id (id, title)
       `)
-      .eq('receiver_id', userId)
+      .eq('to_user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -316,8 +314,8 @@ export async function getPaymentById(paymentId: string): Promise<Payment | null>
       .from('payments')
       .select(`
         *,
-        payer:payer_id (id, email, full_name, avatar_url),
-        receiver:receiver_id (id, email, full_name, avatar_url),
+        payer:from_user_id (id, email, full_name, avatar_url),
+        receiver:to_user_id (id, email, full_name, avatar_url),
         split:split_id (id, title)
       `)
       .eq('id', paymentId)

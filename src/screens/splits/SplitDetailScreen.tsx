@@ -24,14 +24,18 @@ import {
   SplitParticipant,
 } from '../../services/splitService';
 import { supabase } from '../../services/supabase';
+import { createPayment } from '../../services/stripeService';
+import { useStripe } from '@stripe/stripe-react-native';
 
 export default function SplitDetailScreen({ navigation, route }: SplitDetailScreenProps) {
   const { splitId } = route.params;
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [loading, setLoading] = useState(true);
   const [split, setSplit] = useState<SplitWithParticipants | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Load split details
   useEffect(() => {
@@ -161,6 +165,57 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
     }
   };
 
+  // Handle Pay Now - Stripe payment flow
+  const handlePayNow = async () => {
+    if (!split || !currentUserId) return;
+
+    // Find current user's participant record
+    const userParticipant = split.participants.find(p => p.user_id === currentUserId);
+    if (!userParticipant || userParticipant.status === 'paid') {
+      Alert.alert('Error', 'No payment required');
+      return;
+    }
+
+    const amountToPay = userParticipant.amount_owed;
+
+    try {
+      setPaymentLoading(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Create payment and show Stripe payment sheet
+      const result = await createPayment(
+        currentUserId,           // fromUserId (payer)
+        split.creator_id,        // toUserId (receiver/creator)
+        amountToPay,             // amount
+        splitId,                 // splitId
+        initPaymentSheet,        // from useStripe()
+        presentPaymentSheet      // from useStripe()
+      );
+
+      if (!result.success) {
+        if (result.error !== 'Canceled') {
+          Alert.alert('Payment Failed', result.error || 'Unknown error');
+        }
+        return;
+      }
+
+      // Payment successful - mark as paid in database
+      await markParticipantAsPaid(userParticipant.id, splitId);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Payment Successful!',
+        `You paid $${amountToPay.toFixed(2)} for "${split.title}"`,
+        [{ text: 'OK', onPress: () => refreshSplitDetails() }]
+      );
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      Alert.alert('Payment Error', error.message || 'Failed to process payment');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -184,6 +239,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   const isCreator = currentUserId === split.creator_id;
   const isSettled = split.status === 'settled';
+
+  // Check if current user owes money
+  const userParticipant = split.participants.find(p => p.user_id === currentUserId);
+  const userOwesMoney = userParticipant && userParticipant.amount_owed > 0 && userParticipant.status !== 'paid';
+  const amountOwed = userParticipant?.amount_owed || 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -262,6 +322,25 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
       {/* Action Bar */}
       <View style={styles.actionBar}>
+        {/* Pay Button - shown if user owes money */}
+        {userOwesMoney && (
+          <TouchableOpacity
+            style={styles.payButton}
+            onPress={handlePayNow}
+            activeOpacity={0.7}
+            disabled={paymentLoading}
+          >
+            {paymentLoading ? (
+              <ActivityIndicator size="small" color={colors.surface} />
+            ) : (
+              <>
+                <Ionicons name="card-outline" size={20} color={colors.surface} />
+                <Text style={styles.payButtonText}>Pay ${amountOwed.toFixed(2)}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity style={styles.actionButton} onPress={handleShare} activeOpacity={0.7}>
           <Ionicons name="share-outline" size={24} color={colors.primary} />
           <Text style={styles.actionButtonText}>Share</Text>
@@ -598,5 +677,21 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
     marginTop: 4,
+  },
+  payButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    gap: spacing.sm,
+    minWidth: 140,
+  },
+  payButtonText: {
+    ...typography.body,
+    color: colors.surface,
+    fontWeight: '700',
   },
 });

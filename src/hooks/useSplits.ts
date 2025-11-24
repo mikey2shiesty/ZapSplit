@@ -82,6 +82,7 @@ export function useSplits() {
     try {
       setLoading(true);
       setError(null);
+
       const splitsData = await getUserSplits();
       setSplits(splitsData);
 

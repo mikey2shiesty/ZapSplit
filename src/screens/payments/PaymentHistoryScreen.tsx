@@ -77,12 +77,13 @@ export default function PaymentHistoryScreen() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'succeeded':
+      case 'completed':
         return 'success' as const;
       case 'pending':
       case 'processing':
         return 'warning' as const;
       case 'failed':
+      case 'cancelled':
       case 'refunded':
         return 'error' as const;
       default:
@@ -92,7 +93,7 @@ export default function PaymentHistoryScreen() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'succeeded':
+      case 'completed':
         return 'Paid';
       case 'pending':
         return 'Pending';
@@ -100,6 +101,8 @@ export default function PaymentHistoryScreen() {
         return 'Processing';
       case 'failed':
         return 'Failed';
+      case 'cancelled':
+        return 'Cancelled';
       case 'refunded':
         return 'Refunded';
       default:
@@ -108,7 +111,7 @@ export default function PaymentHistoryScreen() {
   };
 
   const renderPaymentItem = ({ item }: { item: Payment }) => {
-    const isSent = item.payer_id === currentUserId;
+    const isSent = item.from_user_id === currentUserId;
     const otherPerson = isSent ? item.receiver : item.payer;
     const amountColor = isSent ? colors.error : colors.success;
     const prefix = isSent ? '-' : '+';
@@ -120,7 +123,7 @@ export default function PaymentHistoryScreen() {
           <View style={styles.paymentLeft}>
             <Avatar
               name={otherPerson?.full_name || 'Unknown'}
-              imageUrl={otherPerson?.avatar_url}
+              uri={otherPerson?.avatar_url || undefined}
               size="md"
             />
             <View style={styles.paymentInfo}>
@@ -153,10 +156,10 @@ export default function PaymentHistoryScreen() {
         </View>
 
         {/* Fee Info (for sent payments) */}
-        {isSent && item.fee_amount > 0 && (
+        {isSent && item.stripe_fee_amount && item.stripe_fee_amount > 0 && (
           <View style={styles.feeInfo}>
             <Text style={styles.feeText}>
-              Fee: ${item.fee_amount.toFixed(2)} • Total: ${item.payer_total.toFixed(2)}
+              Fee: ${item.stripe_fee_amount.toFixed(2)}
             </Text>
           </View>
         )}
