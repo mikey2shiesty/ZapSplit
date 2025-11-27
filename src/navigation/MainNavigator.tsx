@@ -25,6 +25,10 @@ import NotificationSettingsScreen from '../screens/notifications/NotificationSet
 // Privacy & Security screens
 import PrivacySettingsScreen from '../screens/settings/PrivacySettingsScreen';
 import BlockedUsersScreen from '../screens/settings/BlockedUsersScreen';
+// Settings & Profile screens
+import SettingsScreen from '../screens/settings/SettingsScreen';
+import EditProfileScreen from '../screens/settings/EditProfileScreen';
+import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -246,6 +250,32 @@ export default function MainNavigator() {
         component={BlockedUsersScreen}
         options={{
           presentation: 'card',
+          headerShown: false,
+        }}
+      />
+
+      {/* Settings & Profile Screens */}
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+        options={{
+          presentation: 'modal',
           headerShown: false,
         }}
       />

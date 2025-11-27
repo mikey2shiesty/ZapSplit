@@ -24,6 +24,10 @@ export type RootStackParamList = {
   // Privacy & Security
   PrivacySettings: undefined;
   BlockedUsers: undefined;
+  // Settings & Profile
+  Settings: undefined;
+  EditProfile: undefined;
+  ChangePassword: undefined;
 };
 
 // Bottom Tab Navigation Types

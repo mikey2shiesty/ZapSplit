@@ -81,27 +81,20 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
-          <Card style={styles.menuCard}>
-            <View style={styles.menuItemRow}>
-              <Ionicons name="person-outline" size={20} color={colors.text} />
-              <Text style={styles.menuItem}>Edit Profile</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </Card>
-          <TouchableOpacity onPress={() => navigation.navigate('NotificationSettings')}>
+          <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
             <Card style={styles.menuCard}>
               <View style={styles.menuItemRow}>
-                <Ionicons name="notifications-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Notification Settings</Text>
+                <Ionicons name="person-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Edit Profile</Text>
                 <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
             </Card>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('PrivacySettings')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
             <Card style={styles.menuCard}>
               <View style={styles.menuItemRow}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Privacy & Security</Text>
+                <Ionicons name="settings-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItem}>Settings</Text>
                 <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
             </Card>
