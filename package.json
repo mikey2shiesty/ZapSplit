@@ -16,6 +16,7 @@
     "@react-navigation/stack": "^7.4.10",
     "@stripe/stripe-react-native": "0.50.3",
     "@supabase/supabase-js": "^2.75.1",
+    "base64-arraybuffer": "^1.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "expo": "54.0.21",
