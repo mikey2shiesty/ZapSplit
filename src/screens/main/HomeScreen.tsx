@@ -358,7 +358,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Recent Splits</Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      navigation.navigate('Splits');
+                    }}
+                  >
                     <Text style={styles.viewAllText}>View all</Text>
                   </TouchableOpacity>
                 </View>
