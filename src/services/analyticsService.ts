@@ -68,7 +68,7 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
   const { data: participants } = await supabase
     .from('split_participants')
     .select(`
-      amount,
+      amount_owed,
       status,
       splits!inner (
         id,
@@ -89,10 +89,10 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
       totalSplits++;
       if (p.splits.creator_id === userId) {
         // User created this split, they received money
-        totalReceived += p.amount || 0;
+        totalReceived += p.amount_owed || 0;
       } else {
         // User participated, they spent money
-        totalSpent += p.amount || 0;
+        totalSpent += p.amount_owed || 0;
       }
     });
   }
@@ -120,7 +120,7 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
     const { data: participants } = await supabase
       .from('split_participants')
       .select(`
-        amount,
+        amount_owed,
         splits!inner (
           created_at,
           creator_id
@@ -131,7 +131,7 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
       .gte('splits.created_at', startOfMonth)
       .lte('splits.created_at', endOfMonth);
 
-    const total = participants?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
+    const total = participants?.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0) || 0;
 
     months.push({
       month: date.toLocaleDateString('en-AU', { month: 'short' }),
@@ -149,7 +149,7 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
   const { data: participants } = await supabase
     .from('split_participants')
     .select(`
-      amount,
+      amount_owed,
       splits!inner (
         title,
         description
@@ -179,7 +179,7 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
 
   participants.forEach((p: any) => {
     const text = `${p.splits.title || ''} ${p.splits.description || ''}`.toLowerCase();
-    const amount = p.amount || 0;
+    const amount = p.amount_owed || 0;
 
     if (foodKeywords.some(k => text.includes(k))) {
       categories['Food & Dining'].amount += amount;
@@ -226,7 +226,7 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
       id,
       split_participants (
         user_id,
-        amount,
+        amount_owed,
         profiles (
           id,
           full_name,
@@ -240,7 +240,7 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
   const { data: participatedSplits } = await supabase
     .from('split_participants')
     .select(`
-      amount,
+      amount_owed,
       splits!inner (
         id,
         creator_id,
@@ -269,7 +269,7 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
             splitCount: 0,
           };
         }
-        partnerMap[partnerId].totalAmount += p.amount || 0;
+        partnerMap[partnerId].totalAmount += p.amount_owed || 0;
         partnerMap[partnerId].splitCount++;
       }
     });
@@ -288,7 +288,7 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
           splitCount: 0,
         };
       }
-      partnerMap[partnerId].totalAmount += p.amount || 0;
+      partnerMap[partnerId].totalAmount += p.amount_owed || 0;
       partnerMap[partnerId].splitCount++;
     }
   });
@@ -313,7 +313,7 @@ export async function exportToCSV(): Promise<string> {
   const { data: participants } = await supabase
     .from('split_participants')
     .select(`
-      amount,
+      amount_owed,
       status,
       splits!inner (
         id,
@@ -327,7 +327,7 @@ export async function exportToCSV(): Promise<string> {
         )
       )
     `)
-    .eq('user_id', userId)
+    .eq('user_id', user.id)
     .order('splits.created_at', { ascending: false });
 
   if (!participants || participants.length === 0) {
@@ -340,7 +340,7 @@ export async function exportToCSV(): Promise<string> {
   // CSV Rows
   const rows = participants.map((p: any) => {
     const split = p.splits;
-    const isCreator = split.creator_id === userId;
+    const isCreator = split.creator_id === user.id;
     const date = new Date(split.created_at).toLocaleDateString('en-AU');
 
     return [
@@ -348,7 +348,7 @@ export async function exportToCSV(): Promise<string> {
       `"${(split.title || '').replace(/"/g, '""')}"`,
       `"${(split.description || '').replace(/"/g, '""')}"`,
       split.total_amount?.toFixed(2) || '0.00',
-      p.amount?.toFixed(2) || '0.00',
+      p.amount_owed?.toFixed(2) || '0.00',
       p.status || 'pending',
       `"${(split.profiles?.full_name || 'Unknown').replace(/"/g, '""')}"`,
       isCreator ? 'Received' : 'Paid',
