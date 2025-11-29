@@ -1132,7 +1132,6 @@ const styles = StyleSheet.create({
   // Request Modal Styles
   requestModalContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
   },
   requestModalBackdrop: {
     position: 'absolute',
@@ -1140,14 +1139,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.surface,
   },
   requestModalContent: {
+    flex: 1,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: Platform.OS === 'ios' ? 34 : spacing.lg,
-    maxHeight: '80%',
   },
   requestModalHeader: {
     flexDirection: 'row',
@@ -1169,6 +1167,7 @@ const styles = StyleSheet.create({
     color: colors.gray900,
   },
   requestStepContent: {
+    flex: 1,
     padding: spacing.lg,
   },
   requestStepLabel: {
@@ -1218,7 +1217,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   requestFriendsList: {
-    maxHeight: 350,
+    flex: 1,
   },
   requestFriendItem: {
     flexDirection: 'row',
