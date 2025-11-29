@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -24,6 +26,8 @@ import RecentSplitCard from '../../components/splits/RecentSplitCard';
 import ActivityItem from '../../components/activity/ActivityItem';
 import { format } from 'date-fns';
 import { getUnreadCount, registerForPushNotifications } from '../../services/notificationService';
+import { getFriends, Friend } from '../../services/friendService';
+import { createSplit } from '../../services/splitService';
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
@@ -34,6 +38,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  // Request modal state
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestStep, setRequestStep] = useState<'select' | 'amount'>('select');
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [requestAmount, setRequestAmount] = useState('');
+  const [requestNote, setRequestNote] = useState('');
+  const [sendingRequest, setSendingRequest] = useState(false);
 
   const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
 
@@ -76,6 +89,81 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const clearSearch = () => {
     setSearchQuery('');
     setShowSearchResults(false);
+  };
+
+  // Request modal functions
+  const openRequestModal = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowRequestModal(true);
+    setRequestStep('select');
+    setSelectedFriend(null);
+    setRequestAmount('');
+    setRequestNote('');
+
+    // Load friends
+    if (user?.id) {
+      setLoadingFriends(true);
+      try {
+        const friendsData = await getFriends(user.id);
+        setFriends(friendsData);
+      } catch (error) {
+        console.error('Error loading friends:', error);
+      } finally {
+        setLoadingFriends(false);
+      }
+    }
+  };
+
+  const closeRequestModal = () => {
+    setShowRequestModal(false);
+    setRequestStep('select');
+    setSelectedFriend(null);
+    setRequestAmount('');
+    setRequestNote('');
+  };
+
+  const selectFriendForRequest = (friend: Friend) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedFriend(friend);
+    setRequestStep('amount');
+  };
+
+  const sendRequest = async () => {
+    if (!selectedFriend || !requestAmount || !user) return;
+
+    const amount = parseFloat(requestAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid amount');
+      return;
+    }
+
+    setSendingRequest(true);
+    try {
+      await createSplit({
+        title: requestNote || `Request from ${user.email?.split('@')[0] || 'User'}`,
+        description: requestNote || undefined,
+        total_amount: amount,
+        currency: 'AUD',
+        split_method: 'custom',
+        participants: [
+          { user_id: user.id, amount_owed: 0 }, // Creator owes nothing
+          { user_id: selectedFriend.id, amount_owed: amount }, // Friend owes the full amount
+        ],
+      });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      closeRequestModal();
+      Alert.alert(
+        'Request Sent!',
+        `${selectedFriend.full_name} has been notified to pay you $${amount.toFixed(2)}`
+      );
+      refresh(); // Refresh splits list
+    } catch (error) {
+      console.error('Error sending request:', error);
+      Alert.alert('Error', 'Failed to send request. Please try again.');
+    } finally {
+      setSendingRequest(false);
+    }
   };
 
   return (
@@ -247,9 +335,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
+                onPress={openRequestModal}
               >
                 <Text style={styles.secondaryButtonText}>Request</Text>
               </TouchableOpacity>
@@ -445,6 +531,151 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </View>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Request Modal */}
+      <Modal
+        visible={showRequestModal}
+        transparent
+        animationType="slide"
+        onRequestClose={closeRequestModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.requestModalContainer}
+        >
+          <Pressable
+            style={styles.requestModalBackdrop}
+            onPress={closeRequestModal}
+          />
+          <View style={styles.requestModalContent}>
+            {/* Modal Header */}
+            <View style={styles.requestModalHeader}>
+              <TouchableOpacity
+                onPress={requestStep === 'amount' ? () => setRequestStep('select') : closeRequestModal}
+                style={styles.requestBackButton}
+              >
+                <Ionicons
+                  name={requestStep === 'amount' ? 'arrow-back' : 'close'}
+                  size={24}
+                  color={colors.gray700}
+                />
+              </TouchableOpacity>
+              <Text style={styles.requestModalTitle}>
+                {requestStep === 'select' ? 'Request Payment' : 'Enter Amount'}
+              </Text>
+              <View style={{ width: 40 }} />
+            </View>
+
+            {requestStep === 'select' ? (
+              /* Step 1: Select Friend */
+              <View style={styles.requestStepContent}>
+                <Text style={styles.requestStepLabel}>Select who to request from</Text>
+
+                {loadingFriends ? (
+                  <View style={styles.requestLoadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.requestLoadingText}>Loading friends...</Text>
+                  </View>
+                ) : friends.length === 0 ? (
+                  <View style={styles.requestEmptyState}>
+                    <Ionicons name="people-outline" size={48} color={colors.gray300} />
+                    <Text style={styles.requestEmptyTitle}>No friends yet</Text>
+                    <Text style={styles.requestEmptySubtitle}>
+                      Add some friends to send payment requests
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.requestAddFriendButton}
+                      onPress={() => {
+                        closeRequestModal();
+                        navigation.navigate('AddFriend');
+                      }}
+                    >
+                      <Ionicons name="person-add" size={20} color={colors.primary} />
+                      <Text style={styles.requestAddFriendText}>Add Friends</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.requestFriendsList}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {friends.map((friend) => (
+                      <TouchableOpacity
+                        key={friend.id}
+                        style={styles.requestFriendItem}
+                        onPress={() => selectFriendForRequest(friend)}
+                      >
+                        <View style={styles.requestFriendAvatar}>
+                          <Text style={styles.requestFriendInitial}>
+                            {friend.full_name?.charAt(0).toUpperCase() || '?'}
+                          </Text>
+                        </View>
+                        <View style={styles.requestFriendInfo}>
+                          <Text style={styles.requestFriendName}>{friend.full_name}</Text>
+                          <Text style={styles.requestFriendEmail}>{friend.email}</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ) : (
+              /* Step 2: Enter Amount */
+              <View style={styles.requestStepContent}>
+                <View style={styles.requestSelectedFriend}>
+                  <View style={styles.requestFriendAvatar}>
+                    <Text style={styles.requestFriendInitial}>
+                      {selectedFriend?.full_name?.charAt(0).toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                  <Text style={styles.requestSelectedName}>
+                    Request from {selectedFriend?.full_name}
+                  </Text>
+                </View>
+
+                <View style={styles.requestAmountContainer}>
+                  <Text style={styles.requestCurrency}>$</Text>
+                  <TextInput
+                    style={styles.requestAmountInput}
+                    placeholder="0.00"
+                    placeholderTextColor={colors.gray300}
+                    keyboardType="decimal-pad"
+                    value={requestAmount}
+                    onChangeText={setRequestAmount}
+                    autoFocus
+                  />
+                </View>
+
+                <TextInput
+                  style={styles.requestNoteInput}
+                  placeholder="Add a note (optional)"
+                  placeholderTextColor={colors.gray400}
+                  value={requestNote}
+                  onChangeText={setRequestNote}
+                  multiline
+                  maxLength={100}
+                />
+
+                <TouchableOpacity
+                  style={[
+                    styles.requestSendButton,
+                    (!requestAmount || sendingRequest) && styles.requestSendButtonDisabled,
+                  ]}
+                  onPress={sendRequest}
+                  disabled={!requestAmount || sendingRequest}
+                >
+                  {sendingRequest ? (
+                    <ActivityIndicator size="small" color={colors.textInverse} />
+                  ) : (
+                    <Text style={styles.requestSendButtonText}>Send Request</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -897,5 +1128,185 @@ const styles = StyleSheet.create({
   noSearchResultsSubtext: {
     fontSize: 14,
     color: colors.gray500,
+  },
+  // Request Modal Styles
+  requestModalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  requestModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  requestModalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingBottom: Platform.OS === 'ios' ? 34 : spacing.lg,
+    maxHeight: '80%',
+  },
+  requestModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray100,
+  },
+  requestBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.gray900,
+  },
+  requestStepContent: {
+    padding: spacing.lg,
+  },
+  requestStepLabel: {
+    fontSize: 15,
+    color: colors.gray600,
+    marginBottom: spacing.md,
+  },
+  requestLoadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxxl,
+    gap: spacing.md,
+  },
+  requestLoadingText: {
+    fontSize: 14,
+    color: colors.gray500,
+  },
+  requestEmptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+    gap: spacing.md,
+  },
+  requestEmptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.gray700,
+  },
+  requestEmptySubtitle: {
+    fontSize: 14,
+    color: colors.gray500,
+    textAlign: 'center',
+  },
+  requestAddFriendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary + '15',
+    borderRadius: radius.pill,
+    marginTop: spacing.md,
+  },
+  requestAddFriendText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  requestFriendsList: {
+    maxHeight: 350,
+  },
+  requestFriendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+    gap: spacing.md,
+  },
+  requestFriendAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestFriendInitial: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textInverse,
+  },
+  requestFriendInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  requestFriendName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.gray900,
+  },
+  requestFriendEmail: {
+    fontSize: 13,
+    color: colors.gray500,
+  },
+  requestSelectedFriend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+    justifyContent: 'center',
+  },
+  requestSelectedName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.gray700,
+  },
+  requestAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xl,
+  },
+  requestCurrency: {
+    fontSize: 48,
+    fontWeight: '300',
+    color: colors.gray400,
+  },
+  requestAmountInput: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: colors.gray900,
+    minWidth: 150,
+    textAlign: 'center',
+  },
+  requestNoteInput: {
+    backgroundColor: colors.gray50,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    fontSize: 15,
+    color: colors.gray900,
+    marginBottom: spacing.lg,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  requestSendButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestSendButtonDisabled: {
+    backgroundColor: colors.gray300,
+  },
+  requestSendButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textInverse,
   },
 });
