@@ -327,12 +327,18 @@ export async function exportToCSV(): Promise<string> {
         )
       )
     `)
-    .eq('user_id', user.id)
-    .order('splits.created_at', { ascending: false });
+    .eq('user_id', user.id);
 
   if (!participants || participants.length === 0) {
     return 'No data to export';
   }
+
+  // Sort by split date (newest first) - can't use .order() on joined tables
+  participants.sort((a: any, b: any) => {
+    const dateA = new Date(a.splits.created_at).getTime();
+    const dateB = new Date(b.splits.created_at).getTime();
+    return dateB - dateA;
+  });
 
   // CSV Header
   const headers = ['Date', 'Title', 'Description', 'Total Amount', 'Your Share', 'Status', 'Created By', 'Type'];
