@@ -28,6 +28,8 @@ export type RootStackParamList = {
   Settings: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
+  // Analytics
+  Analytics: undefined;
 };
 
 // Bottom Tab Navigation Types

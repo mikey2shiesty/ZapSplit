@@ -29,6 +29,8 @@ import BlockedUsersScreen from '../screens/settings/BlockedUsersScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import EditProfileScreen from '../screens/settings/EditProfileScreen';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
+// Analytics
+import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 import { colors } from '../constants/theme';
 import { RootStackParamList } from '../types/navigation';
 
@@ -276,6 +278,16 @@ export default function MainNavigator() {
         component={ChangePasswordScreen}
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+
+      {/* Analytics */}
+      <Stack.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{
+          presentation: 'card',
           headerShown: false,
         }}
       />

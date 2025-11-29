@@ -72,8 +72,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           />
         </View>
 
-        <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="gift-outline" size={24} color={colors.gray700} />
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('Analytics')}
+        >
+          <Ionicons name="stats-chart-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
 
         <TouchableOpacity
