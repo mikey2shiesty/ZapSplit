@@ -1,32 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getFriends,
-  searchFriends,
-  addFriend,
-  removeFriend,
-  getPendingFriendRequests,
+  getIncomingFriendRequests,
   acceptFriendRequest,
   declineFriendRequest,
+  removeFriend,
   Friend,
+  FriendRequest,
 } from '../services/friendService';
+import { useAuth } from './useAuth';
 
 export function useFriends() {
+  const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pendingRequests, setPendingRequests] = useState<Friend[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
 
   /**
    * Load friends from database
    */
   const loadFriends = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const friendsList = await getFriends();
+      const friendsList = await getFriends(user.id);
       setFriends(friendsList);
       setFilteredFriends(friendsList);
     } catch (err) {
@@ -35,58 +41,51 @@ export function useFriends() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   /**
    * Load pending friend requests
    */
   const loadPendingRequests = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
-      const requests = await getPendingFriendRequests();
+      const requests = await getIncomingFriendRequests(user.id);
       setPendingRequests(requests);
     } catch (err) {
       console.error('Error loading pending requests:', err);
     }
-  }, []);
+  }, [user?.id]);
 
   /**
-   * Search friends by name or email
+   * Search friends by name or email (local filter)
    */
   const handleSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
-      const results = searchFriends(friends, query);
+      if (!query.trim()) {
+        setFilteredFriends(friends);
+        return;
+      }
+      const lowerQuery = query.toLowerCase();
+      const results = friends.filter(
+        (friend) =>
+          friend.full_name?.toLowerCase().includes(lowerQuery) ||
+          friend.email?.toLowerCase().includes(lowerQuery)
+      );
       setFilteredFriends(results);
     },
     [friends]
   );
 
   /**
-   * Add a new friend by email
-   */
-  const handleAddFriend = useCallback(
-    async (email: string) => {
-      try {
-        setError(null);
-        await addFriend(email);
-        await loadFriends(); // Reload friends list
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to add friend';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
-    },
-    [loadFriends]
-  );
-
-  /**
    * Remove a friend
    */
   const handleRemoveFriend = useCallback(
-    async (friendId: string) => {
+    async (friendshipId: string) => {
       try {
         setError(null);
-        await removeFriend(friendId);
+        await removeFriend(friendshipId);
         await loadFriends(); // Reload friends list
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to remove friend';
@@ -101,9 +100,9 @@ export function useFriends() {
    * Accept friend request
    */
   const handleAcceptRequest = useCallback(
-    async (requestorId: string) => {
+    async (friendshipId: string) => {
       try {
-        await acceptFriendRequest(requestorId);
+        await acceptFriendRequest(friendshipId);
         await loadFriends();
         await loadPendingRequests();
       } catch (err) {
@@ -117,9 +116,9 @@ export function useFriends() {
    * Decline friend request
    */
   const handleDeclineRequest = useCallback(
-    async (requestorId: string) => {
+    async (friendshipId: string) => {
       try {
-        await declineFriendRequest(requestorId);
+        await declineFriendRequest(friendshipId);
         await loadPendingRequests();
       } catch (err) {
         console.error('Error declining friend request:', err);
@@ -159,7 +158,6 @@ export function useFriends() {
     pendingRequests,
     search: handleSearch,
     clearSearch,
-    addFriend: handleAddFriend,
     removeFriend: handleRemoveFriend,
     acceptRequest: handleAcceptRequest,
     declineRequest: handleDeclineRequest,

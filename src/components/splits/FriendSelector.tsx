@@ -14,7 +14,7 @@ import { colors } from '../../constants/theme';
 
 export interface Friend {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   avatar_url?: string;
 }
@@ -36,8 +36,8 @@ export default function FriendSelector({
 
   // Filter friends based on search
   const filteredFriends = friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    friend.email.toLowerCase().includes(searchQuery.toLowerCase())
+    friend.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    friend.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleToggleFriend = (friendId: string) => {
@@ -63,7 +63,7 @@ export default function FriendSelector({
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
               <Text style={styles.avatarText}>
-                {item.name.charAt(0).toUpperCase()}
+                {item.full_name?.charAt(0).toUpperCase() || '?'}
               </Text>
             </View>
           )}
@@ -78,7 +78,7 @@ export default function FriendSelector({
 
         {/* Friend Name */}
         <Text style={styles.friendName} numberOfLines={1}>
-          {item.name}
+          {item.full_name || 'Unknown'}
         </Text>
 
         {/* Friend Email (optional) */}
