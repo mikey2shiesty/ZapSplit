@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { LineChart, PieChart } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import {
@@ -232,51 +232,44 @@ export default function AnalyticsScreen() {
           )}
         </Card>
 
-        {/* Split Breakdown */}
+        {/* Split Breakdown - Modern horizontal bars */}
         <Text style={styles.sectionTitle}>Spending by Category</Text>
-        <Card variant="default" style={styles.chartCard}>
+        <Card variant="default" style={styles.categoryCard}>
           {analytics?.splitBreakdown && analytics.splitBreakdown.length > 0 ? (
-            <>
-              <PieChart
-                data={analytics.splitBreakdown.map((item, index) => ({
-                  name: item.category,
-                  amount: item.amount,
-                  color: pieColors[index % pieColors.length],
-                  legendFontColor: colors.gray700,
-                  legendFontSize: 12,
-                }))}
-                width={screenWidth - 64}
-                height={200}
-                chartConfig={chartConfig}
-                accessor="amount"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
-              <View style={styles.breakdownList}>
-                {analytics.splitBreakdown.map((item, index) => (
-                  <View key={item.category} style={styles.breakdownItem}>
-                    <View style={styles.breakdownLeft}>
+            <View style={styles.categoryList}>
+              {analytics.splitBreakdown.map((item, index) => (
+                <View key={item.category} style={styles.categoryItem}>
+                  <View style={styles.categoryHeader}>
+                    <View style={styles.categoryNameRow}>
                       <View
                         style={[
-                          styles.breakdownDot,
+                          styles.categoryDot,
                           { backgroundColor: pieColors[index % pieColors.length] },
                         ]}
                       />
-                      <Text style={styles.breakdownCategory}>{item.category}</Text>
+                      <Text style={styles.categoryName}>{item.category}</Text>
                     </View>
-                    <View style={styles.breakdownRight}>
-                      <Text style={styles.breakdownAmount}>
-                        {formatCurrency(item.amount)}
-                      </Text>
-                      <Text style={styles.breakdownPercentage}>
-                        {item.percentage.toFixed(0)}%
-                      </Text>
-                    </View>
+                    <Text style={styles.categoryAmount}>
+                      {formatCurrency(item.amount)}
+                    </Text>
                   </View>
-                ))}
-              </View>
-            </>
+                  <View style={styles.progressBarContainer}>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        {
+                          width: `${Math.max(item.percentage, 2)}%`,
+                          backgroundColor: pieColors[index % pieColors.length],
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.categoryPercentage}>
+                    {item.percentage.toFixed(0)}% of total
+                  </Text>
+                </View>
+              ))}
+            </View>
           ) : (
             <View style={styles.emptyChart}>
               <Ionicons name="pie-chart-outline" size={48} color={colors.gray300} />
@@ -449,44 +442,54 @@ const styles = StyleSheet.create({
     color: colors.gray400,
     marginTop: 12,
   },
-  breakdownList: {
-    marginTop: 16,
-    gap: 12,
+  categoryCard: {
+    padding: 16,
+    marginBottom: 24,
   },
-  breakdownItem: {
+  categoryList: {
+    gap: 20,
+  },
+  categoryItem: {
+    gap: 8,
+  },
+  categoryHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  breakdownLeft: {
+  categoryNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  breakdownDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  categoryDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  breakdownCategory: {
-    fontSize: 14,
-    color: colors.gray700,
+  categoryName: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.gray800,
   },
-  breakdownRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  breakdownAmount: {
-    fontSize: 14,
+  categoryAmount: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.gray900,
   },
-  breakdownPercentage: {
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: colors.gray100,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  categoryPercentage: {
     fontSize: 12,
     color: colors.gray500,
-    width: 36,
-    textAlign: 'right',
   },
   partnersCard: {
     padding: 0,
