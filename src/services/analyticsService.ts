@@ -219,7 +219,7 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
  * Get top split partners
  */
 async function getTopPartners(userId: string): Promise<TopPartner[]> {
-  // Get all splits where user is creator
+  // Get all splits where user is creator (with participant profiles)
   const { data: createdSplits } = await supabase
     .from('splits')
     .select(`
@@ -236,23 +236,39 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
     `)
     .eq('creator_id', userId);
 
-  // Get all splits where user is participant
+  // Get all splits where user is participant (simpler query without nested profiles)
   const { data: participatedSplits } = await supabase
     .from('split_participants')
     .select(`
       amount_owed,
       splits!inner (
         id,
-        creator_id,
-        profiles:creator_id (
-          id,
-          full_name,
-          avatar_url
-        )
+        creator_id
       )
     `)
     .eq('user_id', userId)
     .neq('splits.creator_id', userId);
+
+  // Collect unique creator IDs to fetch their profiles separately
+  const creatorIds = new Set<string>();
+  participatedSplits?.forEach((p: any) => {
+    if (p.splits?.creator_id) {
+      creatorIds.add(p.splits.creator_id);
+    }
+  });
+
+  // Fetch creator profiles separately
+  const creatorProfiles: Record<string, { full_name: string; avatar_url: string | null }> = {};
+  if (creatorIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .in('id', Array.from(creatorIds));
+
+    profiles?.forEach((p: any) => {
+      creatorProfiles[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+    });
+  }
 
   const partnerMap: Record<string, { name: string; avatarUrl: string | null; totalAmount: number; splitCount: number }> = {};
 
@@ -275,15 +291,15 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
     });
   });
 
-  // Process splits user participated in
+  // Process splits user participated in (using separately fetched profiles)
   participatedSplits?.forEach((p: any) => {
-    const creator = p.splits.profiles;
-    if (creator) {
-      const partnerId = p.splits.creator_id;
+    const partnerId = p.splits?.creator_id;
+    if (partnerId) {
+      const creatorProfile = creatorProfiles[partnerId];
       if (!partnerMap[partnerId]) {
         partnerMap[partnerId] = {
-          name: creator.full_name || 'Unknown',
-          avatarUrl: creator.avatar_url,
+          name: creatorProfile?.full_name || 'Unknown',
+          avatarUrl: creatorProfile?.avatar_url || null,
           totalAmount: 0,
           splitCount: 0,
         };
@@ -294,8 +310,8 @@ async function getTopPartners(userId: string): Promise<TopPartner[]> {
   });
 
   return Object.entries(partnerMap)
-    .map(([userId, data]) => ({
-      userId,
+    .map(([odUserId, data]) => ({
+      userId: odUserId,
       ...data,
     }))
     .sort((a, b) => b.totalAmount - a.totalAmount)
@@ -309,7 +325,7 @@ export async function exportToCSV(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  // Get all user's split participation
+  // Get all user's split participation (without nested profiles - not supported)
   const { data: participants } = await supabase
     .from('split_participants')
     .select(`
@@ -321,16 +337,34 @@ export async function exportToCSV(): Promise<string> {
         description,
         total_amount,
         created_at,
-        creator_id,
-        profiles:creator_id (
-          full_name
-        )
+        creator_id
       )
     `)
     .eq('user_id', user.id);
 
   if (!participants || participants.length === 0) {
     return 'No data to export';
+  }
+
+  // Collect unique creator IDs to fetch their profiles separately
+  const creatorIds = new Set<string>();
+  participants.forEach((p: any) => {
+    if (p.splits?.creator_id) {
+      creatorIds.add(p.splits.creator_id);
+    }
+  });
+
+  // Fetch creator profiles separately
+  const creatorProfiles: Record<string, string> = {};
+  if (creatorIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', Array.from(creatorIds));
+
+    profiles?.forEach((p: any) => {
+      creatorProfiles[p.id] = p.full_name || 'Unknown';
+    });
   }
 
   // Sort by split date (newest first) - can't use .order() on joined tables
@@ -348,6 +382,7 @@ export async function exportToCSV(): Promise<string> {
     const split = p.splits;
     const isCreator = split.creator_id === user.id;
     const date = new Date(split.created_at).toLocaleDateString('en-AU');
+    const creatorName = creatorProfiles[split.creator_id] || 'Unknown';
 
     return [
       date,
@@ -356,7 +391,7 @@ export async function exportToCSV(): Promise<string> {
       split.total_amount?.toFixed(2) || '0.00',
       p.amount_owed?.toFixed(2) || '0.00',
       p.status || 'pending',
-      `"${(split.profiles?.full_name || 'Unknown').replace(/"/g, '""')}"`,
+      `"${creatorName.replace(/"/g, '""')}"`,
       isCreator ? 'Received' : 'Paid',
     ].join(',');
   });
