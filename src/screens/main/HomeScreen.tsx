@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,6 +31,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('1W');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
 
@@ -59,7 +62,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     <View style={styles.container}>
       {/* Coinbase-style Top Navigation */}
       <View style={styles.topNav}>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowQuickActions(true);
+          }}
+        >
           <Ionicons name="grid-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
 
@@ -271,6 +280,89 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </View>
         </View>
       </ScrollView>
+
+      {/* Quick Actions Modal */}
+      <Modal
+        visible={showQuickActions}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQuickActions(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowQuickActions(false)}
+        >
+          <Pressable style={styles.quickActionsModal} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Quick Actions</Text>
+              <TouchableOpacity
+                onPress={() => setShowQuickActions(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={24} color={colors.gray500} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.quickActionsGrid}>
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowQuickActions(false);
+                  navigation.navigate('SplitFlow', { screen: 'ScanReceipt' });
+                }}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="camera" size={28} color={colors.primary} />
+                </View>
+                <Text style={styles.quickActionLabel}>Scan Receipt</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowQuickActions(false);
+                  navigation.navigate('SplitFlow');
+                }}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: colors.success + '15' }]}>
+                  <Ionicons name="add-circle" size={28} color={colors.success} />
+                </View>
+                <Text style={styles.quickActionLabel}>New Split</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowQuickActions(false);
+                  navigation.navigate('AddFriend');
+                }}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: colors.warning + '15' }]}>
+                  <Ionicons name="person-add" size={28} color={colors.warning} />
+                </View>
+                <Text style={styles.quickActionLabel}>Add Friend</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowQuickActions(false);
+                  navigation.navigate('CreateGroup');
+                }}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: colors.error + '15' }]}>
+                  <Ionicons name="people" size={28} color={colors.error} />
+                </View>
+                <Text style={styles.quickActionLabel}>Create Group</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -578,5 +670,65 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Quick Actions Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  quickActionsModal: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.gray900,
+  },
+  modalCloseButton: {
+    padding: spacing.xs,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  quickActionItem: {
+    width: '47%',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.gray50,
+    gap: spacing.sm,
+  },
+  quickActionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gray800,
+    textAlign: 'center',
   },
 });
