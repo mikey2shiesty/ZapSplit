@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../services/supabase';
@@ -40,9 +40,13 @@ export default function EditProfileScreen() {
     phone: '',
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadProfile();
+      }
+    }, [user])
+  );
 
   useEffect(() => {
     // Check if values have changed
@@ -56,11 +60,16 @@ export default function EditProfileScreen() {
     try {
       if (!user) return;
 
+      console.log('Loading profile for user:', user.id);
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+
+      console.log('Profile loaded:', { data, error });
+      console.log('Avatar URL from DB:', data?.avatar_url);
 
       if (error) throw error;
 
@@ -148,24 +157,35 @@ export default function EditProfileScreen() {
 
   const uploadAvatar = async (asset: ImagePicker.ImagePickerAsset) => {
     try {
-      if (!user || !asset.base64) return;
+      if (!user || !asset.base64) {
+        Alert.alert('Error', 'No user or image data');
+        return;
+      }
 
       setUploadingAvatar(true);
+      console.log('Uploading avatar for user:', user.id);
 
-      // Get file extension
-      const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/avatar.${ext}`;
-      const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+      // Always use jpg for consistency
+      const fileName = `${user.id}/avatar.jpg`;
+      const contentType = 'image/jpeg';
+
+      // First try to remove existing file (ignore errors)
+      await supabase.storage.from('avatars').remove([fileName]);
 
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, decode(asset.base64), {
           contentType,
           upsert: true,
         });
 
-      if (uploadError) throw uploadError;
+      console.log('Upload result:', { uploadData, uploadError });
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -173,14 +193,21 @@ export default function EditProfileScreen() {
         .getPublicUrl(fileName);
 
       const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      console.log('New avatar URL:', newAvatarUrl);
 
       // Update profile
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newAvatarUrl })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
-      if (updateError) throw updateError;
+      console.log('Profile update result:', { updateData, updateError });
+
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw updateError;
+      }
 
       setAvatarUrl(newAvatarUrl);
       Alert.alert('Success', 'Profile photo updated!');
