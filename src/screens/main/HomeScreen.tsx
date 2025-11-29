@@ -32,6 +32,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('1W');
   const [unreadCount, setUnreadCount] = useState(0);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
 
@@ -58,6 +60,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setRefreshing(false);
   };
 
+  // Filter splits based on search query
+  const filteredSplits = searchQuery.trim()
+    ? splits.filter(split =>
+        split.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        split.total_amount.toString().includes(searchQuery)
+      )
+    : [];
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    setShowSearchResults(text.trim().length > 0);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
   return (
     <View style={styles.container}>
       {/* Coinbase-style Top Navigation */}
@@ -75,10 +95,19 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color={colors.gray400} />
           <TextInput
-            placeholder="Search"
+            placeholder="Search splits..."
             placeholderTextColor={colors.gray400}
             style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            onFocus={() => searchQuery.trim() && setShowSearchResults(true)}
+            returnKeyType="search"
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch}>
+              <Ionicons name="close-circle" size={18} color={colors.gray400} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <TouchableOpacity
@@ -100,6 +129,60 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Ionicons name="notifications-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
       </View>
+
+      {/* Search Results Overlay */}
+      {showSearchResults && (
+        <View style={styles.searchResultsContainer}>
+          <Pressable
+            style={styles.searchResultsBackdrop}
+            onPress={() => setShowSearchResults(false)}
+          />
+          <View style={styles.searchResultsContent}>
+            {filteredSplits.length > 0 ? (
+              <ScrollView style={styles.searchResultsList} keyboardShouldPersistTaps="handled">
+                <Text style={styles.searchResultsHeader}>
+                  Splits ({filteredSplits.length})
+                </Text>
+                {filteredSplits.slice(0, 10).map((split) => (
+                  <TouchableOpacity
+                    key={split.id}
+                    style={styles.searchResultItem}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      clearSearch();
+                      navigation.navigate('SplitFlow', {
+                        screen: 'SplitDetail',
+                        params: { splitId: split.id },
+                      });
+                    }}
+                  >
+                    <View style={styles.searchResultIcon}>
+                      <Ionicons name="receipt-outline" size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.searchResultInfo}>
+                      <Text style={styles.searchResultTitle} numberOfLines={1}>
+                        {split.title}
+                      </Text>
+                      <Text style={styles.searchResultSubtitle}>
+                        ${split.total_amount.toFixed(2)} • {split.participant_count} people
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.noSearchResults}>
+                <Ionicons name="search-outline" size={40} color={colors.gray300} />
+                <Text style={styles.noSearchResultsText}>No splits found</Text>
+                <Text style={styles.noSearchResultsSubtext}>
+                  Try a different search term
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       <ScrollView
         style={styles.scrollView}
@@ -730,5 +813,89 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.gray800,
     textAlign: 'center',
+  },
+  // Search Results Styles
+  searchResultsContainer: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 110 : 90,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+  },
+  searchResultsBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  searchResultsContent: {
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    maxHeight: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  searchResultsList: {
+    padding: spacing.sm,
+  },
+  searchResultsHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.gray500,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    gap: spacing.md,
+  },
+  searchResultIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchResultInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  searchResultTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.gray900,
+  },
+  searchResultSubtitle: {
+    fontSize: 13,
+    color: colors.gray500,
+  },
+  noSearchResults: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  noSearchResultsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.gray700,
+  },
+  noSearchResultsSubtext: {
+    fontSize: 14,
+    color: colors.gray500,
   },
 });
