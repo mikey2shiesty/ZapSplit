@@ -764,6 +764,7 @@ const styles = StyleSheet.create({
     color: colors.gray900,
     letterSpacing: -1,
     marginBottom: spacing.md,
+    textAlign: 'center',
   },
   chartContainer: {
     marginVertical: spacing.md,
@@ -802,6 +803,7 @@ const styles = StyleSheet.create({
   oweItem: {
     flex: 1,
     gap: spacing.xs,
+    alignItems: 'center',
   },
   oweHeader: {
     flexDirection: 'row',
