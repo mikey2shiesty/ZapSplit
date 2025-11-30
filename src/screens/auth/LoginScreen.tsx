@@ -11,8 +11,6 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -26,8 +24,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -73,138 +69,72 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>
-            Sign in to continue splitting bills with friends
+            Log in to continue splitting bills
           </Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
-          {/* Email Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
-            <View style={[
-              styles.inputContainer,
-              emailFocused && styles.inputContainerFocused
-            ]}>
-              <Ionicons
-                name="mail-outline"
-                size={20}
-                color={emailFocused ? colors.primary : colors.gray400}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={colors.gray400}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType="next"
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-              />
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="you@example.com"
+              placeholderTextColor={colors.textSecondary}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="next"
+            />
           </View>
 
-          {/* Password Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <View style={[
-              styles.inputContainer,
-              passwordFocused && styles.inputContainerFocused
-            ]}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={20}
-                color={passwordFocused ? colors.primary : colors.gray400}
-                style={styles.inputIcon}
-              />
+            <View style={styles.passwordContainer}>
               <TextInput
-                style={styles.input}
+                style={styles.passwordInput}
                 placeholder="Enter your password"
-                placeholderTextColor={colors.gray400}
+                placeholderTextColor={colors.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 returnKeyType="done"
                 onSubmitEditing={handleLogin}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={22}
-                  color={colors.gray400}
-                />
+                <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-          </TouchableOpacity>
-
-          {/* Login Button */}
           <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#3B9EFF', '#2B7FD9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.loginButtonGradient}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
-              )}
-            </LinearGradient>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loginButtonText}>Log In</Text>
+            )}
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Social Login Options */}
-          <View style={styles.socialButtons}>
-            <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-              <Ionicons name="logo-apple" size={22} color={colors.gray900} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-              <Ionicons name="logo-google" size={22} color={colors.gray900} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Sign Up Link */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text style={styles.signupLink}>Sign Up</Text>
+          <TouchableOpacity
+            style={styles.signupLink}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.signupLinkText}>
+              Don't have an account?{' '}
+              <Text style={styles.linkText}>Sign up</Text>
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -219,10 +149,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingTop: Platform.OS === 'ios' ? 80 : 60,
-    paddingBottom: spacing.xl,
-    justifyContent: 'center',
+    padding: spacing.xl,
+    paddingTop: Platform.OS === 'ios' ? 100 : 80,
   },
   header: {
     alignItems: 'center',
@@ -242,7 +170,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   form: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   inputGroup: {
     gap: spacing.xs,
@@ -253,49 +181,41 @@ const styles = StyleSheet.create({
     color: colors.gray700,
     marginLeft: spacing.xs,
   },
-  inputContainer: {
+  input: {
+    backgroundColor: colors.gray50,
+    borderWidth: 1.5,
+    borderColor: colors.gray200,
+    borderRadius: 14,
+    padding: spacing.md,
+    fontSize: 16,
+    color: colors.gray900,
+  },
+  passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.gray50,
     borderWidth: 1.5,
     borderColor: colors.gray200,
     borderRadius: 14,
-    paddingHorizontal: spacing.md,
   },
-  inputContainerFocused: {
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  inputIcon: {
-    marginRight: spacing.sm,
-  },
-  input: {
+  passwordInput: {
     flex: 1,
-    paddingVertical: spacing.md,
+    padding: spacing.md,
     fontSize: 16,
     color: colors.gray900,
   },
   eyeButton: {
-    padding: spacing.xs,
+    padding: spacing.md,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginTop: -spacing.xs,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
+  eyeText: {
+    fontSize: 20,
   },
   loginButton: {
-    marginTop: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md + 2,
     borderRadius: 14,
-    overflow: 'hidden',
+    alignItems: 'center',
+    marginTop: spacing.md,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -303,12 +223,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   loginButtonDisabled: {
-    opacity: 0.7,
-  },
-  loginButtonGradient: {
-    paddingVertical: spacing.md + 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    opacity: 0.6,
   },
   loginButtonText: {
     color: '#FFFFFF',
@@ -316,50 +231,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.3,
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.gray200,
-  },
-  dividerText: {
-    paddingHorizontal: spacing.md,
-    fontSize: 14,
-    color: colors.gray400,
-    fontWeight: '500',
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  socialButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: colors.gray50,
-    borderWidth: 1.5,
-    borderColor: colors.gray200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: spacing.xl,
-    paddingTop: spacing.lg,
-  },
-  footerText: {
-    fontSize: 15,
-    color: colors.gray500,
-  },
   signupLink: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  signupLinkText: {
+    color: colors.gray500,
     fontSize: 15,
+  },
+  linkText: {
     color: colors.primary,
     fontWeight: '600',
   },
