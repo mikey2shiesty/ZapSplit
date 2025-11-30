@@ -18,7 +18,11 @@ export default function App() {
   }
 
   return (
-    <StripeProvider publishableKey={stripePublishableKey}>
+    <StripeProvider
+      publishableKey={stripePublishableKey}
+      merchantIdentifier="merchant.com.zapsplit.app"
+      urlScheme="zapsplit"
+    >
       <NavigationContainer>
         <AppNavigator />
       </NavigationContainer>

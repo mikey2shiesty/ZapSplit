@@ -28,9 +28,8 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
 
   const handleViewSplit = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Phase 6 will implement split detail view
-    // For now, just go back
-    navigation.getParent()?.goBack();
+    // Navigate to split detail screen
+    navigation.navigate('SplitDetail', { splitId });
   };
 
   return (
@@ -79,7 +78,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            Participants will be notified about this split
+            Friends can pay their share via card, Apple Pay, or Google Pay
           </Text>
         </View>
       </View>
@@ -88,18 +87,19 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={handleDone}
+          onPress={handleViewSplit}
           activeOpacity={0.7}
         >
-          <Text style={styles.primaryButtonText}>Done</Text>
+          <Ionicons name="share-outline" size={20} color={colors.surface} style={{ marginRight: 8 }} />
+          <Text style={styles.primaryButtonText}>View & Share Split</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={handleViewSplit}
+          onPress={handleDone}
           activeOpacity={0.7}
         >
-          <Text style={styles.secondaryButtonText}>View Split</Text>
+          <Text style={styles.secondaryButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primaryButton: {
+    flexDirection: 'row',
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,

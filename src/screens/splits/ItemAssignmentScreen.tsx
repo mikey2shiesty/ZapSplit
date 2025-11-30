@@ -216,17 +216,13 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         }
       }
 
-      // Success! Navigate to payment request screen
+      // Success! Navigate to success screen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      const myTotal = participantTotals[currentUser.id]?.total || 0;
-
-      navigation.navigate('PaymentRequest', {
-        amount: myTotal,
-        description: receipt.merchant
-          ? `Your share at ${receipt.merchant}`
-          : 'Your share for this receipt',
+      navigation.navigate('SplitSuccess', {
         splitId: split.id,
+        amount: receipt.total,
+        participantCount: participants.filter(p => participantTotals[p.id]?.total > 0).length,
       });
     } catch (error: any) {
       console.error('Error saving split:', error);

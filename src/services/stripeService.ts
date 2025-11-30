@@ -177,12 +177,21 @@ export async function createPayment(
 
     const { clientSecret, paymentIntentId, paymentId } = data;
 
-    // Initialize payment sheet
+    // Initialize payment sheet with Apple Pay and Google Pay
     const { error: initError } = await initPaymentSheet({
       merchantDisplayName: 'ZapSplit',
       paymentIntentClientSecret: clientSecret,
       defaultBillingDetails: {},
       allowsDelayedPaymentMethods: false,
+      // Enable Apple Pay
+      applePay: {
+        merchantCountryCode: 'AU',
+      },
+      // Enable Google Pay
+      googlePay: {
+        merchantCountryCode: 'AU',
+        testEnv: __DEV__, // Use test environment in development
+      },
     });
 
     if (initError) {
