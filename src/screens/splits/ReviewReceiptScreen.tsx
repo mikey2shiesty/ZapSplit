@@ -156,9 +156,8 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    // Navigate to ItemAssignment
-    // Each person will mark their own items independently!
-    navigation.navigate('ItemAssignment', {
+    // Navigate to friend selection first
+    navigation.navigate('SelectFriendsForReceipt', {
       receipt: receipt,
       imageUri: imageUri,
     });

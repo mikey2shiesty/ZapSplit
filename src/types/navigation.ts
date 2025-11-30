@@ -47,10 +47,14 @@ export type SplitFlowParamList = {
   ReviewReceipt: {
     imageUri: string;
   };
+  SelectFriendsForReceipt: {
+    receipt: ParsedReceipt;
+    imageUri: string;
+  };
   ItemAssignment: {
     receipt: ParsedReceipt;
     imageUri: string; // Receipt image for uploading to storage
-    // No selectedFriends needed - each person marks their own items!
+    selectedFriends: string[]; // Array of friend user IDs
   };
   SelectFriends: {
     amount: number;
@@ -111,6 +115,7 @@ export type SettingsStackParamList = {
 export type CreateSplitScreenProps = StackScreenProps<SplitFlowParamList, 'CreateSplit'>;
 export type ScanReceiptScreenProps = StackScreenProps<SplitFlowParamList, 'ScanReceipt'>;
 export type ReviewReceiptScreenProps = StackScreenProps<SplitFlowParamList, 'ReviewReceipt'>;
+export type SelectFriendsForReceiptScreenProps = StackScreenProps<SplitFlowParamList, 'SelectFriendsForReceipt'>;
 export type ItemAssignmentScreenProps = StackScreenProps<SplitFlowParamList, 'ItemAssignment'>;
 export type SelectFriendsScreenProps = StackScreenProps<SplitFlowParamList, 'SelectFriends'>;
 export type SplitMethodScreenProps = StackScreenProps<SplitFlowParamList, 'SplitMethod'>;

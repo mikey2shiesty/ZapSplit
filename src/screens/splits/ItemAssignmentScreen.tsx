@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,110 +14,144 @@ import { colors, spacing, radius, typography, shadows } from '../../constants/th
 import * as Haptics from 'expo-haptics';
 import { ItemAssignmentScreenProps } from '../../types/navigation';
 import { ReceiptItem } from '../../types/receipt';
-import {
-  UserItemSelections,
-  calculateYourTotal,
-  calculateYourItemShare,
-  formatCurrency,
-} from '../../utils/splitCalculations';
+import { formatCurrency } from '../../utils/splitCalculations';
 import { createReceiptSplit } from '../../services/splitService';
 import { createSplitItems, createUserItemAssignments } from '../../services/itemService';
 import { uploadReceiptToStorage } from '../../services/receiptService';
 import { supabase } from '../../services/supabase';
+import { useFriends } from '../../hooks/useFriends';
+import { useAuth } from '../../hooks/useAuth';
+import Avatar from '../../components/common/Avatar';
 
-// Split options for the dropdown
-const SPLIT_OPTIONS = [
-  { value: 1, label: 'Just me' },
-  { value: 2, label: 'Split between 2 people' },
-  { value: 3, label: 'Split between 3 people' },
-  { value: 4, label: 'Split between 4 people' },
-  { value: 5, label: 'Split between 5 people' },
-];
+interface FriendData {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url?: string | null;
+}
+
+interface ItemAssignments {
+  [itemId: string]: string[]; // itemId -> array of user IDs who ordered this item
+}
 
 export default function ItemAssignmentScreen({ navigation, route }: ItemAssignmentScreenProps) {
-  const { receipt, imageUri } = route.params;
+  const { receipt, imageUri, selectedFriends } = route.params;
+  const { user } = useAuth();
+  const { allFriends } = useFriends();
 
-  // State: Item selections { itemId: { selected, yourQuantity?, splitWith? } }
-  const [selections, setSelections] = useState<UserItemSelections>({});
+  const [assignments, setAssignments] = useState<ItemAssignments>({});
   const [saving, setSaving] = useState(false);
+  const [participants, setParticipants] = useState<FriendData[]>([]);
 
-  // Calculate your total
-  const yourTotal = calculateYourTotal(
-    receipt.items,
-    selections,
-    receipt.subtotal,
-    receipt.tax,
-    receipt.tip
-  );
+  // Build participants list (current user + selected friends)
+  useEffect(() => {
+    const friendsData = selectedFriends
+      .map(id => allFriends.find(f => f.id === id))
+      .filter((f): f is NonNullable<typeof f> => f !== undefined)
+      .map(f => ({
+        id: f.id,
+        full_name: f.full_name || 'Unknown',
+        email: f.email,
+        avatar_url: f.avatar_url,
+      }));
 
-  /**
-   * Toggle item selection
-   */
-  const toggleSelection = (itemId: string) => {
+    // Add current user at the beginning
+    const currentUser: FriendData = {
+      id: user?.id || 'current-user',
+      full_name: 'You',
+      email: user?.email || '',
+      avatar_url: undefined,
+    };
+
+    setParticipants([currentUser, ...friendsData]);
+  }, [allFriends, selectedFriends, user]);
+
+  // Calculate totals for each participant
+  const calculateParticipantTotals = () => {
+    const totals: { [userId: string]: { subtotal: number; tax: number; tip: number; total: number } } = {};
+
+    // Initialize totals for all participants
+    participants.forEach(p => {
+      totals[p.id] = { subtotal: 0, tax: 0, tip: 0, total: 0 };
+    });
+
+    // Calculate item subtotals
+    receipt.items.forEach(item => {
+      const assignedTo = assignments[item.id] || [];
+      if (assignedTo.length > 0) {
+        const sharePerPerson = item.price / assignedTo.length;
+        assignedTo.forEach(userId => {
+          if (totals[userId]) {
+            totals[userId].subtotal += sharePerPerson;
+          }
+        });
+      }
+    });
+
+    // Calculate tax and tip proportionally
+    const totalAssignedSubtotal = Object.values(totals).reduce((sum, t) => sum + t.subtotal, 0);
+
+    if (totalAssignedSubtotal > 0) {
+      participants.forEach(p => {
+        const proportion = totals[p.id].subtotal / totalAssignedSubtotal;
+        totals[p.id].tax = receipt.tax * proportion;
+        totals[p.id].tip = receipt.tip * proportion;
+        totals[p.id].total = totals[p.id].subtotal + totals[p.id].tax + totals[p.id].tip;
+      });
+    }
+
+    return totals;
+  };
+
+  const participantTotals = calculateParticipantTotals();
+
+  // Toggle assignment of an item to a participant
+  const toggleAssignment = (itemId: string, userId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    setSelections((prev) => {
-      const current = prev[itemId];
-
-      if (current && current.selected) {
-        // Deselect item
+    setAssignments(prev => {
+      const current = prev[itemId] || [];
+      if (current.includes(userId)) {
+        // Remove user from item
         return {
           ...prev,
-          [itemId]: { selected: false, splitWith: 1 },
+          [itemId]: current.filter(id => id !== userId),
         };
       } else {
-        // Select item with default split of 1
+        // Add user to item
         return {
           ...prev,
-          [itemId]: { selected: true, splitWith: 1 },
+          [itemId]: [...current, userId],
         };
       }
     });
   };
 
-  /**
-   * Update split quantity for an item (for single items)
-   */
-  const updateSplitQuantity = (itemId: string, splitWith: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Quick assign: select all items for a participant
+  const assignAllToParticipant = (userId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    setSelections((prev) => ({
-      ...prev,
-      [itemId]: {
-        selected: true, // Auto-select when changing split
-        splitWith,
-        yourQuantity: undefined, // Clear quantity when setting split
-      },
-    }));
+    setAssignments(prev => {
+      const newAssignments = { ...prev };
+      receipt.items.forEach(item => {
+        const current = newAssignments[item.id] || [];
+        if (!current.includes(userId)) {
+          newAssignments[item.id] = [...current, userId];
+        }
+      });
+      return newAssignments;
+    });
   };
 
-  /**
-   * Update your quantity for an item (for multiple items)
-   */
-  const updateYourQuantity = (itemId: string, yourQuantity: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Check if any items are assigned
+  const hasAssignments = Object.values(assignments).some(arr => arr.length > 0);
 
-    setSelections((prev) => ({
-      ...prev,
-      [itemId]: {
-        selected: true, // Auto-select when changing quantity
-        yourQuantity,
-        splitWith: undefined, // Clear split when setting quantity
-      },
-    }));
-  };
-
-  /**
-   * Handle continue button press - Save to database
-   */
+  // Handle continue
   const handleContinue = async () => {
-    // Check if any items selected
-    const hasSelections = Object.values(selections).some((s) => s.selected);
-
-    if (!hasSelections) {
+    if (!hasAssignments) {
       Alert.alert(
-        'No Items Selected',
-        'Please select at least one item that you ordered.',
+        'No Items Assigned',
+        'Please assign at least one item to someone.',
         [{ text: 'OK' }]
       );
       return;
@@ -127,25 +161,28 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       setSaving(true);
 
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('User not authenticated');
 
       // 1. Upload receipt image to storage
-      const receiptImageUrl = await uploadReceiptToStorage(imageUri, user.id);
+      const receiptImageUrl = await uploadReceiptToStorage(imageUri, currentUser.id);
 
-      // 2. Create the split record
+      // 2. Build participants data for the split
+      const participantsData = participants
+        .filter(p => participantTotals[p.id]?.total > 0)
+        .map(p => ({
+          user_id: p.id,
+          amount_owed: participantTotals[p.id].total,
+        }));
+
+      // 3. Create the split record
       const splitData = {
         title: receipt.merchant || 'Receipt Split',
         description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
         total_amount: receipt.total,
         currency: 'USD',
         split_method: 'receipt' as const,
-        participants: [
-          {
-            user_id: user.id,
-            amount_owed: yourTotal.total,
-          },
-        ],
+        participants: participantsData,
         image_url: receiptImageUrl,
         receipt_data: {
           subtotal: receipt.subtotal,
@@ -156,17 +193,36 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 
       const split = await createReceiptSplit(splitData, receipt.items, []);
 
-      // 3. Create split items in database
+      // 4. Create split items in database
       const splitItems = await createSplitItems(split.id, receipt.items);
 
-      // 4. Create user's item assignments
-      await createUserItemAssignments(user.id, splitItems, receipt.items, selections);
+      // 5. Create item assignments for each participant
+      // Convert assignments to the format expected by createUserItemAssignments
+      for (const participant of participants) {
+        const userSelections: { [itemId: string]: { selected: boolean; splitWith?: number } } = {};
+
+        receipt.items.forEach(item => {
+          const assignedTo = assignments[item.id] || [];
+          if (assignedTo.includes(participant.id)) {
+            userSelections[item.id] = {
+              selected: true,
+              splitWith: assignedTo.length,
+            };
+          }
+        });
+
+        if (Object.keys(userSelections).length > 0) {
+          await createUserItemAssignments(participant.id, splitItems, receipt.items, userSelections);
+        }
+      }
 
       // Success! Navigate to payment request screen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+      const myTotal = participantTotals[currentUser.id]?.total || 0;
+
       navigation.navigate('PaymentRequest', {
-        amount: yourTotal.total,
+        amount: myTotal,
         description: receipt.merchant
           ? `Your share at ${receipt.merchant}`
           : 'Your share for this receipt',
@@ -194,67 +250,93 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>What did you order?</Text>
+          <Text style={styles.headerTitle}>Assign Items</Text>
           <Text style={styles.headerSubtitle}>
-            Check off your items • {receipt.items.length} total items
+            Tap items to assign to each person
           </Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Participants Summary */}
+        <View style={styles.participantsCard}>
+          <Text style={styles.sectionTitle}>Splitting with</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.participantsList}>
+            {participants.map((participant) => (
+              <TouchableOpacity
+                key={participant.id}
+                style={styles.participantChip}
+                onPress={() => assignAllToParticipant(participant.id)}
+              >
+                <Avatar
+                  name={participant.full_name}
+                  uri={participant.avatar_url ?? undefined}
+                  size="sm"
+                />
+                <View style={styles.participantChipInfo}>
+                  <Text style={styles.participantChipName} numberOfLines={1}>
+                    {participant.full_name}
+                  </Text>
+                  <Text style={styles.participantChipTotal}>
+                    {formatCurrency(participantTotals[participant.id]?.total || 0)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Info Banner */}
         <View style={styles.infoBanner}>
           <Ionicons name="information-circle" size={20} color={colors.info} />
           <Text style={styles.infoText}>
-            Select what you ordered. If you shared an item, choose how many people split it.
+            Tap on person chips below each item to assign who ordered it. Shared items split the cost.
           </Text>
         </View>
 
         {/* Items List */}
         <View style={styles.section}>
-          {receipt.items.map((item) => {
-            const selection = selections[item.id] || { selected: false };
-            const yourShare = selection.selected ? calculateYourItemShare(item, selection) : 0;
-
-            return (
-              <ItemCard
-                key={item.id}
-                item={item}
-                selection={selection}
-                yourShare={yourShare}
-                onToggle={() => toggleSelection(item.id)}
-                onChangeSplit={(splitWith) => updateSplitQuantity(item.id, splitWith)}
-                onChangeQuantity={(qty) => updateYourQuantity(item.id, qty)}
-              />
-            );
-          })}
+          {receipt.items.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              participants={participants}
+              assignedTo={assignments[item.id] || []}
+              onToggleAssignment={(userId) => toggleAssignment(item.id, userId)}
+            />
+          ))}
         </View>
 
-        {/* Your Total Summary */}
+        {/* Summary by Person */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Your Total</Text>
+          <Text style={styles.summaryTitle}>Summary</Text>
+          {participants.map((participant) => {
+            const totals = participantTotals[participant.id];
+            if (!totals || totals.total === 0) return null;
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Items</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.subtotal)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tax</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.tax)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tip</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(yourTotal.tip)}</Text>
-          </View>
+            return (
+              <View key={participant.id} style={styles.summaryRow}>
+                <View style={styles.summaryPerson}>
+                  <Avatar
+                    name={participant.full_name}
+                    uri={participant.avatar_url ?? undefined}
+                    size="xs"
+                  />
+                  <Text style={styles.summaryPersonName}>{participant.full_name}</Text>
+                </View>
+                <Text style={styles.summaryPersonTotal}>
+                  {formatCurrency(totals.total)}
+                </Text>
+              </View>
+            );
+          })}
 
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>You owe</Text>
-            <Text style={styles.totalValue}>{formatCurrency(yourTotal.total)}</Text>
+            <Text style={styles.totalLabel}>Receipt Total</Text>
+            <Text style={styles.totalValue}>{formatCurrency(receipt.total)}</Text>
           </View>
         </View>
 
@@ -266,23 +348,23 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         <TouchableOpacity
           style={[
             styles.continueButton,
-            (yourTotal.total === 0 || saving) && styles.continueButtonDisabled,
+            (!hasAssignments || saving) && styles.continueButtonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={yourTotal.total === 0 || saving}
+          disabled={!hasAssignments || saving}
           activeOpacity={0.8}
         >
           {saving ? (
             <>
               <ActivityIndicator size="small" color={colors.surface} />
               <Text style={[styles.continueButtonText, { marginLeft: spacing.sm }]}>
-                Saving split...
+                Creating split...
               </Text>
             </>
           ) : (
             <>
               <Text style={styles.continueButtonText}>
-                Continue to Payment • {formatCurrency(yourTotal.total)}
+                Create Split
               </Text>
               <Ionicons name="arrow-forward" size={20} color={colors.surface} />
             </>
@@ -296,14 +378,14 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 // Item Card Component
 interface ItemCardProps {
   item: ReceiptItem;
-  selection: { selected: boolean; yourQuantity?: number; splitWith?: number };
-  yourShare: number;
-  onToggle: () => void;
-  onChangeSplit: (splitWith: number) => void;
-  onChangeQuantity: (quantity: number) => void;
+  participants: FriendData[];
+  assignedTo: string[];
+  onToggleAssignment: (userId: string) => void;
 }
 
-function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit, onChangeQuantity }: ItemCardProps) {
+function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCardProps) {
+  const sharePerPerson = assignedTo.length > 0 ? item.price / assignedTo.length : 0;
+
   return (
     <View style={styles.itemCard}>
       {/* Item Header */}
@@ -319,91 +401,52 @@ function ItemCard({ item, selection, yourShare, onToggle, onChangeSplit, onChang
         <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
       </View>
 
-      {/* Checkbox */}
-      <TouchableOpacity
-        style={[styles.checkbox, selection.selected && styles.checkboxSelected]}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.checkboxBox, selection.selected && styles.checkboxBoxSelected]}>
-          {selection.selected && <Ionicons name="checkmark" size={18} color={colors.surface} />}
+      {/* Participant Assignment Chips */}
+      <View style={styles.assignmentContainer}>
+        <Text style={styles.assignmentLabel}>Who ordered this?</Text>
+        <View style={styles.assignmentChips}>
+          {participants.map((participant) => {
+            const isAssigned = assignedTo.includes(participant.id);
+            return (
+              <TouchableOpacity
+                key={participant.id}
+                style={[
+                  styles.assignmentChip,
+                  isAssigned && styles.assignmentChipActive,
+                ]}
+                onPress={() => onToggleAssignment(participant.id)}
+                activeOpacity={0.7}
+              >
+                <Avatar
+                  name={participant.full_name}
+                  uri={participant.avatar_url ?? undefined}
+                  size="xs"
+                />
+                <Text
+                  style={[
+                    styles.assignmentChipText,
+                    isAssigned && styles.assignmentChipTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {participant.full_name === 'You' ? 'Me' : participant.full_name.split(' ')[0]}
+                </Text>
+                {isAssigned && (
+                  <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        <Text style={[styles.checkboxLabel, selection.selected && styles.checkboxLabelSelected]}>
-          I ordered this
-        </Text>
-      </TouchableOpacity>
+      </View>
 
-      {/* Quantity/Split Selector (only show when selected) */}
-      {selection.selected && (
-        <View style={styles.splitContainer}>
-          {item.quantity > 1 ? (
-            /* Quantity Selector: For multiple items */
-            <>
-              <Text style={styles.splitLabel}>How many did you get?</Text>
-              <View style={styles.splitOptions}>
-                {Array.from({ length: item.quantity }, (_, i) => i + 1).map((qty) => (
-                  <TouchableOpacity
-                    key={qty}
-                    style={[
-                      styles.splitOption,
-                      selection.yourQuantity === qty && styles.splitOptionActive,
-                    ]}
-                    onPress={() => onChangeQuantity(qty)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.splitOptionText,
-                        selection.yourQuantity === qty && styles.splitOptionTextActive,
-                      ]}
-                    >
-                      {qty}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          ) : (
-            /* Split Selector: For single items */
-            <>
-              <Text style={styles.splitLabel}>Did you share this?</Text>
-              <View style={styles.splitOptions}>
-                {SPLIT_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.splitOption,
-                      selection.splitWith === option.value && styles.splitOptionActive,
-                    ]}
-                    onPress={() => onChangeSplit(option.value)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.splitOptionText,
-                        selection.splitWith === option.value && styles.splitOptionTextActive,
-                      ]}
-                    >
-                      {option.value === 1 ? 'Just me' : `${option.value}`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-        </View>
-      )}
-
-      {/* Your Share Display */}
-      {selection.selected && (
+      {/* Share Info */}
+      {assignedTo.length > 0 && (
         <View style={styles.shareInfo}>
-          <Ionicons name="person-outline" size={14} color={colors.success} />
+          <Ionicons name="calculator-outline" size={14} color={colors.success} />
           <Text style={styles.shareText}>
-            Your share: {formatCurrency(yourShare)}
-            {item.quantity > 1 && selection.yourQuantity &&
-              ` (${selection.yourQuantity} out of ${item.quantity})`}
-            {item.quantity === 1 && selection.splitWith && selection.splitWith > 1 &&
-              ` (split with ${selection.splitWith})`}
+            {formatCurrency(sharePerPerson)} each
+            {assignedTo.length > 1 && ` (split ${assignedTo.length} ways)`}
           </Text>
         </View>
       )}
@@ -443,6 +486,46 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  participantsCard: {
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    ...shadows.low,
+  },
+  sectionTitle: {
+    ...typography.h6,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  participantsList: {
+    flexDirection: 'row',
+  },
+  participantChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray50,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    marginRight: spacing.sm,
+    gap: spacing.xs,
+  },
+  participantChipInfo: {
+    gap: 2,
+  },
+  participantChipName: {
+    ...typography.caption,
+    color: colors.text,
+    fontWeight: '600',
+    maxWidth: 80,
+  },
+  participantChipTotal: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
   },
   infoBanner: {
     flexDirection: 'row',
@@ -503,75 +586,45 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '700',
   },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-    gap: spacing.sm,
-  },
-  checkboxSelected: {
-    backgroundColor: colors.primary + '08',
-  },
-  checkboxBox: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.xs,
-    borderWidth: 2,
-    borderColor: colors.gray400,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxBoxSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkboxLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  checkboxLabelSelected: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  splitContainer: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+  assignmentContainer: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.gray200,
   },
-  splitLabel: {
-    ...typography.bodySmall,
+  assignmentLabel: {
+    ...typography.caption,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     fontWeight: '600',
   },
-  splitOptions: {
+  assignmentChips: {
     flexDirection: 'row',
-    gap: spacing.sm,
     flexWrap: 'wrap',
+    gap: spacing.sm,
   },
-  splitOption: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  assignmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.gray300,
     backgroundColor: colors.surface,
-    minWidth: 50,
-    alignItems: 'center',
+    gap: spacing.xs,
   },
-  splitOptionActive: {
+  assignmentChipActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primary + '15',
   },
-  splitOptionText: {
-    ...typography.bodySmall,
+  assignmentChipText: {
+    ...typography.caption,
     color: colors.textSecondary,
     fontWeight: '600',
+    maxWidth: 60,
   },
-  splitOptionTextActive: {
+  assignmentChipTextActive: {
     color: colors.primary,
     fontWeight: '700',
   },
@@ -609,13 +662,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  summaryLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
+  summaryPerson: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  summaryValue: {
+  summaryPersonName: {
+    ...typography.body,
+    color: colors.text,
+  },
+  summaryPersonTotal: {
     ...typography.h6,
     color: colors.text,
+    fontWeight: '700',
   },
   divider: {
     height: 1,
