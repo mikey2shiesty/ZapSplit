@@ -1,16 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../services/supabase';
 import { colors, spacing, typography } from '../../constants/theme';
 import Card from '../../components/common/Card';
 import Avatar from '../../components/common/Avatar';
 import Button from '../../components/common/Button';
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  email: string;
+}
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<any>();
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Fetch profile when screen focuses (to get updated avatar after editing)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        fetchProfile();
+      }
+    }, [user?.id])
+  );
+
+  const fetchProfile = async () => {
+    if (!user?.id) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, email')
+      .eq('id', user.id)
+      .single();
+
+    if (data && !error) {
+      setProfile(data);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -18,15 +51,16 @@ export default function ProfileScreen() {
         <Card variant="elevated" padding="lg" style={styles.profileCard}>
           <View style={styles.profileHeader}>
             <Avatar
-              name={user?.user_metadata?.full_name || user?.email || 'User'}
+              uri={profile?.avatar_url ?? undefined}
+              name={profile?.full_name || user?.email || 'User'}
               size="xl"
               showBorder
             />
             <View style={styles.profileInfo}>
               <Text style={styles.name}>
-                {user?.user_metadata?.full_name || 'User'}
+                {profile?.full_name || 'User'}
               </Text>
-              <Text style={styles.email}>{user?.email}</Text>
+              <Text style={styles.email}>{profile?.email || user?.email}</Text>
             </View>
           </View>
         </Card>
