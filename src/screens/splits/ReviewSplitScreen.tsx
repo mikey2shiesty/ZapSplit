@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { ReviewSplitScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 import { SplitSummary, Participant } from '../../components/splits';
-import { createSplit, calculateEqualSplit } from '../../services/splitService';
+import { createSplit, calculateEqualSplitAmounts } from '../../services/splitService';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -27,15 +27,19 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   // Build participants list from real friends
   const selectedFriendsData = selectedFriends
     .map(id => allFriends.find(f => f.id === id))
-    .filter((f): f is { id: string; full_name: string; email: string } => f !== undefined);
+    .filter(f => f !== undefined);
+
+  // Calculate equal split amounts (ensures total matches exactly)
+  const allParticipantIds = [user?.id || 'current-user', ...selectedFriends];
+  const equalAmounts = calculateEqualSplitAmounts(amount, allParticipantIds);
 
   // Calculate amounts based on split method
   const calculateAmount = (participantId: string): number => {
     if (customAmounts) {
       return customAmounts[participantId] || 0;
     }
-    // Equal split
-    return calculateEqualSplit(amount, selectedFriendsData.length + 1);
+    // Equal split - use pre-calculated amounts for accuracy
+    return equalAmounts[participantId] || 0;
   };
 
   const participants: Participant[] = [
@@ -48,10 +52,10 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       status: 'pending',
     },
     ...selectedFriendsData.map(friend => ({
-      id: friend.id,
-      name: friend.full_name || 'Unknown',
-      email: friend.email,
-      amount_owed: calculateAmount(friend.id),
+      id: friend!.id,
+      name: friend!.full_name || 'Unknown',
+      email: friend!.email,
+      amount_owed: calculateAmount(friend!.id),
       amount_paid: 0,
       status: 'pending' as const,
     })),

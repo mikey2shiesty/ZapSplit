@@ -10,7 +10,7 @@ interface SplitSummaryProps {
   participants: Participant[];
   currentUserId?: string;
   description?: string;
-  splitMethod?: 'equal' | 'custom' | 'percentage';
+  splitMethod?: 'equal' | 'custom' | 'percentage' | 'receipt';
   showProgress?: boolean;
 }
 
@@ -43,8 +43,26 @@ export default function SplitSummary({
         return 'Custom Amounts';
       case 'percentage':
         return 'By Percentage';
+      case 'receipt':
+        return 'By Receipt Items';
       default:
         return '';
+    }
+  };
+
+  // Get method icon
+  const getMethodIcon = (): 'people' | 'calculator' | 'pie-chart' | 'receipt' => {
+    switch (splitMethod) {
+      case 'equal':
+        return 'people';
+      case 'custom':
+        return 'calculator';
+      case 'percentage':
+        return 'pie-chart';
+      case 'receipt':
+        return 'receipt';
+      default:
+        return 'people';
     }
   };
 
@@ -69,7 +87,7 @@ export default function SplitSummary({
         {/* Split Method Badge */}
         <View style={styles.methodBadge}>
           <Ionicons
-            name={splitMethod === 'equal' ? 'people' : splitMethod === 'custom' ? 'calculator' : 'pie-chart'}
+            name={getMethodIcon()}
             size={16}
             color={colors.primary}
           />

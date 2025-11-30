@@ -97,14 +97,50 @@ export async function createSplit(data: CreateSplitData): Promise<Split> {
 }
 
 /**
- * Calculate equal split amounts for all participants
+ * Calculate equal split amount per person (base amount)
+ * Note: Use calculateEqualSplitAmounts() for accurate distribution
  */
 export function calculateEqualSplit(
   total: number,
   participantCount: number
 ): number {
   if (participantCount === 0) return 0;
-  return Math.round((total / participantCount) * 100) / 100;
+  // Use floor to avoid exceeding total, remainder goes to first participant
+  return Math.floor((total / participantCount) * 100) / 100;
+}
+
+/**
+ * Calculate equal split amounts for all participants
+ * Ensures the sum exactly matches the total by giving remainder cents to first participant
+ */
+export function calculateEqualSplitAmounts(
+  total: number,
+  participantIds: string[]
+): { [participantId: string]: number } {
+  const count = participantIds.length;
+  if (count === 0) return {};
+
+  // Calculate base amount (floor to avoid exceeding total)
+  const baseAmount = Math.floor((total / count) * 100) / 100;
+
+  // Calculate what we've assigned so far
+  const assignedTotal = baseAmount * count;
+
+  // Calculate remainder (in cents to avoid floating point issues)
+  const remainderCents = Math.round((total - assignedTotal) * 100);
+
+  const amounts: { [participantId: string]: number } = {};
+
+  participantIds.forEach((id, index) => {
+    if (index < remainderCents) {
+      // Give 1 extra cent to first N participants where N = remainder cents
+      amounts[id] = Math.round((baseAmount + 0.01) * 100) / 100;
+    } else {
+      amounts[id] = baseAmount;
+    }
+  });
+
+  return amounts;
 }
 
 /**
