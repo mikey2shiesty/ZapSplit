@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
-import { colors, radius, typography, shadows } from '../../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, shadows } from '../../constants/theme';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -70,7 +71,10 @@ export default function Avatar({
             }}
           />
         ) : (
-          <View
+          <LinearGradient
+            colors={['#6BB4FF', '#3B9EFF', '#2B7FD9']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={[
               styles.fallback,
               {
@@ -83,7 +87,7 @@ export default function Avatar({
             <Text style={[styles.initials, { fontSize: config.fontSize }]}>
               {getInitials(name)}
             </Text>
-          </View>
+          </LinearGradient>
         )}
       </View>
 
@@ -116,13 +120,21 @@ const styles = StyleSheet.create({
     borderColor: colors.surface,
   },
   fallback: {
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#3B9EFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   initials: {
     color: colors.textInverse,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   statusIndicator: {
     position: 'absolute',
