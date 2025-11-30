@@ -27,7 +27,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   // Build participants list from real friends
   const selectedFriendsData = selectedFriends
     .map(id => allFriends.find(f => f.id === id))
-    .filter((f): f is { id: string; name: string; email: string } => f !== undefined);
+    .filter((f): f is { id: string; full_name: string; email: string } => f !== undefined);
 
   // Calculate amounts based on split method
   const calculateAmount = (participantId: string): number => {
@@ -49,7 +49,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     },
     ...selectedFriendsData.map(friend => ({
       id: friend.id,
-      name: friend.name,
+      name: friend.full_name || 'Unknown',
       email: friend.email,
       amount_owed: calculateAmount(friend.id),
       amount_paid: 0,

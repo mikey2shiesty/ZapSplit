@@ -12,45 +12,52 @@ import * as Haptics from 'expo-haptics';
 import { CustomAmountsScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 import { ParticipantRow, Participant } from '../../components/splits';
+import { useFriends } from '../../hooks/useFriends';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function CustomAmountsScreen({ navigation, route }: CustomAmountsScreenProps) {
   const { amount, title, description, selectedFriends } = route.params;
+  const { user } = useAuth();
+  const { allFriends } = useFriends();
 
-  // Mock friends data (will match the selected IDs)
-  const mockFriendsData = [
-    { id: '1', name: 'John Doe', email: 'john@example.com' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-    { id: '3', name: 'Alice Johnson', email: 'alice@example.com' },
-    { id: '4', name: 'Bob Wilson', email: 'bob@example.com' },
-    { id: '5', name: 'Emma Davis', email: 'emma@example.com' },
-    { id: '6', name: 'Michael Brown', email: 'michael@example.com' },
-  ];
-
-  // Create participants from selected friends
-  const selectedFriendsData = selectedFriends
-    .map(id => mockFriendsData.find(f => f.id === id))
-    .filter((f): f is { id: string; name: string; email: string } => f !== undefined);
-
-  // Initialize participants with equal split
-  const initialAmount = amount / (selectedFriendsData.length + 1); // +1 for current user
-
+  // Initialize with just current user - friends will be added when loaded
   const [participants, setParticipants] = useState<Participant[]>([
     {
-      id: 'current-user',
+      id: user?.id || 'current-user',
       name: 'You',
-      email: 'your@email.com',
-      amount_owed: initialAmount,
+      email: user?.email || 'your@email.com',
+      amount_owed: amount, // Will be recalculated when friends load
     },
-    ...selectedFriendsData.map(friend => ({
-      id: friend.id,
-      name: friend.name,
-      email: friend.email,
-      amount_owed: initialAmount,
-    })),
   ]);
 
   const [totalAssigned, setTotalAssigned] = useState(0);
   const [remaining, setRemaining] = useState(0);
+
+  // Update participants when friends are loaded
+  useEffect(() => {
+    if (allFriends.length > 0 && participants.length === 1) {
+      const friendsData = selectedFriends
+        .map(id => allFriends.find(f => f.id === id))
+        .filter(f => f !== undefined);
+
+      const perPerson = amount / (friendsData.length + 1);
+
+      setParticipants([
+        {
+          id: user?.id || 'current-user',
+          name: 'You',
+          email: user?.email || 'your@email.com',
+          amount_owed: perPerson,
+        },
+        ...friendsData.map(friend => ({
+          id: friend!.id,
+          name: friend!.full_name || 'Unknown',
+          email: friend!.email,
+          amount_owed: perPerson,
+        })),
+      ]);
+    }
+  }, [allFriends, selectedFriends, amount, user]);
 
   // Calculate totals whenever participants change
   useEffect(() => {
