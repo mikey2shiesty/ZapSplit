@@ -38,7 +38,7 @@ export default function FriendsScreen() {
     if (currentUserId) {
       loadData();
     }
-  }, [currentUserId, activeTab]);
+  }, [currentUserId]);
 
   const loadCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -49,16 +49,16 @@ export default function FriendsScreen() {
 
   const loadData = async () => {
     if (!currentUserId) return;
-    
+
     try {
       setLoading(true);
-      if (activeTab === 'friends') {
-        const friendsData = await getFriends(currentUserId);
-        setFriends(friendsData);
-      } else {
-        const requestsData = await getIncomingFriendRequests(currentUserId);
-        setRequests(requestsData);
-      }
+      // Always load both friends and requests so badge count is accurate
+      const [friendsData, requestsData] = await Promise.all([
+        getFriends(currentUserId),
+        getIncomingFriendRequests(currentUserId),
+      ]);
+      setFriends(friendsData);
+      setRequests(requestsData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
