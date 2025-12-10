@@ -78,6 +78,7 @@ export default function SplitsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <View style={styles.placeholder} />
         <Text style={styles.headerTitle}>Your Splits</Text>
         <TouchableOpacity
           style={styles.newSplitButton}
@@ -245,6 +246,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: colors.gray900,
+  },
+  placeholder: {
+    width: 44,
   },
   newSplitButton: {
     width: 44,
