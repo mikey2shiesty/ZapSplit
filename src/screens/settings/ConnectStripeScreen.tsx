@@ -7,7 +7,11 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
+  TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
 import { createConnectAccount, checkAccountStatus, ConnectAccountStatus } from '../../services/stripeService';
@@ -16,6 +20,8 @@ import Card from '../../components/common/Card';
 import { colors } from '../../constants/theme';
 
 export default function ConnectStripeScreen() {
+  const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [accountStatus, setAccountStatus] = useState<ConnectAccountStatus | null>(null);
@@ -111,7 +117,17 @@ export default function ConnectStripeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.navHeader}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Receive Payments</Text>
+          <View style={styles.placeholder} />
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading account status...</Text>
@@ -123,14 +139,26 @@ export default function ConnectStripeScreen() {
   const isConnected = accountStatus?.connected && accountStatus?.chargesEnabled;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Receive Payments</Text>
-        <Text style={styles.subtitle}>
-          Connect your bank account to receive payments from splits
-        </Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Navigation Header */}
+      <View style={styles.navHeader}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Receive Payments</Text>
+        <View style={styles.placeholder} />
       </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.subtitle}>
+            Connect your bank account to receive payments from splits
+          </Text>
+        </View>
 
       {/* Status Card */}
       <Card variant="elevated" style={styles.card}>
@@ -243,7 +271,8 @@ export default function ConnectStripeScreen() {
           4. Funds are automatically deposited to your bank account
         </Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -251,6 +280,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.gray50,
+  },
+  navHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 12,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  navTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.gray900,
+  },
+  placeholder: {
+    width: 44,
   },
   content: {
     padding: 20,
