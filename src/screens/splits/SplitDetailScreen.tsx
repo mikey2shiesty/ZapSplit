@@ -5,12 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
   Image,
   Share as RNShare,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
@@ -30,6 +31,7 @@ import { useStripe } from '@stripe/stripe-react-native';
 export default function SplitDetailScreen({ navigation, route }: SplitDetailScreenProps) {
   const { splitId } = route.params;
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [split, setSplit] = useState<SplitWithParticipants | null>(null);
@@ -218,22 +220,22 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading split...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!split) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <Text style={styles.errorText}>Split not found</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -246,16 +248,14 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const amountOwed = userParticipant?.amount_owed || 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Split Details</Text>
-        </View>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Split Details</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -354,7 +354,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -484,21 +484,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   backButton: {
-    padding: spacing.xs,
-  },
-  headerContent: {
-    flex: 1,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.gray50,
+    justifyContent: 'center',
     alignItems: 'center',
+    ...shadows.low,
   },
   headerTitle: {
-    ...typography.h3,
-    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.gray900,
+  },
+  placeholder: {
+    width: 44,
   },
   content: {
     flex: 1,
