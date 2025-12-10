@@ -170,6 +170,12 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+        </TouchableOpacity>
         <Text style={styles.title}>Friends</Text>
         <TouchableOpacity
           style={styles.headerButton}
@@ -256,8 +262,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 12,
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.low,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.gray900,
   },
