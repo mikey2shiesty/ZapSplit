@@ -20,44 +20,33 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
   const { user } = useAuth();
   const { allFriends } = useFriends();
 
-  // Initialize with just current user - friends will be added when loaded
-  const [participants, setParticipants] = useState<Participant[]>([
-    {
-      id: user?.id || 'current-user',
-      name: 'You',
-      email: user?.email || 'your@email.com',
-      amount_owed: amount, // Will be recalculated when friends load
-    },
-  ]);
+  // Initialize with empty - friends will be added when loaded
+  // Creator is NOT a participant - only friends who owe money are participants
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const [totalAssigned, setTotalAssigned] = useState(0);
   const [remaining, setRemaining] = useState(0);
 
   // Update participants when friends are loaded
   useEffect(() => {
-    if (allFriends.length > 0 && participants.length === 1) {
+    if (allFriends.length > 0 && participants.length === 0) {
       const friendsData = selectedFriends
         .map(id => allFriends.find(f => f.id === id))
         .filter(f => f !== undefined);
 
-      const perPerson = amount / (friendsData.length + 1);
+      // Only friends are participants - creator receives the money
+      const perPerson = amount / friendsData.length;
 
-      setParticipants([
-        {
-          id: user?.id || 'current-user',
-          name: 'You',
-          email: user?.email || 'your@email.com',
-          amount_owed: perPerson,
-        },
-        ...friendsData.map(friend => ({
+      setParticipants(
+        friendsData.map(friend => ({
           id: friend!.id,
           name: friend!.full_name || 'Unknown',
           email: friend!.email,
           amount_owed: perPerson,
-        })),
-      ]);
+        }))
+      );
     }
-  }, [allFriends, selectedFriends, amount, user]);
+  }, [allFriends, selectedFriends, amount]);
 
   // Calculate totals whenever participants change
   useEffect(() => {
@@ -160,7 +149,6 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
               participant={participant}
               isEditable
               onAmountChange={handleAmountChange}
-              isHighlighted={participant.id === 'current-user'}
             />
           ))}
         </ScrollView>

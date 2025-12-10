@@ -29,9 +29,10 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     .map(id => allFriends.find(f => f.id === id))
     .filter(f => f !== undefined);
 
-  // Calculate equal split amounts (ensures total matches exactly)
-  const allParticipantIds = [user?.id || 'current-user', ...selectedFriends];
-  const equalAmounts = calculateEqualSplitAmounts(amount, allParticipantIds);
+  // For requesting money: only friends are participants (they owe you)
+  // Creator is NOT a participant - they are the one receiving money
+  const participantIds = selectedFriends;
+  const equalAmounts = calculateEqualSplitAmounts(amount, participantIds);
 
   // Calculate amounts based on split method
   const calculateAmount = (participantId: string): number => {
@@ -42,24 +43,16 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     return equalAmounts[participantId] || 0;
   };
 
-  const participants: Participant[] = [
-    {
-      id: user?.id || 'current-user',
-      name: 'You',
-      email: user?.email || 'your@email.com',
-      amount_owed: calculateAmount(user?.id || 'current-user'),
-      amount_paid: 0,
-      status: 'pending',
-    },
-    ...selectedFriendsData.map(friend => ({
-      id: friend!.id,
-      name: friend!.full_name || 'Unknown',
-      email: friend!.email,
-      amount_owed: calculateAmount(friend!.id),
-      amount_paid: 0,
-      status: 'pending' as const,
-    })),
-  ];
+  // Only friends are participants - creator is NOT included
+  // The creator receives the money, participants owe the money
+  const participants: Participant[] = selectedFriendsData.map(friend => ({
+    id: friend!.id,
+    name: friend!.full_name || 'Unknown',
+    email: friend!.email,
+    amount_owed: calculateAmount(friend!.id),
+    amount_paid: 0,
+    status: 'pending' as const,
+  }));
 
   const handleCreateSplit = async () => {
     if (!user) {

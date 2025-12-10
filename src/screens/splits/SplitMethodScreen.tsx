@@ -18,8 +18,8 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
 
   const [selectedMethod, setSelectedMethod] = useState<SplitMethod>('equal');
 
-  // Total participants = selected friends + current user
-  const participantCount = selectedFriends.length + 1;
+  // Total participants = only the friends who owe money (creator is NOT a participant)
+  const participantCount = selectedFriends.length;
 
   const handleMethodSelect = (method: SplitMethod) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
