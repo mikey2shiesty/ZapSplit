@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ReviewSplitScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
@@ -19,6 +19,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
   const { amount, title, description, selectedFriends, splitMethod, customAmounts } = route.params;
+  const insets = useSafeAreaInsets();
 
   const { user } = useAuth();
   const { allFriends } = useFriends();
@@ -103,7 +104,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.content}>
@@ -155,7 +156,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
           Participants will be notified after you create this split
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

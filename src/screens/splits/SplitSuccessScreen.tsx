@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SplitSuccessScreenProps } from '../../types/navigation';
@@ -14,6 +14,7 @@ import { colors, spacing, radius, typography } from '../../constants/theme';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
   const { splitId, amount, participantCount } = route.params;
+  const insets = useSafeAreaInsets();
 
   // Haptic feedback on mount
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.content}>
@@ -102,7 +103,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
           <Text style={styles.secondaryButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

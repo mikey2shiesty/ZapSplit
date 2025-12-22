@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { CustomAmountsScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
@@ -17,6 +17,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function CustomAmountsScreen({ navigation, route }: CustomAmountsScreenProps) {
   const { amount, title, description, selectedFriends } = route.params;
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { allFriends } = useFriends();
 
@@ -87,7 +88,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
   const isValid = Math.abs(remaining) < 0.01; // Allow for floating point errors
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.content}>
@@ -172,7 +173,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

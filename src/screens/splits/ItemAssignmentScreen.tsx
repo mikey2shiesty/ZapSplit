@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
@@ -36,6 +36,7 @@ interface ItemAssignments {
 
 export default function ItemAssignmentScreen({ navigation, route }: ItemAssignmentScreenProps) {
   const { receipt, imageUri, selectedFriends } = route.params;
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { allFriends } = useFriends();
 
@@ -239,7 +240,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -367,7 +368,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

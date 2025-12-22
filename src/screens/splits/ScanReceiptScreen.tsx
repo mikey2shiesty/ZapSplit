@@ -7,10 +7,10 @@ import {
   Image,
   Alert,
   Platform,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +23,7 @@ interface ScanReceiptScreenProps {
 }
 
 export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScreenProps) {
+  const insets = useSafeAreaInsets();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -118,7 +119,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
   // If image is captured, show preview
   if (capturedImage) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <StatusBar barStyle="light-content" />
 
         {/* Header */}
@@ -162,13 +163,13 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
             <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // Camera view
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Header */}
@@ -228,7 +229,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
         <View style={{ width: 80 }} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

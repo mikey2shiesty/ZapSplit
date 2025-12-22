@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { SplitMethodScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
@@ -15,6 +15,7 @@ import { SplitMethodCard, SplitMethod } from '../../components/splits';
 
 export default function SplitMethodScreen({ navigation, route }: SplitMethodScreenProps) {
   const { amount, title, description, selectedFriends } = route.params;
+  const insets = useSafeAreaInsets();
 
   const [selectedMethod, setSelectedMethod] = useState<SplitMethod>('equal');
 
@@ -50,7 +51,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <ScrollView
@@ -120,7 +121,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

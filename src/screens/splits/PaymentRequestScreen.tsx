@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
@@ -25,6 +25,7 @@ import {
 
 export default function PaymentRequestScreen({ navigation, route }: PaymentRequestScreenProps) {
   const { amount, description, splitId } = route.params;
+  const insets = useSafeAreaInsets();
 
   // TODO: Get from user profile
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('payid');
@@ -96,7 +97,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -321,7 +322,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
           <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

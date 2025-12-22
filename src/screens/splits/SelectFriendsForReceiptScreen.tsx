@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { SelectFriendsForReceiptScreenProps } from '../../types/navigation';
@@ -20,6 +20,7 @@ export default function SelectFriendsForReceiptScreen({
   route
 }: SelectFriendsForReceiptScreenProps) {
   const { receipt, imageUri } = route.params;
+  const insets = useSafeAreaInsets();
 
   // Load real friends from Supabase
   const { friends, loading, error } = useFriends();
@@ -60,7 +61,7 @@ export default function SelectFriendsForReceiptScreen({
   const isValid = selectedFriendIds.length > 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
@@ -173,7 +174,7 @@ export default function SelectFriendsForReceiptScreen({
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

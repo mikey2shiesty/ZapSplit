@@ -8,10 +8,10 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
@@ -21,6 +21,7 @@ import { ReviewReceiptScreenProps } from '../../types/navigation';
 
 export default function ReviewReceiptScreen({ navigation, route }: ReviewReceiptScreenProps) {
   const { imageUri } = route.params;
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +167,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Loading state
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Analyzing receipt with AI...</Text>
@@ -174,14 +175,14 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
             This may take a few seconds
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // Error state
   if (error || !receipt) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={80} color={colors.error} />
           <Text style={styles.errorTitle}>Failed to Parse Receipt</Text>
@@ -196,12 +197,12 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
             <Text style={styles.cancelButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -294,7 +295,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

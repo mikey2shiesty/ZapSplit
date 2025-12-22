@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { SelectFriendsScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
@@ -16,6 +16,7 @@ import { useFriends } from '../../hooks/useFriends';
 
 export default function SelectFriendsScreen({ navigation, route }: SelectFriendsScreenProps) {
   const { amount, title, description } = route.params;
+  const insets = useSafeAreaInsets();
 
   // Load real friends from Supabase
   const { friends, loading, error } = useFriends();
@@ -46,7 +47,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const isValid = selectedFriendIds.length > 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.content}>
@@ -124,7 +125,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

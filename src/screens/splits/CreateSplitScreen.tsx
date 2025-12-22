@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   TextInput,
@@ -11,6 +10,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CreateSplitScreenProps } from '../../types/navigation';
@@ -18,6 +18,7 @@ import { colors, spacing, radius, typography } from '../../constants/theme';
 import { AmountInput } from '../../components/splits';
 
 export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps) {
+  const insets = useSafeAreaInsets();
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -44,7 +45,7 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
 
       <KeyboardAvoidingView
@@ -168,7 +169,7 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
