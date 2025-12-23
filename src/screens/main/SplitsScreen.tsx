@@ -72,21 +72,44 @@ export default function SplitsScreen() {
   });
 
   const getStatusColor = (split: any) => {
+    const isCreator = split.creator_id === user?.id;
     const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
-    if (split.creator_id === user?.id) return colors.success;
+
+    if (isCreator) {
+      // For creator: green if all paid, orange if pending
+      const allPaid = split.participants.every((p: any) => p.status === 'paid');
+      return allPaid ? colors.success : colors.warning;
+    }
+
     if (userParticipant?.status === 'paid') return colors.success;
     return colors.warning;
   };
 
   const getStatusText = (split: any) => {
+    const isCreator = split.creator_id === user?.id;
     const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
-    if (split.creator_id === user?.id) return 'You created';
+
+    if (isCreator) {
+      // For creator: show paid count
+      const paidCount = split.participants.filter((p: any) => p.status === 'paid').length;
+      const totalCount = split.participants.length;
+      if (paidCount === totalCount) return 'All paid';
+      return `${paidCount}/${totalCount} paid`;
+    }
+
     if (userParticipant?.status === 'paid') return 'Paid';
     return 'Pending';
   };
 
   const getUserAmount = (split: any) => {
+    const isCreator = split.creator_id === user?.id;
     const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
+
+    if (isCreator) {
+      // For creator: show total amount owed to them
+      return split.participants.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0);
+    }
+
     return userParticipant?.amount_owed || 0;
   };
 
