@@ -224,6 +224,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         splitId: split.id,
         amount: receipt.total,
         participantCount: participants.filter(p => participantTotals[p.id]?.total > 0).length,
+        splitMethod: 'receipt',
       });
     } catch (error: any) {
       console.error('Error saving split:', error);

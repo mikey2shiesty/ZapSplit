@@ -13,8 +13,9 @@ import { SplitSuccessScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
-  const { splitId, amount, participantCount } = route.params;
+  const { splitId, amount, participantCount, splitMethod } = route.params;
   const insets = useSafeAreaInsets();
+  const isEqualSplit = splitMethod === 'equal' || !splitMethod;
 
   // Haptic feedback on mount
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Per Person</Text>
             <Text style={styles.summaryValue}>
-              ${(amount / participantCount).toFixed(2)}
+              {isEqualSplit ? `$${(amount / participantCount).toFixed(2)}` : 'Varies'}
             </Text>
           </View>
         </View>

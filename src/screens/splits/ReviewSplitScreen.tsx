@@ -86,6 +86,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
         splitId: split.id,
         amount,
         participantCount: participants.length,
+        splitMethod,
       });
     } catch (error) {
       console.error('Error creating split:', error);
