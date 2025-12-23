@@ -39,19 +39,35 @@ export default function SplitsScreen() {
     setRefreshing(false);
   };
 
-  // Filter splits based on user's payment status in that split
+  // Filter splits based on status
   const filteredSplits = splits.filter((split) => {
     if (filter === 'all') return true;
 
+    const isCreator = split.creator_id === user?.id;
     const userParticipant = split.participants.find(p => p.user_id === user?.id);
-    if (!userParticipant) return false;
+
+    if (filter === 'pending') {
+      if (isCreator) {
+        // Show creator's splits that have unpaid participants
+        return split.participants.some(p => p.status === 'pending');
+      } else if (userParticipant) {
+        // Show splits where user hasn't paid
+        return userParticipant.status === 'pending';
+      }
+      return false;
+    }
 
     if (filter === 'paid') {
-      return userParticipant.status === 'paid' || split.creator_id === user?.id;
+      if (isCreator) {
+        // Show creator's splits where all participants paid
+        return split.participants.every(p => p.status === 'paid');
+      } else if (userParticipant) {
+        // Show splits where user has paid
+        return userParticipant.status === 'paid';
+      }
+      return false;
     }
-    if (filter === 'pending') {
-      return userParticipant.status === 'pending' && split.creator_id !== user?.id;
-    }
+
     return true;
   });
 
