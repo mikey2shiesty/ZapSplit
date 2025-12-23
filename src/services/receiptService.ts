@@ -106,7 +106,7 @@ export async function parseReceiptWithAI(
   "total": 0.00,
   "merchant": "restaurant name",
   "date": "YYYY-MM-DD",
-  "confidence": 0.95
+  "confidence": <calculated>
 }
 
 IMPORTANT RULES:
@@ -117,8 +117,12 @@ IMPORTANT RULES:
 5. Extract tax amount (if shown)
 6. Extract tip amount (if shown, otherwise set to 0)
 7. Set total to the final amount on the receipt
-8. Set confidence between 0.0 and 1.0 based on image quality
-9. If you cannot clearly read the receipt, set confidence below 0.7
+8. CONFIDENCE SCORING - Set based on how well you could read the receipt:
+   - 0.98-1.0: Perfect quality, all text crystal clear
+   - 0.90-0.97: Good quality, most text readable
+   - 0.80-0.89: Moderate quality, some items may be unclear
+   - 0.70-0.79: Poor quality, had to guess some values
+   - Below 0.70: Very poor quality, many items unreadable
 
 Return ONLY the JSON object, no additional text.`,
             },
