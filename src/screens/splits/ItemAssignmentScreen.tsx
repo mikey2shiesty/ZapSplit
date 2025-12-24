@@ -220,9 +220,9 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       // Success! Navigate to success screen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Build participant amounts for display (exclude "You" since they're the creator)
+      // Build participant amounts for display (include everyone)
       const participantAmounts = participants
-        .filter(p => p.full_name !== 'You' && participantTotals[p.id]?.total > 0)
+        .filter(p => participantTotals[p.id]?.total > 0)
         .map(p => ({
           name: p.full_name,
           amount: participantTotals[p.id].total,
