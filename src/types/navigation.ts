@@ -95,6 +95,7 @@ export type SplitFlowParamList = {
     amount: number;
     participantCount: number;
     splitMethod?: 'equal' | 'custom' | 'percentage' | 'receipt';
+    participantAmounts?: { name: string; amount: number }[];
   };
   PayScreen: {
     splitId: string;

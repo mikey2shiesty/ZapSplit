@@ -220,11 +220,20 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       // Success! Navigate to success screen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+      // Build participant amounts for display (exclude "You" since they're the creator)
+      const participantAmounts = participants
+        .filter(p => p.full_name !== 'You' && participantTotals[p.id]?.total > 0)
+        .map(p => ({
+          name: p.full_name,
+          amount: participantTotals[p.id].total,
+        }));
+
       navigation.navigate('SplitSuccess', {
         splitId: split.id,
         amount: receipt.total,
         participantCount: participants.filter(p => participantTotals[p.id]?.total > 0).length,
         splitMethod: 'receipt',
+        participantAmounts,
       });
     } catch (error: any) {
       console.error('Error saving split:', error);

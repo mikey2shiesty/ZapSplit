@@ -13,7 +13,7 @@ import { SplitSuccessScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
-  const { splitId, amount, participantCount, splitMethod } = route.params;
+  const { splitId, amount, participantCount, splitMethod, participantAmounts } = route.params;
   const insets = useSafeAreaInsets();
   const isEqualSplit = splitMethod === 'equal' || !splitMethod;
 
@@ -68,12 +68,29 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
             <Text style={styles.summaryValue}>{participantCount} people</Text>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Per Person</Text>
-            <Text style={styles.summaryValue}>
-              {isEqualSplit ? `$${(amount / participantCount).toFixed(2)}` : 'Varies'}
-            </Text>
-          </View>
+          {isEqualSplit ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Per Person</Text>
+              <Text style={styles.summaryValue}>
+                ${(amount / participantCount).toFixed(2)}
+              </Text>
+            </View>
+          ) : participantAmounts && participantAmounts.length > 0 ? (
+            <View style={styles.participantsList}>
+              <Text style={styles.participantsHeader}>Individual Amounts</Text>
+              {participantAmounts.map((p, index) => (
+                <View key={index} style={styles.participantRow}>
+                  <Text style={styles.participantName}>{p.name}</Text>
+                  <Text style={styles.participantAmount}>${p.amount.toFixed(2)}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Per Person</Text>
+              <Text style={styles.summaryValue}>Varies</Text>
+            </View>
+          )}
         </View>
 
         {/* Info Text */}
@@ -164,6 +181,30 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.gray200,
     marginVertical: spacing.md,
+  },
+  participantsList: {
+    marginTop: spacing.xs,
+  },
+  participantsHeader: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  participantRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  participantName: {
+    fontSize: 15,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  participantAmount: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
   },
   infoCard: {
     flexDirection: 'row',

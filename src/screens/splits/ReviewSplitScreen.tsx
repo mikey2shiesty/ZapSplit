@@ -81,12 +81,19 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
         participants: participantsData,
       });
 
+      // Build participant amounts for display
+      const participantAmounts = participants.map(p => ({
+        name: p.name,
+        amount: p.amount_owed,
+      }));
+
       // Navigate to success screen with real split ID
       navigation.navigate('SplitSuccess', {
         splitId: split.id,
         amount,
         participantCount: participants.length,
         splitMethod,
+        participantAmounts,
       });
     } catch (error) {
       console.error('Error creating split:', error);
