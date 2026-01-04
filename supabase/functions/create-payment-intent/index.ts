@@ -124,10 +124,14 @@ serve(async (req) => {
     const applicationFee = halfFee; // ZapSplit keeps half the fee
 
     // Create PaymentIntent with destination charge
+    // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
     const paymentIntent = await stripe.paymentIntents.create({
       amount: payerTotal,
       currency: 'aud',
       customer: customerId,
+      automatic_payment_methods: {
+        enabled: true,
+      },
       application_fee_amount: applicationFee,
       transfer_data: {
         destination: receiver.stripe_connect_account_id,
