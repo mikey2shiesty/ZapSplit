@@ -50,8 +50,8 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.yourname.zapsplit",
-          "enableGooglePay": false
+          "merchantIdentifier": "merchant.com.zapsplit.app",
+          "enableGooglePay": true
         }
       ],
       "expo-splash-screen"
