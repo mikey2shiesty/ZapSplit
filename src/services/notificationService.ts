@@ -112,6 +112,13 @@ export async function registerForPushNotifications(): Promise<string | null> {
   try {
     // Get Expo push token
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+
+    // Skip if no projectId configured (EAS not set up yet)
+    if (!projectId) {
+      console.log('Push notifications: No projectId configured. Skipping token registration.');
+      return null;
+    }
+
     const tokenData = await Notifications.getExpoPushTokenAsync({
       projectId: projectId,
     });
