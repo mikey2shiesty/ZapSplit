@@ -164,6 +164,35 @@ Return ONLY the JSON object, no additional text.`,
       throw new Error('No content in OpenAI response');
     }
 
+    // Check if AI indicates this is not a receipt
+    const notReceiptIndicators = [
+      "doesn't contain a receipt",
+      "does not contain a receipt",
+      "not a receipt",
+      "unable to extract",
+      "cannot extract",
+      "can't extract",
+      "no receipt",
+      "isn't a receipt",
+      "is not a receipt",
+      "doesn't appear to be a receipt",
+      "does not appear to be a receipt",
+    ];
+
+    const contentLower = content.toLowerCase();
+    const isNotReceipt = notReceiptIndicators.some(indicator =>
+      contentLower.includes(indicator)
+    );
+
+    if (isNotReceipt) {
+      const parseError: ReceiptParseError = {
+        type: ReceiptParseErrorType.INVALID_IMAGE,
+        message: 'Please take a photo of a receipt',
+        details: 'The image does not appear to be a receipt. Please try again with a clear photo of your receipt.',
+      };
+      throw parseError;
+    }
+
     // Parse the JSON response
     let parsedReceipt: ParsedReceipt;
     try {
@@ -175,7 +204,14 @@ Return ONLY the JSON object, no additional text.`,
       parsedReceipt = JSON.parse(jsonContent);
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', content);
-      throw new Error('Invalid JSON in OpenAI response');
+
+      // If JSON parsing fails, it might still be a non-receipt message we didn't catch
+      const error: ReceiptParseError = {
+        type: ReceiptParseErrorType.INVALID_IMAGE,
+        message: 'Please take a photo of a receipt',
+        details: 'Could not read the receipt. Please try again with a clearer photo.',
+      };
+      throw error;
     }
 
     // Validate the parsed receipt
@@ -185,8 +221,13 @@ Return ONLY the JSON object, no additional text.`,
     }
 
     return parsedReceipt;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error parsing receipt with AI:', error);
+
+    // If it's already a ReceiptParseError, re-throw it
+    if (error && error.type && error.message) {
+      throw error;
+    }
 
     // Convert to ReceiptParseError
     const parseError: ReceiptParseError = {
