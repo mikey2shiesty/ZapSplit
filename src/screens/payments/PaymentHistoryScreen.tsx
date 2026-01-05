@@ -8,17 +8,20 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../services/supabase';
 import { getPaymentHistory, getPaymentsSent, getPaymentsReceived, Payment } from '../../services/stripeService';
 import Avatar from '../../components/common/Avatar';
 import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
+import Header from '../../components/common/Header';
 import { colors } from '../../constants/theme';
 import { format } from 'date-fns';
 
 type TabType = 'all' | 'sent' | 'received';
 
 export default function PaymentHistoryScreen() {
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,8 +196,10 @@ export default function PaymentHistoryScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Payment History</Text>
+      <Header title="Payment History" onBack={() => navigation.goBack()} />
+
+      {/* Subtitle */}
+      <View style={styles.subtitleContainer}>
         <Text style={styles.subtitle}>View all your transactions</Text>
       </View>
 
@@ -235,15 +240,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.gray600,
   },
-  header: {
-    padding: 20,
+  subtitleContainer: {
+    paddingHorizontal: 20,
     paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
