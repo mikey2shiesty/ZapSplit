@@ -76,11 +76,12 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       totals[p.id] = { subtotal: 0, tax: 0, tip: 0, total: 0 };
     });
 
-    // Calculate item subtotals
+    // Calculate item subtotals (using line total = price × quantity)
     receipt.items.forEach(item => {
       const assignedTo = assignments[item.id] || [];
       if (assignedTo.length > 0) {
-        const sharePerPerson = item.price / assignedTo.length;
+        const lineTotal = item.price * item.quantity;
+        const sharePerPerson = lineTotal / assignedTo.length;
         assignedTo.forEach(userId => {
           if (totals[userId]) {
             totals[userId].subtotal += sharePerPerson;
@@ -391,7 +392,8 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCardProps) {
-  const sharePerPerson = assignedTo.length > 0 ? item.price / assignedTo.length : 0;
+  const lineTotal = item.price * item.quantity;
+  const sharePerPerson = assignedTo.length > 0 ? lineTotal / assignedTo.length : 0;
 
   return (
     <View style={styles.itemCard}>
@@ -405,7 +407,14 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCa
           )}
           <Text style={styles.itemName}>{item.name}</Text>
         </View>
-        <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
+        {item.quantity > 1 ? (
+          <View style={styles.priceContainer}>
+            <Text style={styles.unitPrice}>{formatCurrency(item.price)} ea</Text>
+            <Text style={styles.itemPrice}>{formatCurrency(lineTotal)}</Text>
+          </View>
+        ) : (
+          <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
+        )}
       </View>
 
       {/* Participant Assignment Chips */}
@@ -592,6 +601,14 @@ const styles = StyleSheet.create({
     ...typography.h6,
     color: colors.text,
     fontWeight: '700',
+  },
+  priceContainer: {
+    alignItems: 'flex-start',
+  },
+  unitPrice: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
   assignmentContainer: {
     marginTop: spacing.sm,
