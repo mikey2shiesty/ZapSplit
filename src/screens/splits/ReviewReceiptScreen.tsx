@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   priceContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     flex: 1,
   },
   unitPrice: {
