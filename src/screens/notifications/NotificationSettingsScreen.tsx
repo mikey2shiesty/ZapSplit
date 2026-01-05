@@ -18,6 +18,7 @@ import {
   NotificationPreferences,
 } from '../../services/notificationService';
 import Card from '../../components/common/Card';
+import Header from '../../components/common/Header';
 import { colors } from '../../constants/theme';
 
 export default function NotificationSettingsScreen() {
@@ -110,18 +111,17 @@ export default function NotificationSettingsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification Settings</Text>
-        {saving && (
-          <ActivityIndicator size="small" color={colors.primary} style={styles.savingIndicator} />
-        )}
-      </View>
+      <Header
+        title="Notification Settings"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          saving ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <View style={{ width: 44 }} />
+          )
+        }
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Channels */}
@@ -235,31 +235,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.gray50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-  },
-  savingIndicator: {
-    marginLeft: 8,
   },
   content: {
     flex: 1,

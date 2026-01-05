@@ -8,7 +8,7 @@ import {
   Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import Header from '../../components/common/Header';
 import { colors } from '../../constants/theme';
 
 export default function PrivacyPolicyScreen() {
@@ -21,16 +21,7 @@ export default function PrivacyPolicyScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy Policy</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <Header title="Privacy Policy" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.lastUpdated}>Last Updated: January 2026</Text>
@@ -159,31 +150,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
   },
   content: {
     flex: 1,

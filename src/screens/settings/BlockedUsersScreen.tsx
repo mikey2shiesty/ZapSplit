@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getBlockedUsers, unblockUser, BlockedUser } from '../../services/privacyService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
+import Header from '../../components/common/Header';
 import { colors, shadows } from '../../constants/theme';
 
 export default function BlockedUsersScreen() {
@@ -141,16 +142,7 @@ export default function BlockedUsersScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Blocked Users</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <Header title="Blocked Users" onBack={() => navigation.goBack()} />
 
       {/* Content */}
       <FlatList
@@ -194,31 +186,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.gray50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
   },
   listContent: {
     padding: 16,

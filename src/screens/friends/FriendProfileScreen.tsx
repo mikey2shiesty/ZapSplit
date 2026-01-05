@@ -21,6 +21,7 @@ import { blockUser, reportUser, ReportReason } from '../../services/privacyServi
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import Header from '../../components/common/Header';
 import { colors, shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../types/navigation';
 
@@ -218,26 +219,23 @@ export default function FriendProfileScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Friend Profile</Text>
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={handleToggleFavorite}
-          disabled={actionLoading}
-        >
-          <Ionicons
-            name={profile.is_favorite ? 'star' : 'star-outline'}
-            size={24}
-            color={profile.is_favorite ? colors.warning : colors.gray500}
-          />
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="Friend Profile"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={handleToggleFavorite}
+            disabled={actionLoading}
+          >
+            <Ionicons
+              name={profile.is_favorite ? 'star' : 'star-outline'}
+              size={24}
+              color={profile.is_favorite ? colors.warning : colors.gray500}
+            />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
@@ -372,27 +370,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.gray600,
     marginVertical: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.gray900,
   },
   favoriteButton: {
     width: 40,

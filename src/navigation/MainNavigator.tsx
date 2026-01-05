@@ -134,32 +134,32 @@ export default function MainNavigator() {
       {/* Main Tab Navigator */}
       <Stack.Screen name="Main" component={MainTabs} />
 
-      {/* Split Flow Modal */}
+      {/* Split Flow */}
       <Stack.Screen
         name="SplitFlow"
         component={SplitFlowNavigator}
         options={{
-          presentation: 'modal', // Modal presentation style (slides up from bottom)
+          presentation: 'card',
           headerShown: false,
         }}
       />
 
-      {/* Stripe Connect Modal */}
+      {/* Stripe Connect */}
       <Stack.Screen
         name="ConnectStripe"
         component={ConnectStripeScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
 
-      {/* Payment History Modal */}
+      {/* Payment History */}
       <Stack.Screen
         name="PaymentHistory"
         component={PaymentHistoryScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
@@ -177,7 +177,7 @@ export default function MainNavigator() {
         name="AddFriend"
         component={AddFriendScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
@@ -185,7 +185,7 @@ export default function MainNavigator() {
         name="FriendRequests"
         component={FriendRequestsScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
@@ -211,7 +211,7 @@ export default function MainNavigator() {
         name="CreateGroup"
         component={CreateGroupScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
@@ -237,7 +237,7 @@ export default function MainNavigator() {
         name="NotificationSettings"
         component={NotificationSettingsScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />
@@ -307,7 +307,7 @@ export default function MainNavigator() {
         name="ChangePassword"
         component={ChangePasswordScreen}
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
         }}
       />

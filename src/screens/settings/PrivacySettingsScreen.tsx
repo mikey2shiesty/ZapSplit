@@ -25,6 +25,7 @@ import {
 } from '../../services/privacyService';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import Header from '../../components/common/Header';
 import { colors } from '../../constants/theme';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -200,18 +201,17 @@ export default function PrivacySettingsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy & Security</Text>
-        {saving && (
-          <ActivityIndicator size="small" color={colors.primary} style={styles.savingIndicator} />
-        )}
-      </View>
+      <Header
+        title="Privacy & Security"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          saving ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <View style={{ width: 44 }} />
+          )
+        }
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Pending Deletion Banner */}
@@ -393,31 +393,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.gray50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-  },
-  savingIndicator: {
-    marginLeft: 8,
   },
   content: {
     flex: 1,

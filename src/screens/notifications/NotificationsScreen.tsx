@@ -23,6 +23,7 @@ import {
   NotificationType,
 } from '../../services/notificationService';
 import Card from '../../components/common/Card';
+import Header from '../../components/common/Header';
 import { colors, shadows } from '../../constants/theme';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -228,23 +229,20 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity
-            style={styles.markAllButton}
-            onPress={handleMarkAllRead}
-          >
-            <Text style={styles.markAllText}>Mark All Read</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <Header
+        title="Notifications"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          unreadCount > 0 ? (
+            <TouchableOpacity
+              style={styles.markAllButton}
+              onPress={handleMarkAllRead}
+            >
+              <Text style={styles.markAllText}>Mark All Read</Text>
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {/* Unread Badge */}
       {unreadCount > 0 && (
@@ -285,28 +283,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.gray50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
   },
   markAllButton: {
     paddingHorizontal: 12,

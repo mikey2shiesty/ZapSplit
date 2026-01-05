@@ -23,7 +23,8 @@ import {
 } from '../../services/analyticsService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { colors } from '../../constants/theme';
+import Header from '../../components/common/Header';
+import { colors, shadows } from '../../constants/theme';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -126,26 +127,23 @@ export default function AnalyticsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <TouchableOpacity
-          style={styles.exportButton}
-          onPress={handleExport}
-          disabled={exporting}
-        >
-          {exporting ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="download-outline" size={24} color={colors.primary} />
-          )}
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="Analytics"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <TouchableOpacity
+            style={styles.exportButton}
+            onPress={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="download-outline" size={24} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         style={styles.content}
@@ -357,28 +355,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.gray50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-    textAlign: 'center',
   },
   exportButton: {
     width: 40,
