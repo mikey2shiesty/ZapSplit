@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { parseReceiptWithAI } from '../../services/receiptService';
 import { ParsedReceipt, ReceiptItem } from '../../types/receipt';
 import { ReviewReceiptScreenProps } from '../../types/navigation';
+import AIConsentModal, { hasAIConsent } from '../../components/modals/AIConsentModal';
 
 export default function ReviewReceiptScreen({ navigation, route }: ReviewReceiptScreenProps) {
   const { imageUri } = route.params;
@@ -27,11 +28,36 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<ParsedReceipt | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
-  // Parse receipt on mount
+  // Check consent and parse receipt on mount
   useEffect(() => {
-    parseReceipt();
+    checkConsentAndParse();
   }, []);
+
+  const checkConsentAndParse = async () => {
+    const hasConsent = await hasAIConsent();
+    setConsentChecked(true);
+
+    if (hasConsent) {
+      parseReceipt();
+    } else {
+      setLoading(false);
+      setShowConsentModal(true);
+    }
+  };
+
+  const handleConsentAccept = () => {
+    setShowConsentModal(false);
+    setLoading(true);
+    parseReceipt();
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentModal(false);
+    navigation.goBack();
+  };
 
   const parseReceipt = async () => {
     try {
@@ -168,6 +194,11 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <AIConsentModal
+          visible={showConsentModal}
+          onAccept={handleConsentAccept}
+          onDecline={handleConsentDecline}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Analyzing receipt with AI...</Text>
@@ -175,6 +206,19 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
             This may take a few seconds
           </Text>
         </View>
+      </View>
+    );
+  }
+
+  // Show consent modal if not yet checked
+  if (showConsentModal) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <AIConsentModal
+          visible={showConsentModal}
+          onAccept={handleConsentAccept}
+          onDecline={handleConsentDecline}
+        />
       </View>
     );
   }
@@ -247,7 +291,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
               </TouchableOpacity>
             </View>
 
-            {receipt.items.map((item, index) => (
+            {receipt.items.map((item) => (
               <ItemRow
                 key={item.id}
                 item={item}

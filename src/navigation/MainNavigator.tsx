@@ -25,6 +25,10 @@ import NotificationSettingsScreen from '../screens/notifications/NotificationSet
 // Privacy & Security screens
 import PrivacySettingsScreen from '../screens/settings/PrivacySettingsScreen';
 import BlockedUsersScreen from '../screens/settings/BlockedUsersScreen';
+// Legal & Compliance screens
+import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
+import TermsOfServiceScreen from '../screens/settings/TermsOfServiceScreen';
+import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 // Settings & Profile screens
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import EditProfileScreen from '../screens/settings/EditProfileScreen';
@@ -250,6 +254,32 @@ export default function MainNavigator() {
       <Stack.Screen
         name="BlockedUsers"
         component={BlockedUsersScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+
+      {/* Legal & Compliance Screens */}
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="TermsOfService"
+        component={TermsOfServiceScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="DeleteAccount"
+        component={DeleteAccountScreen}
         options={{
           presentation: 'card',
           headerShown: false,

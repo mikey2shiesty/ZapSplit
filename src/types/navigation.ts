@@ -24,6 +24,10 @@ export type RootStackParamList = {
   // Privacy & Security
   PrivacySettings: undefined;
   BlockedUsers: undefined;
+  // Legal & Compliance
+  PrivacyPolicy: undefined;
+  TermsOfService: undefined;
+  DeleteAccount: undefined;
   // Settings & Profile
   Settings: undefined;
   EditProfile: undefined;

@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -19,11 +20,12 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
-  const { signIn } = useAuth();
+  const { signIn, signInWithApple, isAppleSignInAvailable } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -61,6 +63,24 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    try {
+      await signInWithApple();
+      // Navigation will be handled by auth state change
+    } catch (error: any) {
+      // Don't show error for user cancellation
+      if (error.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert(
+          'Sign In Failed',
+          error.message || 'An error occurred during Apple Sign In'
+        );
+      }
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -126,6 +146,32 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               <Text style={styles.loginButtonText}>Log In</Text>
             )}
           </TouchableOpacity>
+
+          {/* Apple Sign In - iOS only */}
+          {isAppleSignInAvailable && (
+            <>
+              <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.divider} />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.appleButton, appleLoading && styles.appleButtonDisabled]}
+                onPress={handleAppleSignIn}
+                disabled={appleLoading}
+              >
+                {appleLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+                    <Text style={styles.appleButtonText}>Continue with Apple</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           <TouchableOpacity
             style={styles.signupLink}
@@ -230,6 +276,38 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: 0.3,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.gray200,
+  },
+  dividerText: {
+    paddingHorizontal: spacing.md,
+    fontSize: 14,
+    color: colors.gray500,
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    paddingVertical: spacing.md + 2,
+    borderRadius: 14,
+    gap: spacing.sm,
+  },
+  appleButtonDisabled: {
+    opacity: 0.6,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
   },
   signupLink: {
     paddingVertical: spacing.md,

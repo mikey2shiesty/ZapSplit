@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../services/supabase';
 
 export interface AuthState {
@@ -69,10 +71,67 @@ export function useAuth() {
     if (error) throw error;
   };
 
+  const signInWithApple = async () => {
+    // Only available on iOS
+    if (Platform.OS !== 'ios') {
+      throw new Error('Apple Sign In is only available on iOS');
+    }
+
+    // Check if Apple Sign In is available
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+    if (!isAvailable) {
+      throw new Error('Apple Sign In is not available on this device');
+    }
+
+    // Request Apple Sign In
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    // Get the identity token
+    if (!credential.identityToken) {
+      throw new Error('No identity token received from Apple');
+    }
+
+    // Sign in with Supabase using the Apple ID token
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
+    });
+
+    if (error) throw error;
+
+    // If we got the user's name from Apple (only on first sign in), update profile
+    if (credential.fullName?.givenName || credential.fullName?.familyName) {
+      const fullName = [
+        credential.fullName?.givenName,
+        credential.fullName?.familyName,
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      if (fullName && data.user) {
+        await supabase.auth.updateUser({
+          data: { full_name: fullName },
+        });
+      }
+    }
+
+    return data;
+  };
+
+  // Check if Apple Sign In is available on this device
+  const isAppleSignInAvailable = Platform.OS === 'ios';
+
   return {
     ...authState,
     signUp,
     signIn,
     signOut,
+    signInWithApple,
+    isAppleSignInAvailable,
   };
 }

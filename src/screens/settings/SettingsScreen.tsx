@@ -213,12 +213,12 @@ export default function SettingsScreen() {
           <SettingsItem
             icon="document-text-outline"
             label="Terms of Service"
-            onPress={() => Alert.alert('Terms', 'Terms of Service will open in browser')}
+            onPress={() => navigation.navigate('TermsOfService')}
           />
           <SettingsItem
             icon="lock-closed-outline"
             label="Privacy Policy"
-            onPress={() => Alert.alert('Privacy', 'Privacy Policy will open in browser')}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
         </View>
 
@@ -226,6 +226,17 @@ export default function SettingsScreen() {
         <View style={styles.appInfo}>
           <Text style={styles.appVersion}>ZapSplit v1.0.0</Text>
           <Text style={styles.appCopyright}>Made with ⚡ in Australia</Text>
+        </View>
+
+        {/* Danger Zone */}
+        <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
+        <View style={[styles.section, styles.dangerSection]}>
+          <SettingsItem
+            icon="trash-outline"
+            label="Delete Account"
+            onPress={() => navigation.navigate('DeleteAccount')}
+            rightElement={<Ionicons name="chevron-forward" size={20} color={colors.error} />}
+          />
         </View>
 
         {/* Sign Out Button */}
@@ -451,6 +462,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.gray400,
     marginTop: 4,
+  },
+  dangerTitle: {
+    color: colors.error,
+  },
+  dangerSection: {
+    borderWidth: 1,
+    borderColor: colors.errorLight,
   },
   signOutButton: {
     flexDirection: 'row',
