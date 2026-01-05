@@ -35,14 +35,16 @@ import EditProfileScreen from '../screens/settings/EditProfileScreen';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
 // Analytics
 import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
-import { colors } from '../constants/theme';
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Tab Navigator Component
 function MainTabs() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
