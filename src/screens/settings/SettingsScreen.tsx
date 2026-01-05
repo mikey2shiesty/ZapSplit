@@ -1,55 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme, ThemeMode } from '../../contexts/ThemeContext';
 import Avatar from '../../components/common/Avatar';
 import Header from '../../components/common/Header';
-import { colors, shadows } from '../../constants/theme';
-
-const THEME_KEY = '@zapsplit_theme';
-
-type ThemeMode = 'light' | 'dark' | 'system';
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
   const { user, signOut } = useAuth();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+  const { themeMode, setThemeMode, colors } = useTheme();
 
-  useEffect(() => {
-    loadTheme();
-  }, []);
-
-  const loadTheme = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(THEME_KEY);
-      if (saved) {
-        setThemeMode(saved as ThemeMode);
-      }
-    } catch (error) {
-      console.error('Error loading theme:', error);
-    }
-  };
-
-  const handleThemeChange = async (mode: ThemeMode) => {
-    try {
-      setThemeMode(mode);
-      await AsyncStorage.setItem(THEME_KEY, mode);
-      // Note: Full theme implementation would require a ThemeContext
-      // For now, this just saves the preference
-    } catch (error) {
-      console.error('Error saving theme:', error);
-    }
+  const handleThemeChange = (mode: ThemeMode) => {
+    setThemeMode(mode);
   };
 
   const handleSignOut = () => {
@@ -70,15 +41,57 @@ export default function SettingsScreen() {
   const userName = user?.user_metadata?.full_name || 'User';
   const userEmail = user?.email || '';
 
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      flex: 1,
+      backgroundColor: colors.gray50,
+    },
+    profileCard: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      backgroundColor: colors.surface,
+      padding: 16,
+      borderRadius: 16,
+      marginBottom: 24,
+    },
+    profileName: {
+      fontSize: 18,
+      fontWeight: '700' as const,
+      color: colors.gray900,
+    },
+    profileEmail: {
+      fontSize: 14,
+      color: colors.gray500,
+      marginTop: 2,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '600' as const,
+      color: colors.gray500,
+      textTransform: 'uppercase' as const,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+      marginTop: 8,
+      paddingHorizontal: 4,
+    },
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      marginBottom: 16,
+      overflow: 'hidden' as const,
+    },
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={dynamicStyles.container}>
       {/* Header */}
       <Header title="Settings" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
         <TouchableOpacity
-          style={styles.profileCard}
+          style={dynamicStyles.profileCard}
           onPress={() => navigation.navigate('EditProfile')}
         >
           <Avatar
@@ -87,65 +100,71 @@ export default function SettingsScreen() {
             size="lg"
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{userName}</Text>
-            <Text style={styles.profileEmail}>{userEmail}</Text>
+            <Text style={dynamicStyles.profileName}>{userName}</Text>
+            <Text style={dynamicStyles.profileEmail}>{userEmail}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
         </TouchableOpacity>
 
         {/* Account Section */}
-        <Text style={styles.sectionTitle}>Account</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Account</Text>
+        <View style={dynamicStyles.section}>
           <SettingsItem
             icon="person-outline"
             label="Edit Profile"
             onPress={() => navigation.navigate('EditProfile')}
+            colors={colors}
           />
           <SettingsItem
             icon="key-outline"
             label="Change Password"
             onPress={() => navigation.navigate('ChangePassword')}
+            colors={colors}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
             label="Privacy & Security"
             onPress={() => navigation.navigate('PrivacySettings')}
+            colors={colors}
           />
         </View>
 
         {/* Payments Section */}
-        <Text style={styles.sectionTitle}>Payments</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Payments</Text>
+        <View style={dynamicStyles.section}>
           <SettingsItem
             icon="card-outline"
             label="Connect Stripe"
             subtitle="Link your account to receive payments"
             onPress={() => navigation.navigate('ConnectStripe')}
+            colors={colors}
           />
           <SettingsItem
             icon="time-outline"
             label="Payment History"
             onPress={() => navigation.navigate('PaymentHistory')}
+            colors={colors}
           />
         </View>
 
         {/* Notifications Section */}
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Notifications</Text>
+        <View style={dynamicStyles.section}>
           <SettingsItem
             icon="notifications-outline"
             label="Notification Preferences"
             onPress={() => navigation.navigate('NotificationSettings')}
+            colors={colors}
           />
         </View>
 
         {/* Appearance Section */}
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Appearance</Text>
+        <View style={dynamicStyles.section}>
           <View style={styles.themeSection}>
             <View style={styles.themeHeader}>
               <Ionicons name="color-palette-outline" size={22} color={colors.gray700} />
-              <Text style={styles.themeLabel}>Theme</Text>
+              <Text style={[styles.themeLabel, { color: colors.gray900 }]}>Theme</Text>
             </View>
             <View style={styles.themeOptions}>
               <ThemeOption
@@ -153,89 +172,103 @@ export default function SettingsScreen() {
                 icon="sunny-outline"
                 selected={themeMode === 'light'}
                 onPress={() => handleThemeChange('light')}
+                colors={colors}
               />
               <ThemeOption
                 label="Dark"
                 icon="moon-outline"
                 selected={themeMode === 'dark'}
                 onPress={() => handleThemeChange('dark')}
+                colors={colors}
               />
               <ThemeOption
                 label="System"
                 icon="phone-portrait-outline"
                 selected={themeMode === 'system'}
                 onPress={() => handleThemeChange('system')}
+                colors={colors}
               />
             </View>
           </View>
         </View>
 
         {/* Social Section */}
-        <Text style={styles.sectionTitle}>Social</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Social</Text>
+        <View style={dynamicStyles.section}>
           <SettingsItem
             icon="people-outline"
             label="Friends"
             onPress={() => navigation.navigate('Friends')}
+            colors={colors}
           />
           <SettingsItem
             icon="people-circle-outline"
             label="Groups"
             onPress={() => navigation.navigate('Groups')}
+            colors={colors}
           />
           <SettingsItem
             icon="ban-outline"
             label="Blocked Users"
             onPress={() => navigation.navigate('BlockedUsers')}
+            colors={colors}
           />
         </View>
 
         {/* Support Section */}
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Support</Text>
+        <View style={dynamicStyles.section}>
           <SettingsItem
             icon="help-circle-outline"
             label="Help & FAQ"
             onPress={() => Alert.alert('Help', 'Help center coming soon!')}
+            colors={colors}
           />
           <SettingsItem
             icon="chatbubble-outline"
             label="Contact Support"
             onPress={() => Alert.alert('Contact', 'support@zapsplit.com')}
+            colors={colors}
           />
           <SettingsItem
             icon="document-text-outline"
             label="Terms of Service"
             onPress={() => navigation.navigate('TermsOfService')}
+            colors={colors}
           />
           <SettingsItem
             icon="lock-closed-outline"
             label="Privacy Policy"
             onPress={() => navigation.navigate('PrivacyPolicy')}
+            colors={colors}
           />
         </View>
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>ZapSplit v1.0.0</Text>
-          <Text style={styles.appCopyright}>Made with ⚡ in Australia</Text>
+          <Text style={[styles.appVersion, { color: colors.gray500 }]}>ZapSplit v1.0.0</Text>
+          <Text style={[styles.appCopyright, { color: colors.gray400 }]}>Made with ⚡ in Australia</Text>
         </View>
 
         {/* Danger Zone */}
-        <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
-        <View style={[styles.section, styles.dangerSection]}>
+        <Text style={[dynamicStyles.sectionTitle, { color: colors.error }]}>Danger Zone</Text>
+        <View style={[dynamicStyles.section, { borderWidth: 1, borderColor: colors.errorLight }]}>
           <SettingsItem
             icon="trash-outline"
             label="Delete Account"
             onPress={() => navigation.navigate('DeleteAccount')}
             rightElement={<Ionicons name="chevron-forward" size={20} color={colors.error} />}
+            colors={colors}
           />
         </View>
 
         {/* Sign Out Button */}
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+        <TouchableOpacity
+          style={[styles.signOutButton, { backgroundColor: colors.surface, borderColor: colors.errorLight }]}
+          onPress={handleSignOut}
+        >
           <Ionicons name="log-out-outline" size={22} color={colors.error} />
-          <Text style={styles.signOutText}>Sign Out</Text>
+          <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomSpacer} />
@@ -251,21 +284,26 @@ function SettingsItem({
   subtitle,
   onPress,
   rightElement,
+  colors,
 }: {
   icon: string;
   label: string;
   subtitle?: string;
   onPress?: () => void;
   rightElement?: React.ReactNode;
+  colors: any;
 }) {
   return (
-    <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
-      <View style={styles.settingsItemIcon}>
+    <TouchableOpacity
+      style={[styles.settingsItem, { borderBottomColor: colors.gray100 }]}
+      onPress={onPress}
+    >
+      <View style={[styles.settingsItemIcon, { backgroundColor: colors.gray100 }]}>
         <Ionicons name={icon as any} size={22} color={colors.gray700} />
       </View>
       <View style={styles.settingsItemContent}>
-        <Text style={styles.settingsItemLabel}>{label}</Text>
-        {subtitle && <Text style={styles.settingsItemSubtitle}>{subtitle}</Text>}
+        <Text style={[styles.settingsItemLabel, { color: colors.gray900 }]}>{label}</Text>
+        {subtitle && <Text style={[styles.settingsItemSubtitle, { color: colors.gray500 }]}>{subtitle}</Text>}
       </View>
       {rightElement || <Ionicons name="chevron-forward" size={20} color={colors.gray400} />}
     </TouchableOpacity>
@@ -278,15 +316,20 @@ function ThemeOption({
   icon,
   selected,
   onPress,
+  colors,
 }: {
   label: string;
   icon: string;
   selected: boolean;
   onPress: () => void;
+  colors: any;
 }) {
   return (
     <TouchableOpacity
-      style={[styles.themeOption, selected && styles.themeOptionSelected]}
+      style={[
+        styles.themeOption,
+        { backgroundColor: selected ? colors.primaryLight : colors.gray100 },
+      ]}
       onPress={onPress}
     >
       <Ionicons
@@ -294,7 +337,12 @@ function ThemeOption({
         size={20}
         color={selected ? colors.primary : colors.gray500}
       />
-      <Text style={[styles.themeOptionLabel, selected && styles.themeOptionLabelSelected]}>
+      <Text
+        style={[
+          styles.themeOptionLabel,
+          { color: selected ? colors.primary : colors.gray600 },
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -302,64 +350,24 @@ function ThemeOption({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.gray50,
-  },
   content: {
     flex: 1,
     padding: 16,
   },
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-  },
   profileInfo: {
     flex: 1,
     marginLeft: 16,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.gray900,
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: colors.gray500,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray500,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    marginTop: 8,
-    paddingHorizontal: 4,
-  },
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
   },
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
   },
   settingsItemIcon: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -370,11 +378,9 @@ const styles = StyleSheet.create({
   settingsItemLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.gray900,
   },
   settingsItemSubtitle: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   themeSection: {
@@ -389,7 +395,6 @@ const styles = StyleSheet.create({
   themeLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.gray900,
   },
   themeOptions: {
     flexDirection: 'row',
@@ -403,18 +408,10 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: colors.gray100,
-  },
-  themeOptionSelected: {
-    backgroundColor: colors.primaryLight,
   },
   themeOptionLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.gray600,
-  },
-  themeOptionLabelSelected: {
-    color: colors.primary,
   },
   appInfo: {
     alignItems: 'center',
@@ -423,36 +420,24 @@ const styles = StyleSheet.create({
   },
   appVersion: {
     fontSize: 14,
-    color: colors.gray500,
     fontWeight: '500',
   },
   appCopyright: {
     fontSize: 12,
-    color: colors.gray400,
     marginTop: 4,
-  },
-  dangerTitle: {
-    color: colors.error,
-  },
-  dangerSection: {
-    borderWidth: 1,
-    borderColor: colors.errorLight,
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.errorLight,
   },
   signOutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.error,
   },
   bottomSpacer: {
     height: 40,

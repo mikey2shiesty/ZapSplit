@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { shadows } from '../../constants/theme';
 
 interface HeaderProps {
   title: string;
@@ -22,6 +23,7 @@ export default function Header({
   style,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const isTransparent = variant === 'transparent';
 
@@ -29,8 +31,12 @@ export default function Header({
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + 8 },
-        isTransparent && styles.transparent,
+        {
+          paddingTop: insets.top + 8,
+          backgroundColor: isTransparent ? 'transparent' : colors.surface,
+          borderBottomColor: isTransparent ? 'transparent' : colors.gray200,
+          borderBottomWidth: isTransparent ? 0 : 1,
+        },
         style,
       ]}
     >
@@ -38,7 +44,12 @@ export default function Header({
         {/* Left - Back Button */}
         {showBackButton && onBack ? (
           <TouchableOpacity
-            style={[styles.backButton, isTransparent && styles.backButtonTransparent]}
+            style={[
+              styles.backButton,
+              {
+                backgroundColor: isTransparent ? colors.surface : colors.gray50,
+              },
+            ]}
             onPress={onBack}
             activeOpacity={0.7}
           >
@@ -49,7 +60,7 @@ export default function Header({
         )}
 
         {/* Center - Title */}
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.gray900 }]} numberOfLines={1}>
           {title}
         </Text>
 
@@ -65,15 +76,7 @@ export default function Header({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  transparent: {
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
-  },
+  container: {},
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -85,19 +88,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.gray50,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
-  },
-  backButtonTransparent: {
-    backgroundColor: colors.surface,
   },
   title: {
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     textAlign: 'center',
     marginHorizontal: 12,
   },
