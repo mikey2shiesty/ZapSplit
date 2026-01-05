@@ -393,6 +393,8 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
     );
   }
 
+  const lineTotal = item.price * item.quantity;
+
   return (
     <TouchableOpacity
       style={styles.itemCard}
@@ -408,7 +410,14 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
         <Text style={styles.itemName}>{item.name}</Text>
       </View>
       <View style={styles.itemRight}>
-        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+        {item.quantity > 1 ? (
+          <View style={styles.priceContainer}>
+            <Text style={styles.unitPrice}>${item.price.toFixed(2)} ea</Text>
+            <Text style={styles.itemPrice}>${lineTotal.toFixed(2)}</Text>
+          </View>
+        ) : (
+          <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+        )}
         <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
           <Ionicons name="trash-outline" size={18} color={colors.error} />
         </TouchableOpacity>
@@ -598,6 +607,15 @@ const styles = StyleSheet.create({
     ...typography.h6,
     color: colors.text,
     flex: 1,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+    flex: 1,
+  },
+  unitPrice: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
   deleteButton: {
     padding: spacing.sm,
