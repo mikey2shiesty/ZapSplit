@@ -11,7 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ReviewSplitScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { SplitSummary, Participant } from '../../components/splits';
 import { createSplit, calculateEqualSplitAmounts } from '../../services/splitService';
 import { useFriends } from '../../hooks/useFriends';
@@ -20,6 +21,7 @@ import { useAuth } from '../../hooks/useAuth';
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
   const { amount, title, description, selectedFriends, splitMethod, customAmounts } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   const { user } = useAuth();
   const { allFriends } = useFriends();
@@ -112,19 +114,22 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Header with Edit button */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={styles.pageTitle}>Review Split</Text>
-            <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-              <Text style={styles.editButtonText}>Edit</Text>
+            <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Review Split</Text>
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: colors.surface }]}
+              onPress={handleEdit}
+            >
+              <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.pageSubtitle}>
+          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
             Review the details before creating
           </Text>
         </View>
@@ -144,9 +149,9 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       </View>
 
       {/* Create Split Button - Fixed at Bottom */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
         <TouchableOpacity
-          style={[styles.createButton, loading && styles.createButtonDisabled]}
+          style={[styles.createButton, { backgroundColor: colors.primary }, loading && styles.createButtonDisabled]}
           onPress={handleCreateSplit}
           activeOpacity={0.7}
           disabled={loading}
@@ -154,13 +159,13 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
           {loading ? (
             <ActivityIndicator size="small" color={colors.surface} />
           ) : (
-            <Text style={styles.createButtonText}>
+            <Text style={[styles.createButtonText, { color: colors.surface }]}>
               Create Split
             </Text>
           )}
         </TouchableOpacity>
 
-        <Text style={styles.helperText}>
+        <Text style={[styles.helperText, { color: colors.gray500 }]}>
           Participants will be notified after you create this split
         </Text>
       </View>
@@ -171,7 +176,6 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -188,34 +192,27 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...typography.h2,
-    color: colors.text,
   },
   editButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radius.sm,
-    backgroundColor: colors.gray100,
   },
   editButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
   },
   pageSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
   },
   summaryContainer: {
     flex: 1,
   },
   buttonContainer: {
     padding: spacing.lg,
-    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   createButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
@@ -225,7 +222,6 @@ const styles = StyleSheet.create({
   createButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.surface,
     letterSpacing: 0.5,
   },
   createButtonDisabled: {
@@ -233,7 +229,6 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

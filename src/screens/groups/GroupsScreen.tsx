@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import { getUserGroups, Group } from '../../services/groupService';
 import Card from '../../components/common/Card';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 const GROUP_TYPE_ICONS: Record<string, string> = {
   household: 'home-outline',
@@ -24,17 +25,18 @@ const GROUP_TYPE_ICONS: Record<string, string> = {
   custom: 'people-outline',
 };
 
-const GROUP_TYPE_COLORS: Record<string, string> = {
-  household: colors.primary,
-  trip: colors.success,
-  event: colors.warning,
-  work: colors.info,
-  custom: colors.gray600,
+const GROUP_TYPE_COLOR_KEYS: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'gray600'> = {
+  household: 'primary',
+  trip: 'success',
+  event: 'warning',
+  work: 'info',
+  custom: 'gray600',
 };
 
 export default function GroupsScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,25 +85,26 @@ export default function GroupsScreen() {
 
   const renderGroupItem = ({ item }: { item: Group }) => {
     const iconName = GROUP_TYPE_ICONS[item.type] || 'people-outline';
-    const iconColor = GROUP_TYPE_COLORS[item.type] || colors.gray600;
+    const colorKey = GROUP_TYPE_COLOR_KEYS[item.type] || 'gray600';
+    const iconColor = colors[colorKey];
 
     return (
       <TouchableOpacity
         onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
       >
-        <Card variant="default" style={styles.groupCard}>
+        <Card variant="default" style={[styles.groupCard, { backgroundColor: colors.surface }]}>
           <View style={styles.groupContent}>
             <View style={[styles.groupIcon, { backgroundColor: iconColor + '15' }]}>
               <Ionicons name={iconName as any} size={24} color={iconColor} />
             </View>
             <View style={styles.groupInfo}>
-              <Text style={styles.groupName}>{item.name}</Text>
+              <Text style={[styles.groupName, { color: colors.gray900 }]}>{item.name}</Text>
               <View style={styles.groupMeta}>
                 <Ionicons name="people" size={14} color={colors.gray500} />
-                <Text style={styles.memberCount}>{item.member_count} members</Text>
+                <Text style={[styles.memberCount, { color: colors.gray500 }]}>{item.member_count} members</Text>
               </View>
               {item.description && (
-                <Text style={styles.groupDescription} numberOfLines={1}>
+                <Text style={[styles.groupDescription, { color: colors.gray400 }]} numberOfLines={1}>
                   {item.description}
                 </Text>
               )}
@@ -109,9 +112,9 @@ export default function GroupsScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
           </View>
           {item.total_expenses > 0 && (
-            <View style={styles.expensesRow}>
-              <Text style={styles.expensesLabel}>Total expenses</Text>
-              <Text style={styles.expensesAmount}>{formatAmount(item.total_expenses)}</Text>
+            <View style={[styles.expensesRow, { borderTopColor: colors.gray100 }]}>
+              <Text style={[styles.expensesLabel, { color: colors.gray500 }]}>Total expenses</Text>
+              <Text style={[styles.expensesAmount, { color: colors.gray900 }]}>{formatAmount(item.total_expenses)}</Text>
             </View>
           )}
         </Card>
@@ -122,32 +125,32 @@ export default function GroupsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="people-circle-outline" size={80} color={colors.gray300} />
-      <Text style={styles.emptyTitle}>No Groups Yet</Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Groups Yet</Text>
+      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
         Create a group to easily split bills with the same people
       </Text>
       <TouchableOpacity
-        style={styles.createButton}
+        style={[styles.createButton, { backgroundColor: colors.primary }]}
         onPress={() => navigation.navigate('CreateGroup')}
       >
         <Ionicons name="add" size={20} color={colors.surface} />
-        <Text style={styles.createButtonText}>Create Group</Text>
+        <Text style={[styles.createButtonText, { color: colors.surface }]}>Create Group</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title}>Groups</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Groups</Text>
         <TouchableOpacity
-          style={styles.headerButton}
+          style={[styles.headerButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.navigate('CreateGroup')}
         >
           <Ionicons name="add" size={28} color={colors.primary} />
@@ -181,38 +184,32 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.md + 4,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md - 4,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.low,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   headerButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.low,
   },
   loadingContainer: {
     flex: 1,
@@ -220,13 +217,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 20,
-    paddingTop: 8,
+    padding: spacing.md + 4,
+    paddingTop: spacing.sm,
     flexGrow: 1,
   },
   groupCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: spacing.md - 4,
+    padding: spacing.md,
+    borderRadius: radius.lg,
   },
   groupContent: {
     flexDirection: 'row',
@@ -235,51 +233,45 @@ const styles = StyleSheet.create({
   groupIcon: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
   groupInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md - 4,
   },
   groupName: {
     fontSize: 17,
     fontWeight: '600',
-    color: colors.gray900,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   groupMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   memberCount: {
     fontSize: 14,
-    color: colors.gray500,
   },
   groupDescription: {
     fontSize: 13,
-    color: colors.gray400,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   expensesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: spacing.md - 4,
+    paddingTop: spacing.md - 4,
     borderTopWidth: 1,
-    borderTopColor: colors.gray100,
   },
   expensesLabel: {
     fontSize: 13,
-    color: colors.gray500,
   },
   expensesAmount: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   emptyState: {
     flex: 1,
@@ -290,28 +282,24 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.gray900,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
-    borderRadius: 12,
-    gap: 8,
+    borderRadius: radius.md,
+    gap: spacing.sm,
   },
   createButtonText: {
-    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },

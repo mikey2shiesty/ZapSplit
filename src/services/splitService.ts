@@ -26,6 +26,7 @@ export interface Split {
   total_amount: number;
   currency: string;
   image_url?: string;
+  split_type?: 'equal' | 'custom' | 'percentage' | 'receipt';
   status: 'active' | 'settled';
   created_at: string;
   updated_at: string;

@@ -6,7 +6,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import * as Haptics from 'expo-haptics';
@@ -16,13 +15,15 @@ import { createPayment, calculateFees, checkAccountStatus } from '../../services
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Avatar from '../../components/common/Avatar';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import { SplitFlowParamList } from '../../types/navigation';
 
 type PayScreenProps = StackScreenProps<SplitFlowParamList, 'PayScreen'>;
 
 export default function PayScreen({ navigation, route }: PayScreenProps) {
   const { splitId, participantId, recipientId, amount } = route.params;
+  const { colors } = useTheme();
 
   // Get Stripe functions from hook
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -126,7 +127,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         Alert.alert(
-          'Payment Successful! 🎉',
+          'Payment Successful!',
           `You paid ${recipient.full_name} $${fees.total.toFixed(2)}`,
           [
             {
@@ -156,10 +157,10 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading payment details...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading payment details...</Text>
         </View>
       </View>
     );
@@ -170,26 +171,26 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.gray50 }]} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Pay with Card</Text>
-          <Text style={styles.subtitle}>Secure payment powered by Stripe</Text>
+          <Text style={[styles.title, { color: colors.gray900 }]}>Pay with Card</Text>
+          <Text style={[styles.subtitle, { color: colors.gray600 }]}>Secure payment powered by Stripe</Text>
         </View>
 
         {/* Recipient Card */}
         <Card variant="elevated" style={styles.card}>
           <View style={styles.recipientSection}>
-            <Text style={styles.sectionLabel}>Paying</Text>
+            <Text style={[styles.sectionLabel, { color: colors.gray500 }]}>Paying</Text>
             <View style={styles.recipientInfo}>
               <Avatar
                 name={recipient.full_name}
-                imageUrl={recipient.avatar_url}
+                uri={recipient.avatar_url}
                 size="lg"
               />
               <View style={styles.recipientDetails}>
-                <Text style={styles.recipientName}>{recipient.full_name}</Text>
-                <Text style={styles.recipientEmail}>{recipient.email}</Text>
+                <Text style={[styles.recipientName, { color: colors.gray900 }]}>{recipient.full_name}</Text>
+                <Text style={[styles.recipientEmail, { color: colors.gray600 }]}>{recipient.email}</Text>
               </View>
             </View>
           </View>
@@ -199,10 +200,10 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         {split && (
           <Card variant="default" style={styles.card}>
             <View style={styles.splitSection}>
-              <Text style={styles.sectionLabel}>For</Text>
-              <Text style={styles.splitTitle}>{split.title}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.gray500 }]}>For</Text>
+              <Text style={[styles.splitTitle, { color: colors.gray900 }]}>{split.title}</Text>
               {split.description && (
-                <Text style={styles.splitDescription}>{split.description}</Text>
+                <Text style={[styles.splitDescription, { color: colors.gray600 }]}>{split.description}</Text>
               )}
             </View>
           </Card>
@@ -210,36 +211,36 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
         {/* Fee Breakdown Card */}
         <Card variant="elevated" style={styles.breakdownCard}>
-          <Text style={styles.breakdownTitle}>Payment Breakdown</Text>
+          <Text style={[styles.breakdownTitle, { color: colors.gray900 }]}>Payment Breakdown</Text>
 
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Split amount</Text>
-            <Text style={styles.breakdownValue}>${fees.amount.toFixed(2)}</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Split amount</Text>
+            <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>${fees.amount.toFixed(2)}</Text>
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Processing fee (split 50/50)</Text>
-            <Text style={styles.breakdownValue}>+${fees.userFee.toFixed(2)}</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Processing fee (split 50/50)</Text>
+            <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>+${fees.userFee.toFixed(2)}</Text>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total charge</Text>
-            <Text style={styles.totalValue}>${fees.total.toFixed(2)}</Text>
+            <Text style={[styles.totalLabel, { color: colors.gray900 }]}>Total charge</Text>
+            <Text style={[styles.totalValue, { color: colors.primary }]}>${fees.total.toFixed(2)}</Text>
           </View>
 
-          <Text style={styles.feeNote}>
+          <Text style={[styles.feeNote, { color: colors.gray500 }]}>
             Stripe charges {(fees.stripeFee / fees.amount * 100).toFixed(1)}% + $0.30 per transaction.
             You and {recipient.full_name?.split(' ')[0] || 'the recipient'} split this fee equally.
           </Text>
         </Card>
 
         {/* Payment Method Info */}
-        <Card variant="default" style={styles.infoCard}>
+        <Card variant="default" style={[styles.infoCard, { backgroundColor: colors.primary + '10' }]}>
           <View style={styles.infoRow}>
             <Text style={styles.infoIcon}>💳</Text>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.gray700 }]}>
               Your card information is securely processed by Stripe and never stored on our servers.
             </Text>
           </View>
@@ -247,23 +248,25 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
         {/* Pay Button */}
         <Button
-          title={paying ? 'Processing...' : `Pay $${fees.total.toFixed(2)}`}
           variant="primary"
           size="large"
           onPress={handlePay}
           disabled={paying}
           style={styles.payButton}
-        />
+        >
+          {paying ? 'Processing...' : `Pay $${fees.total.toFixed(2)}`}
+        </Button>
 
         {/* Cancel Button */}
         <Button
-          title="Cancel"
           variant="ghost"
           size="medium"
           onPress={() => navigation.goBack()}
           disabled={paying}
           style={styles.cancelButton}
-        />
+        >
+          Cancel
+        </Button>
       </ScrollView>
   );
 }
@@ -271,7 +274,6 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   content: {
     padding: 20,
@@ -285,7 +287,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: colors.gray600,
   },
   header: {
     marginBottom: 24,
@@ -293,12 +294,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
-    color: colors.gray600,
   },
   card: {
     marginBottom: 16,
@@ -309,7 +308,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -325,12 +323,10 @@ const styles = StyleSheet.create({
   recipientName: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 4,
   },
   recipientEmail: {
     fontSize: 14,
-    color: colors.gray600,
   },
   splitSection: {
     padding: 20,
@@ -338,12 +334,10 @@ const styles = StyleSheet.create({
   splitTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 4,
   },
   splitDescription: {
     fontSize: 14,
-    color: colors.gray600,
     lineHeight: 20,
   },
   breakdownCard: {
@@ -353,7 +347,6 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 16,
   },
   breakdownRow: {
@@ -364,16 +357,13 @@ const styles = StyleSheet.create({
   },
   breakdownLabel: {
     fontSize: 15,
-    color: colors.gray700,
   },
   breakdownValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray200,
     marginVertical: 12,
   },
   totalRow: {
@@ -385,23 +375,19 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.gray900,
   },
   totalValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.primary,
   },
   feeNote: {
     fontSize: 12,
-    color: colors.gray500,
     lineHeight: 16,
     marginTop: 8,
   },
   infoCard: {
     padding: 16,
     marginBottom: 24,
-    backgroundColor: colors.primary + '10',
   },
   infoRow: {
     flexDirection: 'row',
@@ -414,7 +400,6 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray700,
     lineHeight: 18,
   },
   payButton: {

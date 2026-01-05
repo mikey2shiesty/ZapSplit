@@ -1,16 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Pressable } from 'react-native';
+import { View, StyleSheet, ViewStyle, Pressable, ColorValue, StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, radius, shadows, spacing } from '../../constants/theme';
+import { radius, shadows, spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface GlassmorphicCardProps {
   children: React.ReactNode;
   intensity?: number;
   tint?: 'light' | 'dark' | 'default';
-  gradient?: string[];
+  gradient?: [ColorValue, ColorValue, ...ColorValue[]];
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   padding?: keyof typeof spacing;
   borderWidth?: number;
   glow?: 'green' | 'blue' | 'purple' | 'none';
@@ -27,6 +28,7 @@ export default function GlassmorphicCard({
   borderWidth = 1,
   glow = 'none',
 }: GlassmorphicCardProps) {
+  const { colors, isDark } = useTheme();
   const paddingValue = spacing[padding];
 
   const glowShadow = glow !== 'none' ? shadows[`glow${glow.charAt(0).toUpperCase()}${glow.slice(1)}` as keyof typeof shadows] : shadows.none;
@@ -37,7 +39,6 @@ export default function GlassmorphicCard({
     borderWidth,
     borderColor: colors.border,
     ...glowShadow,
-    ...style,
   };
 
   const content = (
@@ -52,6 +53,7 @@ export default function GlassmorphicCard({
         onPress={onPress}
         style={({ pressed }) => [
           cardStyle,
+          style as ViewStyle,
           { opacity: pressed ? 0.8 : 1 },
         ]}
       >
@@ -65,7 +67,7 @@ export default function GlassmorphicCard({
         </LinearGradient>
       </Pressable>
     ) : (
-      <View style={cardStyle}>
+      <View style={[cardStyle, style]}>
         <LinearGradient
           colors={gradient}
           start={{ x: 0, y: 0 }}
@@ -78,24 +80,31 @@ export default function GlassmorphicCard({
     );
   }
 
+  // Glass overlay with slight transparency
+  const glassOverlayStyle = {
+    flex: 1,
+    backgroundColor: isDark ? 'rgba(28, 28, 30, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+  };
+
   return onPress ? (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         cardStyle,
+        style as ViewStyle,
         { opacity: pressed ? 0.8 : 1 },
       ]}
     >
       <BlurView intensity={intensity} tint={tint} style={styles.blur}>
-        <View style={styles.glassOverlay}>
+        <View style={glassOverlayStyle}>
           {content}
         </View>
       </BlurView>
     </Pressable>
   ) : (
-    <View style={cardStyle}>
+    <View style={[cardStyle, style]}>
       <BlurView intensity={intensity} tint={tint} style={styles.blur}>
-        <View style={styles.glassOverlay}>
+        <View style={glassOverlayStyle}>
           {content}
         </View>
       </BlurView>
@@ -106,9 +115,5 @@ export default function GlassmorphicCard({
 const styles = StyleSheet.create({
   blur: {
     flex: 1,
-  },
-  glassOverlay: {
-    flex: 1,
-    backgroundColor: colors.surfaceGlass,
   },
 });

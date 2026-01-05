@@ -24,12 +24,14 @@ import {
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Header from '../../components/common/Header';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function AnalyticsScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -118,14 +120,14 @@ export default function AnalyticsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header
         title="Analytics"
@@ -157,52 +159,52 @@ export default function AnalyticsScreen() {
         }
       >
         {/* Monthly Stats */}
-        <Text style={styles.sectionTitle}>This Month</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>This Month</Text>
         <View style={styles.statsGrid}>
-          <Card variant="default" style={styles.statCard}>
+          <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="arrow-up-circle" size={24} color={colors.error} />
             </View>
-            <Text style={styles.statAmount}>
+            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
               {formatCurrency(analytics?.monthlyStats.totalSpent || 0)}
             </Text>
-            <Text style={styles.statLabel}>Spent</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Spent</Text>
           </Card>
 
-          <Card variant="default" style={styles.statCard}>
+          <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="arrow-down-circle" size={24} color={colors.success} />
             </View>
-            <Text style={styles.statAmount}>
+            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
               {formatCurrency(analytics?.monthlyStats.totalReceived || 0)}
             </Text>
-            <Text style={styles.statLabel}>Received</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Received</Text>
           </Card>
 
-          <Card variant="default" style={styles.statCard}>
+          <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="receipt" size={24} color={colors.primary} />
             </View>
-            <Text style={styles.statAmount}>
+            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
               {analytics?.monthlyStats.totalSplits || 0}
             </Text>
-            <Text style={styles.statLabel}>Splits</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Splits</Text>
           </Card>
 
-          <Card variant="default" style={styles.statCard}>
+          <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="calculator" size={24} color={colors.warning} />
             </View>
-            <Text style={styles.statAmount}>
+            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
               {formatCurrency(analytics?.monthlyStats.averageSplitAmount || 0)}
             </Text>
-            <Text style={styles.statLabel}>Avg Split</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Avg Split</Text>
           </Card>
         </View>
 
         {/* Spending Over Time Chart */}
-        <Text style={styles.sectionTitle}>Spending Over Time</Text>
-        <Card variant="default" style={styles.chartCard}>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Spending Over Time</Text>
+        <Card variant="default" style={[styles.chartCard, { backgroundColor: colors.surface }]}>
           {analytics?.spendingByMonth && analytics.spendingByMonth.some(m => m.amount > 0) ? (
             <LineChart
               data={{
@@ -225,14 +227,14 @@ export default function AnalyticsScreen() {
           ) : (
             <View style={styles.emptyChart}>
               <Ionicons name="analytics-outline" size={48} color={colors.gray300} />
-              <Text style={styles.emptyChartText}>No spending data yet</Text>
+              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No spending data yet</Text>
             </View>
           )}
         </Card>
 
         {/* Split Breakdown - Modern horizontal bars */}
-        <Text style={styles.sectionTitle}>Spending by Category</Text>
-        <Card variant="default" style={styles.categoryCard}>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Spending by Category</Text>
+        <Card variant="default" style={[styles.categoryCard, { backgroundColor: colors.surface }]}>
           {analytics?.splitBreakdown && analytics.splitBreakdown.length > 0 ? (
             <View style={styles.categoryList}>
               {analytics.splitBreakdown.map((item, index) => (
@@ -245,13 +247,13 @@ export default function AnalyticsScreen() {
                           { backgroundColor: pieColors[index % pieColors.length] },
                         ]}
                       />
-                      <Text style={styles.categoryName}>{item.category}</Text>
+                      <Text style={[styles.categoryName, { color: colors.gray800 }]}>{item.category}</Text>
                     </View>
-                    <Text style={styles.categoryAmount}>
+                    <Text style={[styles.categoryAmount, { color: colors.gray900 }]}>
                       {formatCurrency(item.amount)}
                     </Text>
                   </View>
-                  <View style={styles.progressBarContainer}>
+                  <View style={[styles.progressBarContainer, { backgroundColor: colors.gray100 }]}>
                     <View
                       style={[
                         styles.progressBar,
@@ -262,7 +264,7 @@ export default function AnalyticsScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={styles.categoryPercentage}>
+                  <Text style={[styles.categoryPercentage, { color: colors.gray500 }]}>
                     {item.percentage.toFixed(0)}% of total
                   </Text>
                 </View>
@@ -271,25 +273,25 @@ export default function AnalyticsScreen() {
           ) : (
             <View style={styles.emptyChart}>
               <Ionicons name="pie-chart-outline" size={48} color={colors.gray300} />
-              <Text style={styles.emptyChartText}>No category data yet</Text>
+              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No category data yet</Text>
             </View>
           )}
         </Card>
 
         {/* Top Split Partners */}
-        <Text style={styles.sectionTitle}>Top Split Partners</Text>
-        <Card variant="default" style={styles.partnersCard}>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Top Split Partners</Text>
+        <Card variant="default" style={[styles.partnersCard, { backgroundColor: colors.surface }]}>
           {analytics?.topPartners && analytics.topPartners.length > 0 ? (
             analytics.topPartners.map((partner, index) => (
               <View
                 key={partner.userId}
                 style={[
                   styles.partnerItem,
-                  index < analytics.topPartners.length - 1 && styles.partnerBorder,
+                  index < analytics.topPartners.length - 1 && [styles.partnerBorder, { borderBottomColor: colors.gray100 }],
                 ]}
               >
-                <View style={styles.partnerRank}>
-                  <Text style={styles.partnerRankText}>#{index + 1}</Text>
+                <View style={[styles.partnerRank, { backgroundColor: colors.gray100 }]}>
+                  <Text style={[styles.partnerRankText, { color: colors.gray600 }]}>#{index + 1}</Text>
                 </View>
                 <Avatar
                   name={partner.name}
@@ -297,12 +299,12 @@ export default function AnalyticsScreen() {
                   size="md"
                 />
                 <View style={styles.partnerInfo}>
-                  <Text style={styles.partnerName}>{partner.name}</Text>
-                  <Text style={styles.partnerSplits}>
+                  <Text style={[styles.partnerName, { color: colors.gray900 }]}>{partner.name}</Text>
+                  <Text style={[styles.partnerSplits, { color: colors.gray500 }]}>
                     {partner.splitCount} split{partner.splitCount !== 1 ? 's' : ''}
                   </Text>
                 </View>
-                <Text style={styles.partnerAmount}>
+                <Text style={[styles.partnerAmount, { color: colors.primary }]}>
                   {formatCurrency(partner.totalAmount)}
                 </Text>
               </View>
@@ -310,24 +312,24 @@ export default function AnalyticsScreen() {
           ) : (
             <View style={styles.emptyPartners}>
               <Ionicons name="people-outline" size={48} color={colors.gray300} />
-              <Text style={styles.emptyChartText}>No split partners yet</Text>
+              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No split partners yet</Text>
             </View>
           )}
         </Card>
 
         {/* Export Section */}
-        <Card variant="default" style={styles.exportCard}>
+        <Card variant="default" style={[styles.exportCard, { backgroundColor: colors.surface }]}>
           <TouchableOpacity
             style={styles.exportRow}
             onPress={handleExport}
             disabled={exporting}
           >
-            <View style={styles.exportIconContainer}>
+            <View style={[styles.exportIconContainer, { backgroundColor: colors.primary + '12' }]}>
               <Ionicons name="document-text-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.exportInfo}>
-              <Text style={styles.exportTitle}>Export to CSV</Text>
-              <Text style={styles.exportDescription}>
+              <Text style={[styles.exportTitle, { color: colors.gray900 }]}>Export to CSV</Text>
+              <Text style={[styles.exportDescription, { color: colors.gray500 }]}>
                 Download all your split data as a spreadsheet
               </Text>
             </View>
@@ -348,13 +350,11 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   exportButton: {
     width: 40,
@@ -364,12 +364,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -384,7 +383,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    padding: 16,
+    padding: spacing.md,
     alignItems: 'center',
   },
   statIconContainer: {
@@ -393,19 +392,17 @@ const styles = StyleSheet.create({
   statAmount: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   statLabel: {
     fontSize: 12,
-    color: colors.gray500,
     marginTop: 4,
   },
   chartCard: {
-    padding: 16,
+    padding: spacing.md,
     marginBottom: 24,
   },
   chart: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginVertical: 8,
   },
   emptyChart: {
@@ -415,11 +412,10 @@ const styles = StyleSheet.create({
   },
   emptyChartText: {
     fontSize: 14,
-    color: colors.gray400,
     marginTop: 12,
   },
   categoryCard: {
-    padding: 16,
+    padding: spacing.md,
     marginBottom: 24,
   },
   categoryList: {
@@ -446,16 +442,13 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 15,
     fontWeight: '500',
-    color: colors.gray800,
   },
   categoryAmount: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: colors.gray100,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -465,7 +458,6 @@ const styles = StyleSheet.create({
   },
   categoryPercentage: {
     fontSize: 12,
-    color: colors.gray500,
   },
   partnersCard: {
     padding: 0,
@@ -475,17 +467,15 @@ const styles = StyleSheet.create({
   partnerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   partnerBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
   },
   partnerRank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -493,7 +483,6 @@ const styles = StyleSheet.create({
   partnerRankText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.gray600,
   },
   partnerInfo: {
     flex: 1,
@@ -502,17 +491,14 @@ const styles = StyleSheet.create({
   partnerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   partnerSplits: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   partnerAmount: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.primary,
   },
   emptyPartners: {
     alignItems: 'center',
@@ -527,13 +513,12 @@ const styles = StyleSheet.create({
   exportRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   exportIconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primary + '12',
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -544,11 +529,9 @@ const styles = StyleSheet.create({
   exportTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   exportDescription: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   bottomSpacer: {

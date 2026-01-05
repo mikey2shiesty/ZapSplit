@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
@@ -25,7 +24,8 @@ import {
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import { colors, shadows } from '../../constants/theme';
+import { shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type RouteParams = {
   GroupDetail: { groupId: string };
@@ -35,6 +35,7 @@ export default function GroupDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RouteParams, 'GroupDetail'>>();
   const { groupId } = route.params;
+  const { colors } = useTheme();
 
   const [group, setGroup] = useState<GroupWithMembers | null>(null);
   const [splits, setSplits] = useState<GroupSplit[]>([]);
@@ -144,7 +145,7 @@ export default function GroupDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -152,27 +153,27 @@ export default function GroupDetailScreen() {
 
   if (!group) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Group not found</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.gray50 }]}>
+        <Text style={[styles.errorText, { color: colors.gray600 }]}>Group not found</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.errorLink}>Go back</Text>
+          <Text style={[styles.errorLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title} numberOfLines={1}>{group.name}</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]} numberOfLines={1}>{group.name}</Text>
         <TouchableOpacity
-          style={styles.menuButton}
+          style={[styles.menuButton, { backgroundColor: colors.surface }]}
           onPress={() => {
             Alert.alert(
               'Group Options',
@@ -195,52 +196,52 @@ export default function GroupDetailScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
       >
-        <Card variant="default" style={styles.infoCard}>
+        <Card variant="default" style={[styles.infoCard, { backgroundColor: colors.surface }]}>
           <View style={styles.groupHeader}>
-            <View style={styles.groupIconLarge}>
+            <View style={[styles.groupIconLarge, { backgroundColor: colors.infoLight }]}>
               <Ionicons name="people" size={32} color={colors.primary} />
             </View>
             <View style={styles.groupHeaderInfo}>
-              <Text style={styles.groupName}>{group.name}</Text>
+              <Text style={[styles.groupName, { color: colors.gray900 }]}>{group.name}</Text>
               {group.description && (
-                <Text style={styles.groupDescription}>{group.description}</Text>
+                <Text style={[styles.groupDescription, { color: colors.gray500 }]}>{group.description}</Text>
               )}
             </View>
           </View>
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { borderTopColor: colors.gray100 }]}>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{group.member_count}</Text>
-              <Text style={styles.statLabel}>Members</Text>
+              <Text style={[styles.statValue, { color: colors.gray900 }]}>{group.member_count}</Text>
+              <Text style={[styles.statLabel, { color: colors.gray500 }]}>Members</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{splits.length}</Text>
-              <Text style={styles.statLabel}>Splits</Text>
+              <Text style={[styles.statValue, { color: colors.gray900 }]}>{splits.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.gray500 }]}>Splits</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{formatAmount(group.total_expenses)}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={[styles.statValue, { color: colors.gray900 }]}>{formatAmount(group.total_expenses)}</Text>
+              <Text style={[styles.statLabel, { color: colors.gray500 }]}>Total</Text>
             </View>
           </View>
         </Card>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Members</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Members</Text>
             {isAdmin && (
               <TouchableOpacity onPress={() => navigation.navigate('AddGroupMembers', { groupId })}>
-                <Text style={styles.addLink}>Add</Text>
+                <Text style={[styles.addLink, { color: colors.primary }]}>Add</Text>
               </TouchableOpacity>
             )}
           </View>
-          <Card variant="default" style={styles.membersCard}>
+          <Card variant="default" style={[styles.membersCard, { backgroundColor: colors.surface }]}>
             {group.members.map((member, index) => (
               <View
                 key={member.id}
                 style={[
                   styles.memberItem,
-                  index < group.members.length - 1 && styles.memberItemBorder,
+                  index < group.members.length - 1 && [styles.memberItemBorder, { borderBottomColor: colors.gray100 }],
                 ]}
               >
                 <Avatar
@@ -248,7 +249,7 @@ export default function GroupDetailScreen() {
                   uri={member.user?.avatar_url || undefined}
                   size="sm"
                 />
-                <Text style={styles.memberName}>{member.user?.full_name || 'Unknown'}</Text>
+                <Text style={[styles.memberName, { color: colors.gray900 }]}>{member.user?.full_name || 'Unknown'}</Text>
                 {member.role === 'admin' && (
                   <Badge variant="info" size="small">Admin</Badge>
                 )}
@@ -259,17 +260,17 @@ export default function GroupDetailScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Splits</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Recent Splits</Text>
             <TouchableOpacity onPress={handleCreateSplit}>
-              <Text style={styles.addLink}>New Split</Text>
+              <Text style={[styles.addLink, { color: colors.primary }]}>New Split</Text>
             </TouchableOpacity>
           </View>
           {splits.length === 0 ? (
-            <Card variant="default" style={styles.emptyCard}>
+            <Card variant="default" style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
               <Ionicons name="receipt-outline" size={40} color={colors.gray300} />
-              <Text style={styles.emptyText}>No splits yet</Text>
-              <TouchableOpacity style={styles.createSplitBtn} onPress={handleCreateSplit}>
-                <Text style={styles.createSplitBtnText}>Create First Split</Text>
+              <Text style={[styles.emptyText, { color: colors.gray500 }]}>No splits yet</Text>
+              <TouchableOpacity style={[styles.createSplitBtn, { backgroundColor: colors.primary }]} onPress={handleCreateSplit}>
+                <Text style={[styles.createSplitBtnText, { color: colors.surface }]}>Create First Split</Text>
               </TouchableOpacity>
             </Card>
           ) : (
@@ -278,16 +279,16 @@ export default function GroupDetailScreen() {
                 key={split.id}
                 onPress={() => navigation.navigate('SplitDetail', { splitId: split.id })}
               >
-                <Card variant="default" style={styles.splitCard}>
+                <Card variant="default" style={[styles.splitCard, { backgroundColor: colors.surface }]}>
                   <View style={styles.splitContent}>
                     <View style={styles.splitInfo}>
-                      <Text style={styles.splitTitle}>{split.title}</Text>
-                      <Text style={styles.splitDate}>
+                      <Text style={[styles.splitTitle, { color: colors.gray900 }]}>{split.title}</Text>
+                      <Text style={[styles.splitDate, { color: colors.gray500 }]}>
                         {new Date(split.created_at).toLocaleDateString()}
                       </Text>
                     </View>
                     <View style={styles.splitRight}>
-                      <Text style={styles.splitAmount}>{formatAmount(split.total_amount)}</Text>
+                      <Text style={[styles.splitAmount, { color: colors.gray900 }]}>{formatAmount(split.total_amount)}</Text>
                       <Badge
                         variant={split.status === 'settled' ? 'success' : 'warning'}
                         size="small"
@@ -309,28 +310,23 @@ export default function GroupDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   errorText: {
     fontSize: 16,
-    color: colors.gray600,
     marginBottom: 12,
   },
   errorLink: {
     fontSize: 16,
-    color: colors.primary,
     fontWeight: '600',
   },
   header: {
@@ -344,7 +340,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -353,7 +348,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     textAlign: 'center',
     marginHorizontal: 12,
   },
@@ -361,7 +355,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -384,7 +377,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: colors.infoLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -395,19 +387,16 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 4,
   },
   groupDescription: {
     fontSize: 14,
-    color: colors.gray500,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.gray100,
   },
   stat: {
     alignItems: 'center',
@@ -415,17 +404,14 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: colors.gray500,
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: colors.gray200,
   },
   section: {
     marginBottom: 20,
@@ -439,11 +425,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray900,
   },
   addLink: {
     fontSize: 15,
-    color: colors.primary,
     fontWeight: '600',
   },
   membersCard: {
@@ -457,12 +441,10 @@ const styles = StyleSheet.create({
   },
   memberItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
   },
   memberName: {
     flex: 1,
     fontSize: 15,
-    color: colors.gray900,
   },
   emptyCard: {
     padding: 32,
@@ -470,18 +452,15 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray500,
     marginTop: 12,
     marginBottom: 16,
   },
   createSplitBtn: {
-    backgroundColor: colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
   createSplitBtnText: {
-    color: colors.surface,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -499,12 +478,10 @@ const styles = StyleSheet.create({
   splitTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 4,
   },
   splitDate: {
     fontSize: 13,
-    color: colors.gray500,
   },
   splitRight: {
     alignItems: 'flex-end',
@@ -513,6 +490,5 @@ const styles = StyleSheet.create({
   splitAmount: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.gray900,
   },
 });

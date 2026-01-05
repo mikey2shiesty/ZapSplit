@@ -6,10 +6,12 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  ColorValue,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { colors, gradients, radius, spacing, typography, shadows } from '../../constants/theme';
+import { gradients, radius, spacing, typography, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ButtonProps {
   children: string;
@@ -36,6 +38,8 @@ export default function Button({
   style,
   textStyle,
 }: ButtonProps) {
+  const { colors } = useTheme();
+
   const handlePress = () => {
     if (!disabled && !loading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -47,8 +51,8 @@ export default function Button({
     styles.base,
     styles[size],
     fullWidth && styles.fullWidth,
-    variant === 'secondary' && styles.secondary,
-    variant === 'outline' && styles.outline,
+    variant === 'secondary' && [styles.secondary, { backgroundColor: colors.accent }],
+    variant === 'outline' && [styles.outline, { borderColor: colors.primary }],
     variant === 'ghost' && styles.ghost,
     (disabled || loading) && styles.disabled,
     style,
@@ -57,11 +61,11 @@ export default function Button({
   const textStyles = [
     styles.text,
     styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}` as keyof typeof styles],
-    variant === 'primary' && styles.textPrimary,
-    variant === 'secondary' && styles.textSecondary,
-    variant === 'outline' && styles.textOutline,
-    variant === 'ghost' && styles.textGhost,
-    (disabled || loading) && styles.textDisabled,
+    variant === 'primary' && { color: colors.textInverse },
+    variant === 'secondary' && { color: colors.primary },
+    variant === 'outline' && { color: colors.primary },
+    variant === 'ghost' && { color: colors.primary },
+    (disabled || loading) && { color: colors.textSecondary },
     textStyle,
   ];
 
@@ -88,7 +92,7 @@ export default function Button({
         style={({ pressed }) => [pressed && styles.pressed]}
       >
         <LinearGradient
-          colors={gradients.primary}
+          colors={gradients.primary as [ColorValue, ColorValue]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[buttonStyle, shadows.low]}
@@ -140,13 +144,10 @@ const styles = StyleSheet.create({
   },
 
   // Variants
-  secondary: {
-    backgroundColor: colors.accent,
-  },
+  secondary: {},
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -173,21 +174,11 @@ const styles = StyleSheet.create({
   textLarge: {
     fontSize: 18,
   },
-  textPrimary: {
-    color: colors.textInverse,
-  },
-  textSecondary: {
-    color: colors.primary,
-  },
-  textOutline: {
-    color: colors.primary,
-  },
-  textGhost: {
-    color: colors.primary,
-  },
-  textDisabled: {
-    color: colors.textSecondary,
-  },
+  textPrimary: {},
+  textSecondary: {},
+  textOutline: {},
+  textGhost: {},
+  textDisabled: {},
   loader: {
     marginRight: spacing.xs,
   },

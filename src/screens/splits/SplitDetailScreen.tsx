@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
   Image,
   Share as RNShare,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { spacing, radius, typography, shadows } from '../../constants/theme';
+import { useTheme, ThemeColors } from '../../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { SplitDetailScreenProps } from '../../types/navigation';
 import {
@@ -32,6 +32,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const { splitId } = route.params;
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [split, setSplit] = useState<SplitWithParticipants | null>(null);
@@ -220,10 +221,10 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading split...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray500 }]}>Loading split...</Text>
         </View>
       </View>
     );
@@ -231,9 +232,9 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   if (!split) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>Split not found</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>Split not found</Text>
         </View>
       </View>
     );
@@ -248,13 +249,13 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const amountOwed = userParticipant?.amount_owed || 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.gray50 }]}>
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Split Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Split Details</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -267,42 +268,42 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
         )}
 
         {/* Summary Card */}
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
           <View style={styles.summaryHeader}>
-            <Text style={styles.summaryTitle}>{split.title}</Text>
+            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>{split.title}</Text>
             {isSettled && (
-              <View style={styles.settledBadge}>
+              <View style={[styles.settledBadge, { backgroundColor: colors.successLight }]}>
                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                <Text style={styles.settledBadgeText}>Settled</Text>
+                <Text style={[styles.settledBadgeText, { color: colors.success }]}>Settled</Text>
               </View>
             )}
           </View>
 
-          {split.description && <Text style={styles.summaryDescription}>{split.description}</Text>}
+          {split.description && <Text style={[styles.summaryDescription, { color: colors.gray500 }]}>{split.description}</Text>}
 
-          <View style={styles.summaryDivider} />
+          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Amount</Text>
-            <Text style={styles.summaryValue}>${split.total_amount.toFixed(2)} AUD</Text>
+            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Total Amount</Text>
+            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>${split.total_amount.toFixed(2)} AUD</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Split Method</Text>
-            <Text style={styles.summaryValue}>{getSplitMethodLabel(split.split_type)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Split Method</Text>
+            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{getSplitMethodLabel(split.split_type || 'equal')}</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Created</Text>
-            <Text style={styles.summaryValue}>{formatDate(split.created_at)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Created</Text>
+            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{formatDate(split.created_at)}</Text>
           </View>
         </View>
 
         {/* Participants Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Participants</Text>
-            <Text style={styles.sectionSubtitle}>
+            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
               {split.paid_count} of {split.participant_count} paid
             </Text>
           </View>
@@ -313,6 +314,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               participant={participant}
               isCreator={isCreator}
               onMarkAsPaid={() => handleMarkAsPaid(participant)}
+              colors={colors}
             />
           ))}
         </View>
@@ -321,11 +323,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
       </ScrollView>
 
       {/* Action Bar */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         {/* Pay Button - shown if user owes money */}
         {userOwesMoney && (
           <TouchableOpacity
-            style={styles.payButton}
+            style={[styles.payButton, { backgroundColor: colors.primary }]}
             onPress={handlePayNow}
             activeOpacity={0.7}
             disabled={paymentLoading}
@@ -335,7 +337,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             ) : (
               <>
                 <Ionicons name="card-outline" size={20} color={colors.surface} />
-                <Text style={styles.payButtonText}>Pay ${amountOwed.toFixed(2)}</Text>
+                <Text style={[styles.payButtonText, { color: colors.surface }]}>Pay ${amountOwed.toFixed(2)}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -343,7 +345,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
         <TouchableOpacity style={styles.actionButton} onPress={handleShare} activeOpacity={0.7}>
           <Ionicons name="share-outline" size={24} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Share</Text>
+          <Text style={[styles.actionButtonText, { color: colors.primary }]}>Share</Text>
         </TouchableOpacity>
 
         {/* Only creator can delete */}
@@ -363,23 +365,25 @@ function ParticipantCard({
   participant,
   isCreator,
   onMarkAsPaid,
+  colors,
 }: {
   participant: any;
   isCreator: boolean;
   onMarkAsPaid: () => void;
+  colors: ThemeColors;
 }) {
   const isPaid = participant.status === 'paid';
 
   return (
-    <View style={styles.participantCard}>
+    <View style={[styles.participantCard, { backgroundColor: colors.surface }]}>
       <View style={styles.participantInfo}>
         {/* Avatar */}
         <View style={styles.participantAvatar}>
           {participant.user?.avatar_url ? (
             <Image source={{ uri: participant.user.avatar_url }} style={styles.avatarImage} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitials}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.avatarInitials, { color: colors.surface }]}>
                 {getInitials(participant.user?.full_name || 'U')}
               </Text>
             </View>
@@ -388,21 +392,21 @@ function ParticipantCard({
 
         {/* Name and Amount */}
         <View style={styles.participantDetails}>
-          <Text style={styles.participantName}>{participant.user?.full_name || 'Unknown'}</Text>
-          <Text style={styles.participantAmount}>${participant.amount_owed.toFixed(2)}</Text>
+          <Text style={[styles.participantName, { color: colors.gray900 }]}>{participant.user?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.participantAmount, { color: colors.gray500 }]}>${participant.amount_owed.toFixed(2)}</Text>
         </View>
 
         {/* Status or Button */}
         {isPaid ? (
-          <View style={styles.paidBadge}>
+          <View style={[styles.paidBadge, { backgroundColor: colors.successLight }]}>
             <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-            <Text style={styles.paidBadgeText}>Paid</Text>
+            <Text style={[styles.paidBadgeText, { color: colors.success }]}>Paid</Text>
           </View>
         ) : (
           <>
             {isCreator && (
-              <TouchableOpacity style={styles.markPaidButton} onPress={onMarkAsPaid} activeOpacity={0.7}>
-                <Text style={styles.markPaidButtonText}>Mark Paid</Text>
+              <TouchableOpacity style={[styles.markPaidButton, { backgroundColor: colors.primary }]} onPress={onMarkAsPaid} activeOpacity={0.7}>
+                <Text style={[styles.markPaidButtonText, { color: colors.surface }]}>Mark Paid</Text>
               </TouchableOpacity>
             )}
           </>
@@ -463,7 +467,6 @@ function getInitials(name: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
@@ -472,12 +475,10 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.textSecondary,
     marginTop: spacing.md,
   },
   errorText: {
     ...typography.h3,
-    color: colors.error,
   },
   header: {
     flexDirection: 'row',
@@ -486,15 +487,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
     paddingBottom: spacing.sm,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.gray50,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -502,7 +500,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   placeholder: {
     width: 44,
@@ -514,18 +511,15 @@ const styles = StyleSheet.create({
     margin: spacing.md,
     borderRadius: radius.md,
     overflow: 'hidden',
-    ...shadows.small,
   },
   receiptImage: {
     width: '100%',
     height: 200,
   },
   summaryCard: {
-    backgroundColor: colors.surface,
     margin: spacing.md,
     padding: spacing.lg,
     borderRadius: radius.lg,
-    ...shadows.small,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -535,31 +529,26 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     ...typography.h2,
-    color: colors.text,
     flex: 1,
   },
   settledBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.successLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.sm,
   },
   settledBadgeText: {
     ...typography.caption,
-    color: colors.success,
     fontWeight: '600',
     marginLeft: 4,
   },
   summaryDescription: {
     ...typography.body,
-    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: colors.border,
     marginVertical: spacing.md,
   },
   summaryRow: {
@@ -569,11 +558,9 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   summaryValue: {
     ...typography.body,
-    color: colors.text,
     fontWeight: '600',
   },
   section: {
@@ -588,18 +575,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
   },
   sectionSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   participantCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    ...shadows.small,
   },
   participantInfo: {
     flexDirection: 'row',
@@ -617,13 +600,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitials: {
     ...typography.h3,
-    color: colors.surface,
     fontWeight: '700',
   },
   participantDetails: {
@@ -631,37 +612,31 @@ const styles = StyleSheet.create({
   },
   participantName: {
     ...typography.body,
-    color: colors.text,
     fontWeight: '600',
     marginBottom: 2,
   },
   participantAmount: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   paidBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.successLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.sm,
   },
   paidBadgeText: {
     ...typography.caption,
-    color: colors.success,
     fontWeight: '600',
     marginLeft: 4,
   },
   markPaidButton: {
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
   },
   markPaidButtonText: {
     ...typography.caption,
-    color: colors.surface,
     fontWeight: '600',
   },
   actionBar: {
@@ -669,9 +644,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     ...shadows.medium,
   },
   actionButton: {
@@ -681,7 +654,6 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -689,7 +661,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
@@ -698,7 +669,6 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     ...typography.body,
-    color: colors.surface,
     fontWeight: '700',
   },
 });

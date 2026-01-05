@@ -36,7 +36,7 @@ export default function SplitFlowNavigator() {
           fontWeight: '600',
           fontSize: 17,
         },
-        headerBackTitleVisible: false, // Hide "Back" text on iOS
+        headerBackButtonDisplayMode: 'minimal', // Hide "Back" text on iOS
         cardStyle: {
           backgroundColor: colors.background,
         },

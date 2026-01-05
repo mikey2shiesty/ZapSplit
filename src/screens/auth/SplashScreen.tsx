@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../services/supabase';
 
 interface SplashScreenProps {
@@ -8,6 +8,8 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
+  const { colors } = useTheme();
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -33,7 +35,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       <Image
         source={require('../../assets/images/logo.png')}
         style={styles.logo}
@@ -51,7 +53,6 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

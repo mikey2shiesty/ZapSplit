@@ -22,30 +22,32 @@ import {
   AppNotification,
   NotificationType,
 } from '../../services/notificationService';
-import Card from '../../components/common/Card';
 import Header from '../../components/common/Header';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import { formatDistanceToNow } from 'date-fns';
-
-const NOTIFICATION_ICONS: Record<NotificationType, { name: string; color: string }> = {
-  split_created: { name: 'receipt-outline', color: colors.primary },
-  split_updated: { name: 'create-outline', color: colors.info },
-  payment_requested: { name: 'cash-outline', color: colors.warning },
-  payment_received: { name: 'checkmark-circle-outline', color: colors.success },
-  payment_sent: { name: 'arrow-up-circle-outline', color: colors.success },
-  payment_reminder: { name: 'alarm-outline', color: colors.error },
-  friend_request: { name: 'person-add-outline', color: colors.primary },
-  friend_accepted: { name: 'people-outline', color: colors.success },
-  group_invite: { name: 'people-circle-outline', color: colors.primary },
-  group_activity: { name: 'chatbubbles-outline', color: colors.info },
-};
 
 export default function NotificationsScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Define notification icons with theme colors
+  const NOTIFICATION_ICONS: Record<NotificationType, { name: string; color: string }> = {
+    split_created: { name: 'receipt-outline', color: colors.primary },
+    split_updated: { name: 'create-outline', color: colors.info },
+    payment_requested: { name: 'cash-outline', color: colors.warning },
+    payment_received: { name: 'checkmark-circle-outline', color: colors.success },
+    payment_sent: { name: 'arrow-up-circle-outline', color: colors.success },
+    payment_reminder: { name: 'alarm-outline', color: colors.error },
+    friend_request: { name: 'person-add-outline', color: colors.primary },
+    friend_accepted: { name: 'people-outline', color: colors.success },
+    group_invite: { name: 'people-circle-outline', color: colors.primary },
+    group_activity: { name: 'chatbubbles-outline', color: colors.info },
+  };
 
   useEffect(() => {
     loadCurrentUser();
@@ -184,11 +186,11 @@ export default function NotificationsScreen() {
         onLongPress={() => handleDeleteNotification(item.id)}
         delayLongPress={500}
       >
-        <Card
-          variant="default"
+        <View
           style={[
             styles.notificationCard,
-            !item.read && styles.unreadCard,
+            { backgroundColor: colors.surface },
+            !item.read && [styles.unreadCard, { borderLeftColor: colors.primary }],
           ]}
         >
           <View style={styles.notificationContent}>
@@ -197,19 +199,19 @@ export default function NotificationsScreen() {
             </View>
             <View style={styles.textContent}>
               <View style={styles.titleRow}>
-                <Text style={[styles.title, !item.read && styles.unreadTitle]}>
+                <Text style={[styles.title, { color: colors.gray900 }, !item.read && styles.unreadTitle]}>
                   {item.title}
                 </Text>
-                {!item.read && <View style={styles.unreadDot} />}
+                {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
               </View>
-              <Text style={styles.body} numberOfLines={2}>
+              <Text style={[styles.body, { color: colors.gray600 }]} numberOfLines={2}>
                 {item.body}
               </Text>
-              <Text style={styles.time}>{timeAgo}</Text>
+              <Text style={[styles.time, { color: colors.gray500 }]}>{timeAgo}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
           </View>
-        </Card>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -217,8 +219,8 @@ export default function NotificationsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="notifications-off-outline" size={64} color={colors.gray300} />
-      <Text style={styles.emptyTitle}>No Notifications</Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Notifications</Text>
+      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
         You're all caught up! New notifications will appear here.
       </Text>
     </View>
@@ -227,7 +229,7 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header
         title="Notifications"
@@ -235,10 +237,10 @@ export default function NotificationsScreen() {
         rightElement={
           unreadCount > 0 ? (
             <TouchableOpacity
-              style={styles.markAllButton}
+              style={[styles.markAllButton, { backgroundColor: colors.primaryLight }]}
               onPress={handleMarkAllRead}
             >
-              <Text style={styles.markAllText}>Mark All Read</Text>
+              <Text style={[styles.markAllText, { color: colors.primary }]}>Mark All Read</Text>
             </TouchableOpacity>
           ) : undefined
         }
@@ -246,9 +248,9 @@ export default function NotificationsScreen() {
 
       {/* Unread Badge */}
       {unreadCount > 0 && (
-        <View style={styles.unreadBanner}>
+        <View style={[styles.unreadBanner, { backgroundColor: colors.primaryLight }]}>
           <Ionicons name="mail-unread-outline" size={20} color={colors.primary} />
-          <Text style={styles.unreadBannerText}>
+          <Text style={[styles.unreadBannerText, { color: colors.primary }]}>
             {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
           </Text>
         </View>
@@ -282,31 +284,26 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   markAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.sm,
   },
   markAllText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.primary,
   },
   unreadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: colors.primaryLight,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg - 4,
+    paddingVertical: spacing.sm + 4,
   },
   unreadBannerText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.primary,
   },
   loadingContainer: {
     flex: 1,
@@ -314,16 +311,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 16,
+    padding: spacing.md,
     flexGrow: 1,
   },
   notificationCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: spacing.sm + 4,
+    padding: spacing.md,
+    borderRadius: radius.md,
   },
   unreadCard: {
     borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
   },
   notificationContent: {
     flexDirection: 'row',
@@ -338,17 +335,16 @@ const styles = StyleSheet.create({
   },
   textContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   title: {
     fontSize: 15,
     fontWeight: '500',
-    color: colors.gray900,
   },
   unreadTitle: {
     fontWeight: '700',
@@ -357,17 +353,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
   },
   body: {
     fontSize: 14,
-    color: colors.gray600,
     marginTop: 2,
   },
   time: {
     fontSize: 12,
-    color: colors.gray400,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   emptyState: {
     flex: 1,
@@ -378,13 +371,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
   },

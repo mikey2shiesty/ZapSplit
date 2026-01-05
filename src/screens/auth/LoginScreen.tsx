@@ -12,7 +12,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
 
 interface LoginScreenProps {
@@ -20,6 +21,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const { colors } = useTheme();
   const { signIn, signInWithApple, isAppleSignInAvailable } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,23 +89,23 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.gray50 }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.gray900 }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { color: colors.gray500 }]}>
             Log in to continue splitting bills
           </Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={[styles.label, { color: colors.gray600 }]}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
               placeholder="you@example.com"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.gray500}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -113,12 +115,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <Text style={[styles.label, { color: colors.gray600 }]}>Password</Text>
+            <View style={[styles.passwordContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.gray900 }]}
                 placeholder="Enter your password"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.gray500}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -136,7 +138,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
 
           <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            style={[styles.loginButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={loading}
           >
@@ -151,9 +153,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           {isAppleSignInAvailable && (
             <>
               <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+                <Text style={[styles.dividerText, { color: colors.gray500 }]}>or</Text>
+                <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
               </View>
 
               <TouchableOpacity
@@ -177,9 +179,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             style={styles.signupLink}
             onPress={() => navigation.navigate('Signup')}
           >
-            <Text style={styles.signupLinkText}>
+            <Text style={[styles.signupLinkText, { color: colors.gray500 }]}>
               Don't have an account?{' '}
-              <Text style={styles.linkText}>Sign up</Text>
+              <Text style={[styles.linkText, { color: colors.primary }]}>Sign up</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -191,7 +193,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
   },
   scrollContent: {
     flexGrow: 1,
@@ -205,13 +206,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: spacing.sm,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.gray500,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -224,31 +223,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray700,
     marginLeft: spacing.xs,
   },
   input: {
-    backgroundColor: colors.gray50,
     borderWidth: 1.5,
-    borderColor: colors.gray200,
     borderRadius: 14,
     padding: spacing.md,
     fontSize: 16,
-    color: colors.gray900,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
     borderWidth: 1.5,
-    borderColor: colors.gray200,
     borderRadius: 14,
   },
   passwordInput: {
     flex: 1,
     padding: spacing.md,
     fontSize: 16,
-    color: colors.gray900,
   },
   eyeButton: {
     padding: spacing.md,
@@ -257,12 +249,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   loginButton: {
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md + 2,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: spacing.md,
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -285,12 +275,10 @@ const styles = StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.gray200,
   },
   dividerText: {
     paddingHorizontal: spacing.md,
     fontSize: 14,
-    color: colors.gray500,
   },
   appleButton: {
     flexDirection: 'row',
@@ -314,11 +302,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signupLinkText: {
-    color: colors.gray500,
     fontSize: 15,
   },
   linkText: {
-    color: colors.primary,
     fontWeight: '600',
   },
 });

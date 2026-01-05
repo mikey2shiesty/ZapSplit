@@ -9,15 +9,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { PaymentRequestScreenProps } from '../../types/navigation';
 import {
   PaymentMethod,
   sharePaymentDetails,
   copyPaymentDetails,
-  sendPaymentViaSMS,
-  sendPaymentViaWhatsApp,
   formatBSB,
   formatPayID,
   PaymentRequest,
@@ -26,6 +25,7 @@ import {
 export default function PaymentRequestScreen({ navigation, route }: PaymentRequestScreenProps) {
   const { amount, description, splitId } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   // TODO: Get from user profile
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('payid');
@@ -86,45 +86,35 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
     }
   };
 
-  const handleSMS = async () => {
-    // TODO: Get friend's phone number from split participants
-    Alert.alert('Send SMS', 'This will send an SMS to the person who paid the bill');
-  };
-
-  const handleWhatsApp = async () => {
-    // TODO: Get friend's phone number from split participants
-    Alert.alert('Send WhatsApp', 'This will send a WhatsApp message');
-  };
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Request Payment</Text>
-          <Text style={styles.headerSubtitle}>Share your payment details</Text>
+          <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Request Payment</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Share your payment details</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Amount Card */}
-        <View style={styles.amountCard}>
-          <Text style={styles.amountLabel}>Your Total</Text>
-          <Text style={styles.amountValue}>${amount.toFixed(2)}</Text>
-          <Text style={styles.amountDescription}>{description}</Text>
+        <View style={[styles.amountCard, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.amountLabel, { color: colors.surface }]}>Your Total</Text>
+          <Text style={[styles.amountValue, { color: colors.surface }]}>${amount.toFixed(2)}</Text>
+          <Text style={[styles.amountDescription, { color: colors.surface }]}>{description}</Text>
         </View>
 
         {/* Quick Pay with Card Option */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💳 Pay Instantly</Text>
-          <Text style={styles.sectionSubtitle}>Pay now with your credit or debit card</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Pay Instantly</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Pay now with your credit or debit card</Text>
 
           <TouchableOpacity
-            style={styles.payNowButton}
+            style={[styles.payNowButton, { backgroundColor: colors.primary }]}
             onPress={() => {
               // TODO: Need recipientId and participantId in route params
               // For now, show coming soon alert
@@ -146,37 +136,41 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             <View style={styles.payNowIcon}>
               <Ionicons name="card-outline" size={24} color={colors.surface} />
             </View>
-            <Text style={styles.payNowText}>Pay ${amount.toFixed(2)} with Card</Text>
+            <Text style={[styles.payNowText, { color: colors.surface }]}>Pay ${amount.toFixed(2)} with Card</Text>
             <Ionicons name="arrow-forward" size={20} color={colors.surface} />
           </TouchableOpacity>
 
-          <Text style={styles.payNowNote}>
-            ✓ Secure payment via Stripe • ✓ Instant confirmation
+          <Text style={[styles.payNowNote, { color: colors.textSecondary }]}>
+            Secure payment via Stripe - Instant confirmation
           </Text>
         </View>
 
         {/* OR Divider */}
         <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
         </View>
 
         {/* Payment Method Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Choose Payment Method</Text>
-          <Text style={styles.sectionSubtitle}>How do you want to receive payment?</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Choose Payment Method</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>How do you want to receive payment?</Text>
 
           {/* PayID Option */}
           <TouchableOpacity
-            style={[styles.methodCard, selectedMethod === 'payid' && styles.methodCardSelected]}
+            style={[
+              styles.methodCard,
+              { backgroundColor: colors.surface, borderColor: 'transparent' },
+              selectedMethod === 'payid' && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+            ]}
             onPress={() => {
               setSelectedMethod('payid');
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             activeOpacity={0.7}
           >
-            <View style={styles.methodIcon}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
               <Ionicons
                 name="phone-portrait-outline"
                 size={24}
@@ -184,10 +178,14 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
               />
             </View>
             <View style={styles.methodContent}>
-              <Text style={[styles.methodTitle, selectedMethod === 'payid' && styles.methodTitleSelected]}>
+              <Text style={[
+                styles.methodTitle,
+                { color: colors.gray900 },
+                selectedMethod === 'payid' && { color: colors.primary },
+              ]}>
                 PayID
               </Text>
-              <Text style={styles.methodSubtitle}>
+              <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>
                 {formatPayID(mockPaymentDetails.payid, 'phone')}
               </Text>
             </View>
@@ -198,14 +196,18 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
           {/* Bank Transfer Option */}
           <TouchableOpacity
-            style={[styles.methodCard, selectedMethod === 'bank_transfer' && styles.methodCardSelected]}
+            style={[
+              styles.methodCard,
+              { backgroundColor: colors.surface, borderColor: 'transparent' },
+              selectedMethod === 'bank_transfer' && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+            ]}
             onPress={() => {
               setSelectedMethod('bank_transfer');
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             activeOpacity={0.7}
           >
-            <View style={styles.methodIcon}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
               <Ionicons
                 name="business-outline"
                 size={24}
@@ -213,11 +215,15 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
               />
             </View>
             <View style={styles.methodContent}>
-              <Text style={[styles.methodTitle, selectedMethod === 'bank_transfer' && styles.methodTitleSelected]}>
+              <Text style={[
+                styles.methodTitle,
+                { color: colors.gray900 },
+                selectedMethod === 'bank_transfer' && { color: colors.primary },
+              ]}>
                 Bank Transfer
               </Text>
-              <Text style={styles.methodSubtitle}>
-                {mockPaymentDetails.bankName} • BSB {formatBSB(mockPaymentDetails.bsb)}
+              <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>
+                {mockPaymentDetails.bankName} - BSB {formatBSB(mockPaymentDetails.bsb)}
               </Text>
             </View>
             {selectedMethod === 'bank_transfer' && (
@@ -227,14 +233,18 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
           {/* PayPal Option */}
           <TouchableOpacity
-            style={[styles.methodCard, selectedMethod === 'paypal' && styles.methodCardSelected]}
+            style={[
+              styles.methodCard,
+              { backgroundColor: colors.surface, borderColor: 'transparent' },
+              selectedMethod === 'paypal' && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+            ]}
             onPress={() => {
               setSelectedMethod('paypal');
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             activeOpacity={0.7}
           >
-            <View style={styles.methodIcon}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
               <Ionicons
                 name="logo-paypal"
                 size={24}
@@ -242,10 +252,14 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
               />
             </View>
             <View style={styles.methodContent}>
-              <Text style={[styles.methodTitle, selectedMethod === 'paypal' && styles.methodTitleSelected]}>
+              <Text style={[
+                styles.methodTitle,
+                { color: colors.gray900 },
+                selectedMethod === 'paypal' && { color: colors.primary },
+              ]}>
                 PayPal
               </Text>
-              <Text style={styles.methodSubtitle}>paypal.me/{mockPaymentDetails.paypalUsername}</Text>
+              <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>paypal.me/{mockPaymentDetails.paypalUsername}</Text>
             </View>
             {selectedMethod === 'paypal' && (
               <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -255,26 +269,26 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Payment Details Preview */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Details</Text>
-          <View style={styles.detailsCard}>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Payment Details</Text>
+          <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
             {selectedMethod === 'payid' && (
               <>
-                <DetailRow label="PayID" value={formatPayID(mockPaymentDetails.payid, 'phone')} />
-                <DetailRow label="Name" value={mockPaymentDetails.accountName} />
+                <DetailRow label="PayID" value={formatPayID(mockPaymentDetails.payid, 'phone')} colors={colors} />
+                <DetailRow label="Name" value={mockPaymentDetails.accountName} colors={colors} />
               </>
             )}
             {selectedMethod === 'bank_transfer' && (
               <>
-                <DetailRow label="Bank" value={mockPaymentDetails.bankName} />
-                <DetailRow label="BSB" value={formatBSB(mockPaymentDetails.bsb)} />
-                <DetailRow label="Account" value={mockPaymentDetails.accountNumber} />
-                <DetailRow label="Name" value={mockPaymentDetails.accountName} />
+                <DetailRow label="Bank" value={mockPaymentDetails.bankName} colors={colors} />
+                <DetailRow label="BSB" value={formatBSB(mockPaymentDetails.bsb)} colors={colors} />
+                <DetailRow label="Account" value={mockPaymentDetails.accountNumber} colors={colors} />
+                <DetailRow label="Name" value={mockPaymentDetails.accountName} colors={colors} />
               </>
             )}
             {selectedMethod === 'paypal' && (
               <>
-                <DetailRow label="PayPal" value={`paypal.me/${mockPaymentDetails.paypalUsername}`} />
-                <DetailRow label="Amount" value={`$${amount.toFixed(2)} AUD`} />
+                <DetailRow label="PayPal" value={`paypal.me/${mockPaymentDetails.paypalUsername}`} colors={colors} />
+                <DetailRow label="Amount" value={`$${amount.toFixed(2)} AUD`} colors={colors} />
               </>
             )}
           </View>
@@ -282,44 +296,33 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Share Buttons */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Share Payment Request</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Share Payment Request</Text>
 
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.shareButton, { backgroundColor: colors.primary }]} onPress={handleShare} activeOpacity={0.8}>
             <Ionicons name="share-outline" size={20} color={colors.surface} />
-            <Text style={styles.shareButtonText}>Share via...</Text>
+            <Text style={[styles.shareButtonText, { color: colors.surface }]}>Share via...</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.shareButton} onPress={handleCopyDetails} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.shareButton, { backgroundColor: colors.primary }]} onPress={handleCopyDetails} activeOpacity={0.8}>
             <Ionicons name="copy-outline" size={20} color={colors.surface} />
-            <Text style={styles.shareButtonText}>Copy to Clipboard</Text>
+            <Text style={[styles.shareButtonText, { color: colors.surface }]}>Copy to Clipboard</Text>
           </TouchableOpacity>
-
-          {/* TODO: Implement when we have friend phone numbers */}
-          {/* <TouchableOpacity style={styles.shareButtonSecondary} onPress={handleSMS} activeOpacity={0.8}>
-            <Ionicons name="chatbubble-outline" size={20} color={colors.primary} />
-            <Text style={styles.shareButtonSecondaryText}>Send SMS</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.shareButtonSecondary} onPress={handleWhatsApp} activeOpacity={0.8}>
-            <Ionicons name="logo-whatsapp" size={20} color={colors.primary} />
-            <Text style={styles.shareButtonSecondaryText}>Send WhatsApp</Text>
-          </TouchableOpacity> */}
         </View>
 
         <View style={{ height: spacing.xxxl }} />
       </ScrollView>
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.doneButton}
+          style={[styles.doneButton, { backgroundColor: colors.gray200 }]}
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             navigation.navigate('CreateSplit'); // Navigate back to home
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.doneButtonText}>Done</Text>
+          <Text style={[styles.doneButtonText, { color: colors.gray900 }]}>Done</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -327,11 +330,11 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 }
 
 // Detail Row Component
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value, colors }: { label: string; value: string; colors: any }) {
   return (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+    <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.detailValue, { color: colors.gray900 }]}>{value}</Text>
     </View>
   );
 }
@@ -339,7 +342,6 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
@@ -347,9 +349,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -360,17 +360,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.text,
   },
   headerSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   content: {
     flex: 1,
   },
   amountCard: {
-    backgroundColor: colors.primary,
     margin: spacing.md,
     padding: spacing.xl,
     borderRadius: radius.lg,
@@ -379,18 +376,15 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     ...typography.caption,
-    color: colors.surface,
     opacity: 0.9,
     marginBottom: spacing.xs,
   },
   amountValue: {
     ...typography.h1,
-    color: colors.surface,
     fontWeight: '700',
   },
   amountDescription: {
     ...typography.body,
-    color: colors.surface,
     marginTop: spacing.xs,
     textAlign: 'center',
   },
@@ -400,33 +394,24 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h4,
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   sectionSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  methodCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
   },
   methodIcon: {
     width: 48,
     height: 48,
     borderRadius: radius.md,
-    backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -436,18 +421,12 @@ const styles = StyleSheet.create({
   },
   methodTitle: {
     ...typography.h4,
-    color: colors.text,
     marginBottom: 2,
-  },
-  methodTitleSelected: {
-    color: colors.primary,
   },
   methodSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   detailsCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
   },
@@ -456,64 +435,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   detailLabel: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   detailValue: {
     ...typography.body,
-    color: colors.text,
     fontWeight: '600',
   },
   shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     padding: spacing.md,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
   },
   shareButtonText: {
     ...typography.body,
-    color: colors.surface,
-    fontWeight: '600',
-    marginLeft: spacing.sm,
-  },
-  shareButtonSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  shareButtonSecondaryText: {
-    ...typography.body,
-    color: colors.primary,
     fontWeight: '600',
     marginLeft: spacing.sm,
   },
   footer: {
     padding: spacing.md,
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   doneButton: {
-    backgroundColor: colors.gray200,
     padding: spacing.md,
     borderRadius: radius.md,
     alignItems: 'center',
   },
   doneButtonText: {
     ...typography.body,
-    color: colors.text,
     fontWeight: '600',
   },
   // Pay with Card styles
@@ -521,11 +474,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     padding: spacing.md,
     borderRadius: radius.md,
     marginTop: spacing.sm,
-    ...shadows.small,
+    ...shadows.low,
   },
   payNowIcon: {
     marginRight: spacing.sm,
@@ -533,13 +485,11 @@ const styles = StyleSheet.create({
   payNowText: {
     flex: 1,
     ...typography.body,
-    color: colors.surface,
     fontWeight: '700',
     fontSize: 16,
   },
   payNowNote: {
     ...typography.caption,
-    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.sm,
   },
@@ -552,11 +502,9 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
   },
   dividerText: {
     ...typography.caption,
-    color: colors.textSecondary,
     paddingHorizontal: spacing.sm,
     fontWeight: '600',
   },

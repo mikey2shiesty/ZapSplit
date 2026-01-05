@@ -63,61 +63,61 @@ const lightColors = {
   divider: '#E5E7EB',
 };
 
-// Dark theme colors
+// Dark theme colors - True black, pristine like Apple/Twitter dark mode
 const darkColors = {
   // Primary Colors
-  primary: '#5AADFF',
-  primaryDark: '#3B9EFF',
-  primaryLight: '#2B7FD9',
+  primary: '#3B9EFF',
+  primaryDark: '#2B7FD9',
+  primaryLight: 'rgba(59, 158, 255, 0.15)',
 
-  // Background Colors
-  background: '#0F0F0F',
-  surface: '#1A1A1A',
-  surfaceElevated: '#242424',
+  // Background Colors - TRUE BLACK
+  background: '#000000',
+  surface: '#1C1C1E',
+  surfaceElevated: '#2C2C2E',
 
-  // Text Colors
-  text: '#F9FAFB',
-  textSecondary: '#9CA3AF',
-  textTertiary: '#6B7280',
-  textInverse: '#111827',
+  // Text Colors - Clean white
+  text: '#FFFFFF',
+  textSecondary: '#8E8E93',
+  textTertiary: '#636366',
+  textInverse: '#000000',
 
   // Accent & Highlight
-  accent: '#1E2A3A',
-  highlight: '#3D3520',
+  accent: '#1C1C1E',
+  highlight: '#2C2C2E',
 
-  // Status Colors
-  success: '#4ADE80',
-  successLight: '#1A2E1A',
-  warning: '#FFB84D',
-  warningLight: '#3D2E1A',
-  error: '#FF6B6B',
-  errorLight: '#3D1A1A',
-  info: '#5AADFF',
-  infoLight: '#1A2A3D',
+  // Status Colors - Vibrant on dark
+  success: '#30D158',
+  successLight: 'rgba(48, 209, 88, 0.15)',
+  warning: '#FFD60A',
+  warningLight: 'rgba(255, 214, 10, 0.15)',
+  error: '#FF453A',
+  errorLight: 'rgba(255, 69, 58, 0.15)',
+  info: '#3B9EFF',
+  infoLight: 'rgba(59, 158, 255, 0.15)',
 
   // Semantic Colors
-  paid: '#4ADE80',
-  pending: '#FFB84D',
-  owed: '#FF6B6B',
+  paid: '#30D158',
+  pending: '#FFD60A',
+  owed: '#FF453A',
 
-  // Neutral Grays (inverted)
-  gray50: '#111827',
-  gray100: '#1F2937',
-  gray200: '#374151',
-  gray300: '#4B5563',
-  gray400: '#6B7280',
-  gray500: '#9CA3AF',
-  gray600: '#D1D5DB',
-  gray700: '#E5E7EB',
-  gray800: '#F3F4F6',
-  gray900: '#F9FAFB',
+  // Neutral Grays - Apple-style dark grays
+  gray50: '#000000',
+  gray100: '#1C1C1E',
+  gray200: '#2C2C2E',
+  gray300: '#3A3A3C',
+  gray400: '#48484A',
+  gray500: '#636366',
+  gray600: '#8E8E93',
+  gray700: '#AEAEB2',
+  gray800: '#C7C7CC',
+  gray900: '#FFFFFF',
 
   // Overlay & Borders
-  overlay: 'rgba(0, 0, 0, 0.7)',
-  overlayLight: 'rgba(0, 0, 0, 0.4)',
-  border: '#374151',
-  borderLight: '#1F2937',
-  divider: '#374151',
+  overlay: 'rgba(0, 0, 0, 0.8)',
+  overlayLight: 'rgba(0, 0, 0, 0.5)',
+  border: '#3A3A3C',
+  borderLight: '#2C2C2E',
+  divider: '#3A3A3C',
 };
 
 export type ThemeColors = typeof lightColors;

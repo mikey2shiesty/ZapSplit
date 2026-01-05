@@ -129,7 +129,11 @@ export async function getBlockedUsers(): Promise<BlockedUser[]> {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    // Transform profile from array to object (Supabase returns arrays for joins)
+    return (data || []).map((item: any) => ({
+      ...item,
+      profile: Array.isArray(item.profile) ? item.profile[0] : item.profile,
+    }));
   } catch (error) {
     console.error('Error getting blocked users:', error);
     return [];

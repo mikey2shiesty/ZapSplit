@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Pressable } from 'react-native';
-import { colors, shadows, radius, spacing } from '../../constants/theme';
+import { View, StyleSheet, StyleProp, ViewStyle, Pressable, ColorValue } from 'react-native';
+import { shadows, radius, spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
 interface CardProps {
   children: React.ReactNode;
   variant?: 'default' | 'elevated' | 'outlined';
-  gradient?: string[];
+  gradient?: [ColorValue, ColorValue, ...ColorValue[]];
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   padding?: keyof typeof spacing;
 }
 
@@ -21,13 +22,14 @@ export default function Card({
   style,
   padding = 'md',
 }: CardProps) {
+  const { colors } = useTheme();
   const paddingValue = spacing[padding];
 
-  const cardStyle = [
+  const cardStyle: StyleProp<ViewStyle> = [
     styles.base,
-    { padding: paddingValue },
+    { padding: paddingValue, backgroundColor: colors.surface },
     variant === 'elevated' && [styles.elevated, shadows.medium],
-    variant === 'outlined' && styles.outlined,
+    variant === 'outlined' && [styles.outlined, { borderColor: colors.border }],
     style,
   ];
 
@@ -41,7 +43,7 @@ export default function Card({
       colors={gradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[cardStyle, { padding: 0 }]}
+      style={[styles.base, { padding: 0 }]}
     >
       <View style={{ padding: paddingValue }}>{children}</View>
     </LinearGradient>
@@ -62,16 +64,12 @@ export default function Card({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
-  elevated: {
-    backgroundColor: colors.surface,
-  },
+  elevated: {},
   outlined: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.border,
   },
 });

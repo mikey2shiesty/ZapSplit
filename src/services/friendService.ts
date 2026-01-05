@@ -136,7 +136,11 @@ export async function getIncomingFriendRequests(userId: string): Promise<FriendR
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    // Transform sender from array to object (Supabase returns arrays for joins)
+    return (data || []).map((item: any) => ({
+      ...item,
+      sender: Array.isArray(item.sender) ? item.sender[0] : item.sender,
+    }));
   } catch (error) {
     console.error('Error getting incoming friend requests:', error);
     return [];
@@ -153,7 +157,11 @@ export async function getOutgoingFriendRequests(userId: string): Promise<FriendR
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    // Transform receiver from array to object (Supabase returns arrays for joins)
+    return (data || []).map((item: any) => ({
+      ...item,
+      receiver: Array.isArray(item.receiver) ? item.receiver[0] : item.receiver,
+    }));
   } catch (error) {
     console.error('Error getting outgoing friend requests:', error);
     return [];

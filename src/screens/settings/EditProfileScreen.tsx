@@ -19,12 +19,13 @@ import { useAuth } from '../../hooks/useAuth';
 import Avatar from '../../components/common/Avatar';
 import Button from '../../components/common/Button';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { decode } from 'base64-arraybuffer';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -289,14 +290,14 @@ export default function EditProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header title="Edit Profile" onBack={() => navigation.goBack()} />
 
@@ -326,22 +327,22 @@ export default function EditProfileScreen() {
                   <ActivityIndicator color={colors.surface} />
                 </View>
               ) : (
-                <View style={styles.cameraIcon}>
+                <View style={[styles.cameraIcon, { backgroundColor: colors.primary, borderColor: colors.surface }]}>
                   <Ionicons name="camera" size={16} color={colors.surface} />
                 </View>
               )}
             </TouchableOpacity>
             <TouchableOpacity onPress={showImageOptions} disabled={uploadingAvatar}>
-              <Text style={styles.changePhotoText}>Change Photo</Text>
+              <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</Text>
             </TouchableOpacity>
           </View>
 
           {/* Form Fields */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Full Name</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Full Name</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Enter your name"
@@ -351,31 +352,31 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Email</Text>
               <View style={styles.disabledInputContainer}>
                 <TextInput
-                  style={[styles.input, styles.disabledInput]}
+                  style={[styles.input, styles.disabledInput, { backgroundColor: colors.gray100, borderColor: colors.gray200, color: colors.gray500 }]}
                   value={email}
                   editable={false}
                 />
                 <Ionicons name="lock-closed" size={16} color={colors.gray400} style={styles.lockIcon} />
               </View>
-              <Text style={styles.inputHint}>
+              <Text style={[styles.inputHint, { color: colors.gray400 }]}>
                 Contact support to change your email address
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Phone Number</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Phone Number</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="Enter your phone number"
                 placeholderTextColor={colors.gray400}
                 keyboardType="phone-pad"
               />
-              <Text style={styles.inputHint}>
+              <Text style={[styles.inputHint, { color: colors.gray400 }]}>
                 Optional - used for account recovery
               </Text>
             </View>
@@ -383,14 +384,14 @@ export default function EditProfileScreen() {
 
           {/* Security Section */}
           <View style={styles.securitySection}>
-            <Text style={styles.sectionTitle}>Security</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Security</Text>
             <TouchableOpacity
-              style={styles.securityButton}
+              style={[styles.securityButton, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
               onPress={() => navigation.navigate('ChangePassword')}
             >
               <View style={styles.securityButtonContent}>
                 <Ionicons name="key-outline" size={22} color={colors.gray700} />
-                <Text style={styles.securityButtonText}>Change Password</Text>
+                <Text style={[styles.securityButtonText, { color: colors.gray900 }]}>Change Password</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
             </TouchableOpacity>
@@ -417,13 +418,11 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   keyboardAvoid: {
     flex: 1,
@@ -458,16 +457,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: colors.surface,
   },
   changePhotoText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
   },
   formSection: {
     marginBottom: 32,
@@ -478,24 +474,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray700,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.gray200,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: colors.gray900,
   },
   disabledInputContainer: {
     position: 'relative',
   },
   disabledInput: {
-    backgroundColor: colors.gray100,
-    color: colors.gray500,
   },
   lockIcon: {
     position: 'absolute',
@@ -504,7 +494,6 @@ const styles = StyleSheet.create({
   },
   inputHint: {
     fontSize: 12,
-    color: colors.gray400,
     marginTop: 6,
   },
   securitySection: {
@@ -513,7 +502,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -522,11 +510,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.gray200,
   },
   securityButtonContent: {
     flexDirection: 'row',
@@ -536,7 +522,6 @@ const styles = StyleSheet.create({
   securityButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.gray900,
   },
   saveSection: {
     marginBottom: 40,

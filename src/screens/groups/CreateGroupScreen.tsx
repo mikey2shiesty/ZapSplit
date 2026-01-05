@@ -19,7 +19,8 @@ import { createGroup, GroupType } from '../../services/groupService';
 import { getFriends, Friend } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { colors, shadows } from '../../constants/theme';
+import { shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const GROUP_TYPES: { value: GroupType; label: string; icon: string }[] = [
   { value: 'household', label: 'Household', icon: 'home-outline' },
@@ -31,6 +32,7 @@ const GROUP_TYPES: { value: GroupType; label: string; icon: string }[] = [
 
 export default function CreateGroupScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedType, setSelectedType] = useState<GroupType>('custom');
@@ -115,7 +117,11 @@ export default function CreateGroupScreen() {
     return (
       <TouchableOpacity
         key={type.value}
-        style={[styles.typeOption, isSelected && styles.typeOptionSelected]}
+        style={[
+          styles.typeOption,
+          { backgroundColor: isSelected ? colors.infoLight : colors.gray100 },
+          isSelected && { borderWidth: 1, borderColor: colors.primary },
+        ]}
         onPress={() => setSelectedType(type.value)}
       >
         <Ionicons
@@ -123,7 +129,7 @@ export default function CreateGroupScreen() {
           size={24}
           color={isSelected ? colors.primary : colors.gray500}
         />
-        <Text style={[styles.typeLabel, isSelected && styles.typeLabelSelected]}>
+        <Text style={[styles.typeLabel, { color: isSelected ? colors.primary : colors.gray600 }]}>
           {type.label}
         </Text>
       </TouchableOpacity>
@@ -134,7 +140,11 @@ export default function CreateGroupScreen() {
     const isSelected = selectedMembers.includes(item.id);
     return (
       <TouchableOpacity
-        style={[styles.friendItem, isSelected && styles.friendItemSelected]}
+        style={[
+          styles.friendItem,
+          { borderBottomColor: colors.gray200 },
+          isSelected && { backgroundColor: colors.infoLight, marginHorizontal: -16, paddingHorizontal: 16 },
+        ]}
         onPress={() => toggleMember(item.id)}
       >
         <Avatar
@@ -142,8 +152,12 @@ export default function CreateGroupScreen() {
           uri={item.avatar_url || undefined}
           size="sm"
         />
-        <Text style={styles.friendName}>{item.full_name}</Text>
-        <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+        <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.full_name}</Text>
+        <View style={[
+          styles.checkbox,
+          { borderColor: colors.gray300 },
+          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+        ]}>
           {isSelected && <Ionicons name="checkmark" size={16} color={colors.surface} />}
         </View>
       </TouchableOpacity>
@@ -152,42 +166,42 @@ export default function CreateGroupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.gray50 }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="close" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title}>Create Group</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Create Group</Text>
         <TouchableOpacity
-          style={[styles.createBtn, !name.trim() && styles.createBtnDisabled]}
+          style={[styles.createBtn, { backgroundColor: colors.primary }, !name.trim() && styles.createBtnDisabled]}
           onPress={handleCreate}
           disabled={!name.trim() || loading}
         >
           {loading ? (
             <ActivityIndicator size="small" color={colors.surface} />
           ) : (
-            <Text style={styles.createBtnText}>Create</Text>
+            <Text style={[styles.createBtnText, { color: colors.surface }]}>Create</Text>
           )}
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Card variant="default" style={styles.section}>
-          <Text style={styles.sectionTitle}>Group Details</Text>
+        <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Group Details</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.gray100, color: colors.gray900 }]}
             placeholder="Group name"
             placeholderTextColor={colors.gray400}
             value={name}
             onChangeText={setName}
           />
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.gray100, color: colors.gray900 }]}
             placeholder="Description (optional)"
             placeholderTextColor={colors.gray400}
             value={description}
@@ -197,27 +211,27 @@ export default function CreateGroupScreen() {
           />
         </Card>
 
-        <Card variant="default" style={styles.section}>
-          <Text style={styles.sectionTitle}>Group Type</Text>
+        <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Group Type</Text>
           <View style={styles.typeGrid}>
             {GROUP_TYPES.map(renderTypeOption)}
           </View>
         </Card>
 
-        <Card variant="default" style={styles.section}>
+        <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Add Members</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Add Members</Text>
             {selectedMembers.length > 0 && (
-              <Text style={styles.selectedCount}>{selectedMembers.length} selected</Text>
+              <Text style={[styles.selectedCount, { color: colors.primary }]}>{selectedMembers.length} selected</Text>
             )}
           </View>
           {loadingFriends ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : friends.length === 0 ? (
             <View style={styles.noFriends}>
-              <Text style={styles.noFriendsText}>No friends to add</Text>
+              <Text style={[styles.noFriendsText, { color: colors.gray500 }]}>No friends to add</Text>
               <TouchableOpacity onPress={() => navigation.navigate('AddFriend')}>
-                <Text style={styles.addFriendsLink}>Add friends first</Text>
+                <Text style={[styles.addFriendsLink, { color: colors.primary }]}>Add friends first</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -237,7 +251,6 @@ export default function CreateGroupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
@@ -250,7 +263,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -258,10 +270,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   createBtn: {
-    backgroundColor: colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -270,7 +280,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   createBtnText: {
-    color: colors.surface,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -292,21 +301,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 12,
   },
   selectedCount: {
     fontSize: 14,
-    color: colors.primary,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: colors.gray50,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: colors.gray900,
     marginBottom: 12,
   },
   textArea: {
@@ -325,52 +330,30 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 10,
-    backgroundColor: colors.gray50,
     gap: 8,
-  },
-  typeOptionSelected: {
-    backgroundColor: colors.infoLight,
-    borderWidth: 1,
-    borderColor: colors.primary,
   },
   typeLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.gray600,
-  },
-  typeLabelSelected: {
-    color: colors.primary,
   },
   friendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
     gap: 12,
-  },
-  friendItemSelected: {
-    backgroundColor: colors.infoLight,
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
   },
   friendName: {
     flex: 1,
     fontSize: 15,
-    color: colors.gray900,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.gray300,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  checkboxSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   noFriends: {
     alignItems: 'center',
@@ -378,12 +361,10 @@ const styles = StyleSheet.create({
   },
   noFriendsText: {
     fontSize: 14,
-    color: colors.gray500,
     marginBottom: 8,
   },
   addFriendsLink: {
     fontSize: 14,
-    color: colors.primary,
     fontWeight: '600',
   },
 });

@@ -17,11 +17,13 @@ import { supabase } from '../../services/supabase';
 import { createConnectAccount, checkAccountStatus, ConnectAccountStatus } from '../../services/stripeService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export default function ConnectStripeScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [accountStatus, setAccountStatus] = useState<ConnectAccountStatus | null>(null);
@@ -117,20 +119,20 @@ export default function ConnectStripeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
         <View style={styles.navHeader}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={colors.gray900} />
           </TouchableOpacity>
-          <Text style={styles.navTitle}>Receive Payments</Text>
+          <Text style={[styles.navTitle, { color: colors.gray900 }]}>Receive Payments</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading account status...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading account status...</Text>
         </View>
       </View>
     );
@@ -139,23 +141,23 @@ export default function ConnectStripeScreen() {
   const isConnected = accountStatus?.connected && accountStatus?.chargesEnabled;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
       {/* Navigation Header */}
       <View style={styles.navHeader}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Receive Payments</Text>
+        <Text style={[styles.navTitle, { color: colors.gray900 }]}>Receive Payments</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.gray600 }]}>
             Connect your bank account to receive payments from splits
           </Text>
         </View>
@@ -164,110 +166,113 @@ export default function ConnectStripeScreen() {
       <Card variant="elevated" style={styles.card}>
         {!isConnected ? (
           <View style={styles.cardContent}>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
               <Text style={styles.iconText}>💳</Text>
             </View>
-            <Text style={styles.cardTitle}>Connect Your Bank Account</Text>
-            <Text style={styles.cardDescription}>
+            <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Connect Your Bank Account</Text>
+            <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
               To receive payments through ZapSplit, you'll need to connect your bank account via Stripe.
             </Text>
             <View style={styles.benefits}>
-              <Text style={styles.benefitItem}>✓ Secure bank-level encryption</Text>
-              <Text style={styles.benefitItem}>✓ Fast payouts (1-3 business days)</Text>
-              <Text style={styles.benefitItem}>✓ No monthly fees</Text>
+              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ Secure bank-level encryption</Text>
+              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ Fast payouts (1-3 business days)</Text>
+              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ No monthly fees</Text>
             </View>
             <Button
-              title={connecting ? 'Connecting...' : 'Connect Bank Account'}
               variant="primary"
               size="large"
               onPress={handleConnectAccount}
               disabled={connecting}
               style={styles.connectButton}
-            />
+            >
+              {connecting ? 'Connecting...' : 'Connect Bank Account'}
+            </Button>
             <View style={styles.stripeFooter}>
-              <Text style={styles.poweredBy}>Powered by</Text>
+              <Text style={[styles.poweredBy, { color: colors.gray500 }]}>Powered by</Text>
               <Text style={styles.stripeLogo}>Stripe</Text>
               <Text style={styles.lockIcon}>🔒</Text>
             </View>
           </View>
         ) : (
           <View style={styles.cardContent}>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
               <Text style={styles.iconText}>✅</Text>
             </View>
-            <Text style={styles.cardTitle}>Bank Account Connected</Text>
-            <Text style={styles.cardDescription}>
+            <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Bank Account Connected</Text>
+            <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
               You're all set to receive payments through ZapSplit!
             </Text>
 
             {/* Account Info */}
-            <View style={styles.accountInfo}>
+            <View style={[styles.accountInfo, { backgroundColor: colors.gray50 }]}>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Status</Text>
-                <View style={styles.statusBadge}>
+                <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Status</Text>
+                <View style={[styles.statusBadge, { backgroundColor: colors.success }]}>
                   <Text style={styles.statusText}>Active</Text>
                 </View>
               </View>
               {accountStatus?.chargesEnabled && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Charges</Text>
-                  <Text style={styles.infoValue}>Enabled ✓</Text>
+                  <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Charges</Text>
+                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled ✓</Text>
                 </View>
               )}
               {accountStatus?.payoutsEnabled && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Payouts</Text>
-                  <Text style={styles.infoValue}>Enabled ✓</Text>
+                  <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Payouts</Text>
+                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled ✓</Text>
                 </View>
               )}
             </View>
 
             <Button
-              title="Refresh Status"
               variant="outline"
               size="medium"
               onPress={handleRefreshStatus}
               style={styles.refreshButton}
-            />
+            >
+              Refresh Status
+            </Button>
           </View>
         )}
       </Card>
 
       {/* Requirements (if any) */}
       {accountStatus?.requirements && accountStatus.requirements.currently_due.length > 0 && (
-        <Card variant="default" style={styles.requirementsCard}>
-          <Text style={styles.requirementsTitle}>⚠️ Action Required</Text>
-          <Text style={styles.requirementsDescription}>
+        <Card variant="default" style={[styles.requirementsCard, { backgroundColor: colors.warningLight }]}>
+          <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>⚠️ Action Required</Text>
+          <Text style={[styles.requirementsDescription, { color: colors.gray700 }]}>
             Please complete the following to activate your account:
           </Text>
           {accountStatus.requirements.currently_due.map((req, index) => (
-            <Text key={index} style={styles.requirementItem}>
+            <Text key={index} style={[styles.requirementItem, { color: colors.gray700 }]}>
               • {req.replace(/_/g, ' ')}
             </Text>
           ))}
           <Button
-            title="Complete Setup"
             variant="primary"
             size="small"
             onPress={handleConnectAccount}
             style={styles.completeButton}
-          />
+          >
+            Complete Setup
+          </Button>
         </Card>
       )}
 
       {/* Info Section */}
-      <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>How it works</Text>
-        <Text style={styles.infoText}>
+      <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.infoTitle, { color: colors.gray900 }]}>How it works</Text>
+        <Text style={[styles.infoText, { color: colors.gray700 }]}>
           1. Connect your bank account through Stripe's secure onboarding
         </Text>
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { color: colors.gray700 }]}>
           2. Stripe verifies your information (instant or 1-2 business days)
         </Text>
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { color: colors.gray700 }]}>
           3. Start receiving payments from your splits
         </Text>
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { color: colors.gray700 }]}>
           4. Funds are automatically deposited to your bank account
         </Text>
       </View>
@@ -279,21 +284,19 @@ export default function ConnectStripeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   navHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm + 4,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -305,7 +308,6 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   placeholder: {
     width: 44,
@@ -319,36 +321,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
+    marginTop: spacing.md,
     fontSize: 16,
-    color: colors.gray600,
   },
   header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 8,
+    marginBottom: spacing.lg,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.gray600,
     lineHeight: 22,
   },
   card: {
     marginBottom: 20,
   },
   cardContent: {
-    padding: 24,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -359,30 +352,27 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
     textAlign: 'center',
   },
   cardDescription: {
     fontSize: 16,
-    color: colors.gray600,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   benefits: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   benefitItem: {
     fontSize: 15,
-    color: colors.gray700,
-    marginBottom: 8,
-    paddingLeft: 8,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.sm,
   },
   connectButton: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   stripeFooter: {
     flexDirection: 'row',
@@ -392,7 +382,6 @@ const styles = StyleSheet.create({
   },
   poweredBy: {
     fontSize: 13,
-    color: colors.gray500,
   },
   stripeLogo: {
     fontSize: 16,
@@ -404,31 +393,27 @@ const styles = StyleSheet.create({
   },
   accountInfo: {
     width: '100%',
-    backgroundColor: colors.gray50,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: radius.md,
+    padding: spacing.md,
     marginVertical: 20,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
   },
   infoLabel: {
     fontSize: 15,
-    color: colors.gray600,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   statusBadge: {
-    backgroundColor: colors.success,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm + 4,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
   statusText: {
     fontSize: 13,
@@ -441,43 +426,36 @@ const styles = StyleSheet.create({
   requirementsCard: {
     padding: 20,
     marginBottom: 20,
-    backgroundColor: colors.warning + '15',
   },
   requirementsTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   requirementsDescription: {
     fontSize: 14,
-    color: colors.gray700,
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
   },
   requirementItem: {
     fontSize: 14,
-    color: colors.gray700,
     marginBottom: 6,
   },
   completeButton: {
-    marginTop: 12,
+    marginTop: spacing.sm + 4,
   },
   infoSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 20,
     marginBottom: 40,
   },
   infoTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   infoText: {
     fontSize: 15,
-    color: colors.gray700,
     lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
   },
 });

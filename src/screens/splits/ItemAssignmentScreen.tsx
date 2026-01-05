@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { ItemAssignmentScreenProps } from '../../types/navigation';
 import { ReceiptItem } from '../../types/receipt';
@@ -39,6 +40,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { allFriends } = useFriends();
+  const { colors } = useTheme();
 
   const [assignments, setAssignments] = useState<ItemAssignments>({});
   const [saving, setSaving] = useState(false);
@@ -251,15 +253,15 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Assign Items</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Assign Items</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Tap items to assign to each person
           </Text>
         </View>
@@ -268,13 +270,13 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Participants Summary */}
-        <View style={styles.participantsCard}>
-          <Text style={styles.sectionTitle}>Splitting with</Text>
+        <View style={[styles.participantsCard, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Splitting with</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.participantsList}>
             {participants.map((participant) => (
               <TouchableOpacity
                 key={participant.id}
-                style={styles.participantChip}
+                style={[styles.participantChip, { backgroundColor: colors.gray50 }]}
                 onPress={() => assignAllToParticipant(participant.id)}
               >
                 <Avatar
@@ -283,10 +285,10 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
                   size="sm"
                 />
                 <View style={styles.participantChipInfo}>
-                  <Text style={styles.participantChipName} numberOfLines={1}>
+                  <Text style={[styles.participantChipName, { color: colors.gray900 }]} numberOfLines={1}>
                     {participant.full_name}
                   </Text>
-                  <Text style={styles.participantChipTotal}>
+                  <Text style={[styles.participantChipTotal, { color: colors.primary }]}>
                     {formatCurrency(participantTotals[participant.id]?.total || 0)}
                   </Text>
                 </View>
@@ -296,9 +298,9 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
         </View>
 
         {/* Info Banner */}
-        <View style={styles.infoBanner}>
+        <View style={[styles.infoBanner, { backgroundColor: colors.infoLight }]}>
           <Ionicons name="information-circle" size={20} color={colors.info} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.info }]}>
             Tap on person chips below each item to assign who ordered it. Shared items split the cost.
           </Text>
         </View>
@@ -312,13 +314,14 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
               participants={participants}
               assignedTo={assignments[item.id] || []}
               onToggleAssignment={(userId) => toggleAssignment(item.id, userId)}
+              colors={colors}
             />
           ))}
         </View>
 
         {/* Summary by Person */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Summary</Text>
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>Summary</Text>
           {participants.map((participant) => {
             const totals = participantTotals[participant.id];
             if (!totals || totals.total === 0) return null;
@@ -331,20 +334,20 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
                     uri={participant.avatar_url ?? undefined}
                     size="xs"
                   />
-                  <Text style={styles.summaryPersonName}>{participant.full_name}</Text>
+                  <Text style={[styles.summaryPersonName, { color: colors.gray900 }]}>{participant.full_name}</Text>
                 </View>
-                <Text style={styles.summaryPersonTotal}>
+                <Text style={[styles.summaryPersonTotal, { color: colors.gray900 }]}>
                   {formatCurrency(totals.total)}
                 </Text>
               </View>
             );
           })}
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Receipt Total</Text>
-            <Text style={styles.totalValue}>{formatCurrency(receipt.total)}</Text>
+            <Text style={[styles.totalLabel, { color: colors.gray900 }]}>Receipt Total</Text>
+            <Text style={[styles.totalValue, { color: colors.primary }]}>{formatCurrency(receipt.total)}</Text>
           </View>
         </View>
 
@@ -352,11 +355,12 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       </ScrollView>
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
-            (!hasAssignments || saving) && styles.continueButtonDisabled,
+            { backgroundColor: colors.primary },
+            (!hasAssignments || saving) && [styles.continueButtonDisabled, { backgroundColor: colors.gray400 }],
           ]}
           onPress={handleContinue}
           disabled={!hasAssignments || saving}
@@ -365,13 +369,13 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           {saving ? (
             <>
               <ActivityIndicator size="small" color={colors.surface} />
-              <Text style={[styles.continueButtonText, { marginLeft: spacing.sm }]}>
+              <Text style={[styles.continueButtonText, { marginLeft: spacing.sm, color: colors.surface }]}>
                 Creating split...
               </Text>
             </>
           ) : (
             <>
-              <Text style={styles.continueButtonText}>
+              <Text style={[styles.continueButtonText, { color: colors.surface }]}>
                 Create Split
               </Text>
               <Ionicons name="arrow-forward" size={20} color={colors.surface} />
@@ -389,37 +393,38 @@ interface ItemCardProps {
   participants: FriendData[];
   assignedTo: string[];
   onToggleAssignment: (userId: string) => void;
+  colors: any;
 }
 
-function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCardProps) {
+function ItemCard({ item, participants, assignedTo, onToggleAssignment, colors }: ItemCardProps) {
   const lineTotal = item.price * item.quantity;
   const sharePerPerson = assignedTo.length > 0 ? lineTotal / assignedTo.length : 0;
 
   return (
-    <View style={styles.itemCard}>
+    <View style={[styles.itemCard, { backgroundColor: colors.surface }]}>
       {/* Item Header */}
       <View style={styles.itemHeader}>
         <View style={styles.itemInfo}>
           {item.quantity > 1 && (
-            <View style={styles.quantityBadge}>
-              <Text style={styles.quantityText}>{item.quantity}x</Text>
+            <View style={[styles.quantityBadge, { backgroundColor: colors.accent }]}>
+              <Text style={[styles.quantityText, { color: colors.primary }]}>{item.quantity}x</Text>
             </View>
           )}
-          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={[styles.itemName, { color: colors.gray900 }]}>{item.name}</Text>
         </View>
         {item.quantity > 1 ? (
           <View style={styles.priceContainer}>
-            <Text style={styles.unitPrice}>{formatCurrency(item.price)} ea</Text>
-            <Text style={styles.itemPrice}>{formatCurrency(lineTotal)}</Text>
+            <Text style={[styles.unitPrice, { color: colors.textSecondary }]}>{formatCurrency(item.price)} ea</Text>
+            <Text style={[styles.itemPrice, { color: colors.gray900 }]}>{formatCurrency(lineTotal)}</Text>
           </View>
         ) : (
-          <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
+          <Text style={[styles.itemPrice, { color: colors.gray900 }]}>{formatCurrency(item.price)}</Text>
         )}
       </View>
 
       {/* Participant Assignment Chips */}
-      <View style={styles.assignmentContainer}>
-        <Text style={styles.assignmentLabel}>Who ordered this?</Text>
+      <View style={[styles.assignmentContainer, { borderTopColor: colors.gray200 }]}>
+        <Text style={[styles.assignmentLabel, { color: colors.textSecondary }]}>Who ordered this?</Text>
         <View style={styles.assignmentChips}>
           {participants.map((participant) => {
             const isAssigned = assignedTo.includes(participant.id);
@@ -428,7 +433,8 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCa
                 key={participant.id}
                 style={[
                   styles.assignmentChip,
-                  isAssigned && styles.assignmentChipActive,
+                  { borderColor: colors.gray300, backgroundColor: colors.surface },
+                  isAssigned && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
                 ]}
                 onPress={() => onToggleAssignment(participant.id)}
                 activeOpacity={0.7}
@@ -441,7 +447,8 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCa
                 <Text
                   style={[
                     styles.assignmentChipText,
-                    isAssigned && styles.assignmentChipTextActive,
+                    { color: colors.textSecondary },
+                    isAssigned && { color: colors.primary, fontWeight: '700' },
                   ]}
                   numberOfLines={1}
                 >
@@ -458,9 +465,9 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCa
 
       {/* Share Info */}
       {assignedTo.length > 0 && (
-        <View style={styles.shareInfo}>
+        <View style={[styles.shareInfo, { borderTopColor: colors.gray200 }]}>
           <Ionicons name="calculator-outline" size={14} color={colors.success} />
-          <Text style={styles.shareText}>
+          <Text style={[styles.shareText, { color: colors.success }]}>
             {formatCurrency(sharePerPerson)} each
             {assignedTo.length > 1 && ` (split ${assignedTo.length} ways)`}
           </Text>
@@ -473,16 +480,13 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment }: ItemCa
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     gap: spacing.md,
   },
   backButton: {
@@ -493,18 +497,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h5,
-    color: colors.text,
   },
   headerSubtitle: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
   content: {
     flex: 1,
   },
   participantsCard: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
     padding: spacing.md,
@@ -513,7 +514,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h6,
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   participantsList: {
@@ -522,7 +522,6 @@ const styles = StyleSheet.create({
   participantChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
@@ -534,19 +533,16 @@ const styles = StyleSheet.create({
   },
   participantChipName: {
     ...typography.caption,
-    color: colors.text,
     fontWeight: '600',
     maxWidth: 80,
   },
   participantChipTotal: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: '700',
   },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.infoLight,
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
@@ -555,14 +551,12 @@ const styles = StyleSheet.create({
   },
   infoText: {
     ...typography.bodySmall,
-    color: colors.info,
     flex: 1,
   },
   section: {
     marginTop: spacing.lg,
   },
   itemCard: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     padding: spacing.md,
@@ -582,24 +576,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   quantityBadge: {
-    backgroundColor: colors.accent,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
     borderRadius: radius.xs,
   },
   quantityText: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: '600',
   },
   itemName: {
     ...typography.h6,
-    color: colors.text,
     flex: 1,
   },
   itemPrice: {
     ...typography.h6,
-    color: colors.text,
     fontWeight: '700',
   },
   priceContainer: {
@@ -607,18 +597,15 @@ const styles = StyleSheet.create({
   },
   unitPrice: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: 2,
   },
   assignmentContainer: {
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   assignmentLabel: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: spacing.sm,
     fontWeight: '600',
   },
@@ -634,23 +621,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
     borderWidth: 1.5,
-    borderColor: colors.gray300,
-    backgroundColor: colors.surface,
     gap: spacing.xs,
-  },
-  assignmentChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '15',
   },
   assignmentChipText: {
     ...typography.caption,
-    color: colors.textSecondary,
     fontWeight: '600',
     maxWidth: 60,
-  },
-  assignmentChipTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
   },
   shareInfo: {
     flexDirection: 'row',
@@ -658,17 +634,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
     gap: spacing.xs,
   },
   shareText: {
     ...typography.caption,
-    color: colors.success,
     fontStyle: 'italic',
     fontWeight: '600',
   },
   summaryCard: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     marginTop: spacing.lg,
     padding: spacing.lg,
@@ -677,7 +650,6 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     ...typography.h5,
-    color: colors.text,
     marginBottom: spacing.md,
   },
   summaryRow: {
@@ -693,16 +665,13 @@ const styles = StyleSheet.create({
   },
   summaryPersonName: {
     ...typography.body,
-    color: colors.text,
   },
   summaryPersonTotal: {
     ...typography.h6,
-    color: colors.text,
     fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
     marginVertical: spacing.md,
   },
   totalRow: {
@@ -712,37 +681,30 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     ...typography.h5,
-    color: colors.text,
     fontWeight: '700',
   },
   totalValue: {
     ...typography.h4,
-    color: colors.primary,
     fontWeight: '700',
   },
   footer: {
     padding: spacing.md,
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   continueButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     gap: spacing.sm,
     ...shadows.medium,
   },
   continueButtonDisabled: {
-    backgroundColor: colors.gray400,
     ...shadows.none,
   },
   continueButtonText: {
     ...typography.button,
-    color: colors.surface,
     fontSize: 16,
   },
 });

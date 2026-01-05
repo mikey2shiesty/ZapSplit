@@ -14,7 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius } from '../../constants/theme';
+import { spacing, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
 interface ScanReceiptScreenProps {
@@ -23,6 +24,7 @@ interface ScanReceiptScreenProps {
 }
 
 export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScreenProps) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
@@ -33,7 +35,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
   // Request camera permission
   if (!permission) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -41,20 +43,20 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.gray50 }]}>
         <Ionicons name="camera-outline" size={80} color={colors.gray400} />
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionMessage}>
+        <Text style={[styles.permissionTitle, { color: colors.gray900 }]}>Camera Access Required</Text>
+        <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>
           ZapSplit needs camera access to scan receipts and automatically split bills.
         </Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: colors.primary }]} onPress={requestPermission}>
+          <Text style={[styles.permissionButtonText, { color: colors.surface }]}>Grant Permission</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.cancelButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
         </TouchableOpacity>
       </View>
     );
@@ -119,7 +121,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
   // If image is captured, show preview
   if (capturedImage) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <StatusBar barStyle="light-content" />
 
         {/* Header */}
@@ -127,18 +129,18 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
           <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
             <Ionicons name="close" size={28} color={colors.surface} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Review Photo</Text>
+          <Text style={[styles.headerTitle, { color: colors.surface }]}>Review Photo</Text>
           <View style={{ width: 28 }} />
         </View>
 
         {/* Image Preview */}
-        <View style={styles.previewContainer}>
+        <View style={[styles.previewContainer, { backgroundColor: colors.gray50 }]}>
           <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="contain" />
         </View>
 
         {/* Instructions */}
         <View style={styles.instructionsContainer}>
-          <Text style={styles.instructionsText}>
+          <Text style={[styles.instructionsText, { color: colors.gray400 }]}>
             Make sure the receipt is clear and all items are visible
           </Text>
         </View>
@@ -146,20 +148,20 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.retakeButton}
+            style={[styles.retakeButton, { backgroundColor: colors.gray800 }]}
             onPress={handleRetake}
             activeOpacity={0.7}
           >
-            <Ionicons name="camera-reverse-outline" size={24} color={colors.text} />
-            <Text style={styles.retakeButtonText}>Retake</Text>
+            <Ionicons name="camera-reverse-outline" size={24} color={colors.surface} />
+            <Text style={[styles.retakeButtonText, { color: colors.surface }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.usePhotoButton}
+            style={[styles.usePhotoButton, { backgroundColor: colors.primary }]}
             onPress={handleUsePhoto}
             activeOpacity={0.7}
           >
-            <Text style={styles.usePhotoButtonText}>Use Photo</Text>
+            <Text style={[styles.usePhotoButtonText, { color: colors.surface }]}>Use Photo</Text>
             <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
           </TouchableOpacity>
         </View>
@@ -169,7 +171,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
   // Camera view
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Header */}
@@ -177,7 +179,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={28} color={colors.surface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Scan Receipt</Text>
+        <Text style={[styles.headerTitle, { color: colors.surface }]}>Scan Receipt</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -190,7 +192,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         >
           {/* Receipt frame guide */}
           <View style={styles.frameGuide}>
-            <View style={styles.frameCorner} />
+            <View style={[styles.frameCorner, { borderColor: colors.surface }]} />
           </View>
         </CameraView>
       </View>
@@ -198,7 +200,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
       {/* Instructions */}
       <View style={styles.instructionsContainer}>
         <Ionicons name="information-circle-outline" size={20} color={colors.gray400} />
-        <Text style={styles.instructionsText}>
+        <Text style={[styles.instructionsText, { color: colors.gray400 }]}>
           Position the entire receipt within the frame
         </Text>
       </View>
@@ -211,19 +213,19 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
           activeOpacity={0.7}
         >
           <Ionicons name="images-outline" size={28} color={colors.surface} />
-          <Text style={styles.galleryButtonText}>Gallery</Text>
+          <Text style={[styles.galleryButtonText, { color: colors.surface }]}>Gallery</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.captureButton, isProcessing && styles.captureButtonDisabled]}
+          style={[styles.captureButton, { backgroundColor: colors.surface, borderColor: colors.gray700 }, isProcessing && styles.captureButtonDisabled]}
           onPress={handleTakePhoto}
           disabled={isProcessing}
           activeOpacity={0.8}
         >
           {isProcessing ? (
-            <ActivityIndicator size="large" color={colors.surface} />
+            <ActivityIndicator size="large" color={colors.gray50} />
           ) : (
-            <View style={styles.captureButtonInner} />
+            <View style={[styles.captureButtonInner, { backgroundColor: colors.surface }]} />
           )}
         </TouchableOpacity>
 
@@ -236,31 +238,26 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
-    backgroundColor: colors.background,
   },
   permissionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   permissionMessage: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
   permissionButton: {
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
@@ -269,7 +266,6 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
   },
   cancelButton: {
     paddingHorizontal: spacing.xl,
@@ -278,7 +274,6 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -297,7 +292,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.surface,
   },
   cameraContainer: {
     flex: 1,
@@ -318,7 +312,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
     borderWidth: 2,
-    borderColor: colors.surface,
     borderRadius: radius.md,
     opacity: 0.5,
   },
@@ -332,7 +325,6 @@ const styles = StyleSheet.create({
   },
   instructionsText: {
     fontSize: 14,
-    color: colors.gray400,
     textAlign: 'center',
   },
   bottomActions: {
@@ -349,31 +341,26 @@ const styles = StyleSheet.create({
   },
   galleryButtonText: {
     fontSize: 12,
-    color: colors.surface,
     marginTop: spacing.xs,
   },
   captureButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: colors.gray700,
   },
   captureButtonInner: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: colors.surface,
   },
   captureButtonDisabled: {
     opacity: 0.5,
   },
   previewContainer: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -393,7 +380,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray800,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
     gap: spacing.sm,
@@ -401,14 +387,12 @@ const styles = StyleSheet.create({
   retakeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
   },
   usePhotoButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
     gap: spacing.sm,
@@ -416,6 +400,5 @@ const styles = StyleSheet.create({
   usePhotoButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
   },
 });

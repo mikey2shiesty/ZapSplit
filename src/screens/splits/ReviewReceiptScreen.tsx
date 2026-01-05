@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius, typography, shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { parseReceiptWithAI } from '../../services/receiptService';
 import { ParsedReceipt, ReceiptItem } from '../../types/receipt';
@@ -23,6 +24,7 @@ import AIConsentModal, { hasAIConsent } from '../../components/modals/AIConsentM
 export default function ReviewReceiptScreen({ navigation, route }: ReviewReceiptScreenProps) {
   const { imageUri } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +195,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Loading state
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <AIConsentModal
           visible={showConsentModal}
           onAccept={handleConsentAccept}
@@ -201,8 +203,8 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Analyzing receipt with AI...</Text>
-          <Text style={styles.loadingSubtext}>
+          <Text style={[styles.loadingText, { color: colors.gray900 }]}>Analyzing receipt with AI...</Text>
+          <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
             This may take a few seconds
           </Text>
         </View>
@@ -213,7 +215,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Show consent modal if not yet checked
   if (showConsentModal) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <AIConsentModal
           visible={showConsentModal}
           onAccept={handleConsentAccept}
@@ -226,19 +228,19 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Error state
   if (error || !receipt) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={80} color={colors.error} />
-          <Text style={styles.errorTitle}>Failed to Parse Receipt</Text>
-          <Text style={styles.errorMessage}>
+          <Text style={[styles.errorTitle, { color: colors.gray900 }]}>Failed to Parse Receipt</Text>
+          <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
             {error || 'Could not extract items from the receipt image'}
           </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={parseReceipt}>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={parseReceipt}>
             <Ionicons name="refresh-outline" size={20} color={colors.surface} />
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={[styles.retryButtonText, { color: colors.surface }]}>Try Again</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.cancelButtonText}>Go Back</Text>
+            <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -246,27 +248,27 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Review Receipt</Text>
-            <Text style={styles.headerSubtitle}>
+            <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Review Receipt</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
               {receipt.merchant || 'Unknown Restaurant'}
             </Text>
           </View>
-          <View style={styles.confidenceBadge}>
-            <Text style={styles.confidenceText}>
+          <View style={[styles.confidenceBadge, { backgroundColor: colors.successLight }]}>
+            <Text style={[styles.confidenceText, { color: colors.success }]}>
               {(receipt.confidence * 100).toFixed(0)}%
             </Text>
           </View>
@@ -274,9 +276,9 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Info Banner */}
-          <View style={styles.infoBanner}>
+          <View style={[styles.infoBanner, { backgroundColor: colors.infoLight }]}>
             <Ionicons name="information-circle" size={20} color={colors.info} />
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.info }]}>
               Review the extracted items. Tap to edit or delete.
             </Text>
           </View>
@@ -284,10 +286,10 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
           {/* Items List */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Items</Text>
+              <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Items</Text>
               <TouchableOpacity onPress={handleAddItem} style={styles.addButton}>
                 <Ionicons name="add-circle" size={20} color={colors.primary} />
-                <Text style={styles.addButtonText}>Add Item</Text>
+                <Text style={[styles.addButtonText, { color: colors.primary }]}>Add Item</Text>
               </TouchableOpacity>
             </View>
 
@@ -299,28 +301,29 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
                 onEdit={() => handleEditItem(item.id)}
                 onSave={handleSaveItem}
                 onDelete={() => handleDeleteItem(item.id)}
+                colors={colors}
               />
             ))}
           </View>
 
           {/* Totals */}
-          <View style={styles.totalsCard}>
+          <View style={[styles.totalsCard, { backgroundColor: colors.surface }]}>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>${receipt.subtotal.toFixed(2)}</Text>
+              <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Subtotal</Text>
+              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tax</Text>
-              <Text style={styles.totalValue}>${receipt.tax.toFixed(2)}</Text>
+              <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Tax</Text>
+              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.tax.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tip</Text>
-              <Text style={styles.totalValue}>${receipt.tip.toFixed(2)}</Text>
+              <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Tip</Text>
+              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.tip.toFixed(2)}</Text>
             </View>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.totalRow}>
-              <Text style={styles.grandTotalLabel}>Total</Text>
-              <Text style={styles.grandTotalValue}>${receipt.total.toFixed(2)}</Text>
+              <Text style={[styles.grandTotalLabel, { color: colors.gray900 }]}>Total</Text>
+              <Text style={[styles.grandTotalValue, { color: colors.primary }]}>${receipt.total.toFixed(2)}</Text>
             </View>
           </View>
 
@@ -328,13 +331,13 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
         </ScrollView>
 
         {/* Footer Button */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
           <TouchableOpacity
-            style={styles.continueButton}
+            style={[styles.continueButton, { backgroundColor: colors.primary }]}
             onPress={handleContinue}
             activeOpacity={0.8}
           >
-            <Text style={styles.continueButtonText}>Looks Good - Continue</Text>
+            <Text style={[styles.continueButtonText, { color: colors.surface }]}>Looks Good - Continue</Text>
             <Ionicons name="arrow-forward" size={20} color={colors.surface} />
           </TouchableOpacity>
         </View>
@@ -350,9 +353,10 @@ interface ItemRowProps {
   onEdit: () => void;
   onSave: (id: string, name: string, price: string) => void;
   onDelete: () => void;
+  colors: any;
 }
 
-function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
+function ItemRow({ item, isEditing, onEdit, onSave, onDelete, colors }: ItemRowProps) {
   const [name, setName] = useState(item.name);
   const [price, setPrice] = useState(item.price.toFixed(2));
 
@@ -363,30 +367,32 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
 
   if (isEditing) {
     return (
-      <View style={styles.itemCard}>
+      <View style={[styles.itemCard, { backgroundColor: colors.surface }]}>
         <View style={styles.itemEditRow}>
           <TextInput
-            style={styles.itemNameInput}
+            style={[styles.itemNameInput, { color: colors.gray900, backgroundColor: colors.gray50, borderColor: colors.border }]}
             value={name}
             onChangeText={setName}
             placeholder="Item name"
+            placeholderTextColor={colors.textSecondary}
             autoFocus
           />
           <TextInput
-            style={styles.itemPriceInput}
+            style={[styles.itemPriceInput, { color: colors.gray900, backgroundColor: colors.gray50, borderColor: colors.border }]}
             value={price}
             onChangeText={setPrice}
             placeholder="0.00"
+            placeholderTextColor={colors.textSecondary}
             keyboardType="decimal-pad"
           />
         </View>
         <View style={styles.itemActions}>
           <TouchableOpacity
             onPress={() => onSave(item.id, name, price)}
-            style={styles.saveButton}
+            style={[styles.saveButton, { backgroundColor: colors.success }]}
           >
             <Ionicons name="checkmark" size={18} color={colors.surface} />
-            <Text style={styles.saveButtonText}>Save</Text>
+            <Text style={[styles.saveButtonText, { color: colors.surface }]}>Save</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -397,26 +403,26 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
 
   return (
     <TouchableOpacity
-      style={styles.itemCard}
+      style={[styles.itemCard, { backgroundColor: colors.surface }]}
       onPress={onEdit}
       activeOpacity={0.7}
     >
       <View style={styles.itemInfo}>
         {item.quantity > 1 && (
-          <View style={styles.quantityBadge}>
-            <Text style={styles.quantityText}>{item.quantity}x</Text>
+          <View style={[styles.quantityBadge, { backgroundColor: colors.accent }]}>
+            <Text style={[styles.quantityText, { color: colors.primary }]}>{item.quantity}x</Text>
           </View>
         )}
-        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={[styles.itemName, { color: colors.gray900 }]}>{item.name}</Text>
       </View>
       <View style={styles.itemRight}>
         {item.quantity > 1 ? (
           <View style={styles.priceContainer}>
-            <Text style={styles.unitPrice}>${item.price.toFixed(2)} ea</Text>
-            <Text style={styles.itemPrice}>${lineTotal.toFixed(2)}</Text>
+            <Text style={[styles.unitPrice, { color: colors.textSecondary }]}>${item.price.toFixed(2)} ea</Text>
+            <Text style={[styles.itemPrice, { color: colors.gray900 }]}>${lineTotal.toFixed(2)}</Text>
           </View>
         ) : (
-          <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+          <Text style={[styles.itemPrice, { color: colors.gray900 }]}>${item.price.toFixed(2)}</Text>
         )}
         <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
           <Ionicons name="trash-outline" size={18} color={colors.error} />
@@ -429,7 +435,6 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete }: ItemRowProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
@@ -439,13 +444,11 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.h4,
-    color: colors.text,
     marginTop: spacing.lg,
     textAlign: 'center',
   },
   loadingSubtext: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
@@ -457,20 +460,17 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     ...typography.h3,
-    color: colors.text,
     marginTop: spacing.lg,
     textAlign: 'center',
   },
   errorMessage: {
     ...typography.body,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
   retryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
@@ -479,7 +479,6 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     ...typography.button,
-    color: colors.surface,
   },
   cancelButton: {
     marginTop: spacing.md,
@@ -487,16 +486,13 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     ...typography.button,
-    color: colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     gap: spacing.md,
   },
   backButton: {
@@ -507,22 +503,18 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h5,
-    color: colors.text,
   },
   headerSubtitle: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
   confidenceBadge: {
-    backgroundColor: colors.successLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
   },
   confidenceText: {
     ...typography.caption,
-    color: colors.success,
     fontWeight: '600',
   },
   content: {
@@ -531,7 +523,6 @@ const styles = StyleSheet.create({
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.infoLight,
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
@@ -540,7 +531,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     ...typography.bodySmall,
-    color: colors.info,
     flex: 1,
   },
   section: {
@@ -555,7 +545,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h5,
-    color: colors.text,
   },
   addButton: {
     flexDirection: 'row',
@@ -564,11 +553,9 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     ...typography.bodySmall,
-    color: colors.primary,
     fontWeight: '600',
   },
   itemCard: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     padding: spacing.md,
@@ -582,19 +569,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   quantityBadge: {
-    backgroundColor: colors.accent,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
     borderRadius: radius.xs,
   },
   quantityText: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: '600',
   },
   itemName: {
     ...typography.body,
-    color: colors.text,
     flex: 1,
   },
   itemRight: {
@@ -605,7 +589,6 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     ...typography.h6,
-    color: colors.text,
     flex: 1,
   },
   priceContainer: {
@@ -614,7 +597,6 @@ const styles = StyleSheet.create({
   },
   unitPrice: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: 2,
   },
   deleteButton: {
@@ -628,24 +610,18 @@ const styles = StyleSheet.create({
   itemNameInput: {
     flex: 1,
     ...typography.body,
-    color: colors.text,
-    backgroundColor: colors.gray50,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   itemPriceInput: {
     width: 100,
     ...typography.body,
-    color: colors.text,
-    backgroundColor: colors.gray50,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
     textAlign: 'right',
   },
   itemActions: {
@@ -656,7 +632,6 @@ const styles = StyleSheet.create({
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.success,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
@@ -664,11 +639,9 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     ...typography.bodySmall,
-    color: colors.surface,
     fontWeight: '600',
   },
   totalsCard: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     marginTop: spacing.lg,
     padding: spacing.lg,
@@ -683,38 +656,30 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   totalValue: {
     ...typography.h6,
-    color: colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
     marginVertical: spacing.md,
   },
   grandTotalLabel: {
     ...typography.h5,
-    color: colors.text,
     fontWeight: '700',
   },
   grandTotalValue: {
     ...typography.h4,
-    color: colors.primary,
     fontWeight: '700',
   },
   footer: {
     padding: spacing.md,
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   continueButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     gap: spacing.sm,
@@ -722,7 +687,6 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     ...typography.button,
-    color: colors.surface,
     fontSize: 18,
   },
 });

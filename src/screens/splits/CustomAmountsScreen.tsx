@@ -10,16 +10,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { CustomAmountsScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
 import { ParticipantRow, Participant } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function CustomAmountsScreen({ navigation, route }: CustomAmountsScreenProps) {
   const { amount, title, description, selectedFriends } = route.params;
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { allFriends } = useFriends();
+  const { colors, isDark } = useTheme();
 
   // Initialize with empty - friends will be added when loaded
   // Creator is NOT a participant - only friends who owe money are participants
@@ -88,50 +90,56 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
   const isValid = Math.abs(remaining) < 0.01; // Allow for floating point errors
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.pageTitle}>Custom Amounts</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Custom Amounts</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
             Enter amount for each person
           </Text>
         </View>
 
         {/* Progress Card */}
-        <View style={[styles.progressCard, !isValid && styles.progressCardError]}>
+        <View style={[
+          styles.progressCard,
+          { backgroundColor: colors.surface, borderColor: colors.gray200 },
+          !isValid && { borderColor: colors.warning, backgroundColor: colors.warningLight }
+        ]}>
           <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>Total Bill</Text>
-            <Text style={styles.progressAmount}>${amount.toFixed(2)}</Text>
+            <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>Total Bill</Text>
+            <Text style={[styles.progressAmount, { color: colors.gray900 }]}>${amount.toFixed(2)}</Text>
           </View>
 
           <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>Assigned</Text>
+            <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>Assigned</Text>
             <Text style={[
               styles.progressAmount,
-              totalAssigned > amount && styles.progressAmountError
+              { color: colors.gray900 },
+              totalAssigned > amount && { color: colors.error }
             ]}>
               ${totalAssigned.toFixed(2)}
             </Text>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
 
           <View style={styles.progressRow}>
-            <Text style={styles.remainingLabel}>Remaining</Text>
+            <Text style={[styles.remainingLabel, { color: colors.gray900 }]}>Remaining</Text>
             <Text style={[
               styles.remainingAmount,
-              remaining < -0.01 && styles.remainingAmountError,
-              Math.abs(remaining) < 0.01 && styles.remainingAmountValid
+              { color: colors.warning },
+              remaining < -0.01 && { color: colors.error },
+              Math.abs(remaining) < 0.01 && { color: colors.success }
             ]}>
               ${remaining.toFixed(2)}
             </Text>
           </View>
 
           {!isValid && (
-            <Text style={styles.errorText}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {remaining > 0.01
                 ? `Assign $${remaining.toFixed(2)} more to match total`
                 : `Reduce by $${Math.abs(remaining).toFixed(2)} to match total`}
@@ -156,19 +164,27 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
       </View>
 
       {/* Continue Button - Fixed at Bottom */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
         {isValid && (
-          <Text style={styles.validText}>
-            ✓ Amounts match total
+          <Text style={[styles.validText, { color: colors.success }]}>
+            Amounts match total
           </Text>
         )}
         <TouchableOpacity
-          style={[styles.continueButton, !isValid && styles.continueButtonDisabled]}
+          style={[
+            styles.continueButton,
+            { backgroundColor: colors.primary },
+            !isValid && { backgroundColor: colors.gray200 }
+          ]}
           onPress={handleContinue}
           disabled={!isValid}
           activeOpacity={0.7}
         >
-          <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
+          <Text style={[
+            styles.continueButtonText,
+            { color: colors.surface },
+            !isValid && { color: colors.gray400 }
+          ]}>
             Continue
           </Text>
         </TouchableOpacity>
@@ -180,7 +196,6 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -191,26 +206,18 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...typography.h2,
-    color: colors.text,
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
   pageSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   progressCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
     borderWidth: 2,
-    borderColor: colors.gray200,
-  },
-  progressCardError: {
-    borderColor: colors.warning,
-    backgroundColor: colors.warningLight,
   },
   progressRow: {
     flexDirection: 'row',
@@ -220,40 +227,25 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
   progressAmount: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
-  },
-  progressAmountError: {
-    color: colors.error,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray200,
     marginVertical: spacing.sm,
   },
   remainingLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   remainingAmount: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.warning,
-  },
-  remainingAmountError: {
-    color: colors.error,
-  },
-  remainingAmountValid: {
-    color: colors.success,
   },
   errorText: {
     fontSize: 14,
-    color: colors.error,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
@@ -262,34 +254,23 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     padding: spacing.lg,
-    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   validText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.success,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   continueButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  continueButtonDisabled: {
-    backgroundColor: colors.gray200,
-  },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
     letterSpacing: 0.5,
-  },
-  continueButtonTextDisabled: {
-    color: colors.gray400,
   },
 });

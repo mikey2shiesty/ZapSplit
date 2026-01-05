@@ -22,7 +22,8 @@ import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Header from '../../components/common/Header';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import { RootStackParamList } from '../../types/navigation';
 
 type FriendProfileRouteProp = RouteProp<RootStackParamList, 'FriendProfile'>;
@@ -31,6 +32,7 @@ export default function FriendProfileScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<FriendProfileRouteProp>();
   const { friendId } = route.params;
+  const { colors } = useTheme();
 
   const [profile, setProfile] = useState<FriendProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export default function FriendProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -204,20 +206,21 @@ export default function FriendProfileScreen() {
 
   if (!profile) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { backgroundColor: colors.gray50 }]}>
         <Ionicons name="person-outline" size={64} color={colors.gray300} />
-        <Text style={styles.errorText}>Friend not found</Text>
+        <Text style={[styles.errorText, { color: colors.gray600 }]}>Friend not found</Text>
         <Button
-          title="Go Back"
           variant="outline"
           onPress={() => navigation.goBack()}
-        />
+        >
+          Go Back
+        </Button>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header
         title="Friend Profile"
@@ -246,95 +249,95 @@ export default function FriendProfileScreen() {
             size="xl"
             showBorder
           />
-          <Text style={styles.name}>{profile.full_name}</Text>
+          <Text style={[styles.name, { color: colors.gray900 }]}>{profile.full_name}</Text>
           {profile.username && (
-            <Text style={styles.username}>@{profile.username}</Text>
+            <Text style={[styles.username, { color: colors.primary }]}>@{profile.username}</Text>
           )}
-          <Text style={styles.email}>{profile.email}</Text>
+          <Text style={[styles.email, { color: colors.gray500 }]}>{profile.email}</Text>
         </Card>
 
         {/* Stats */}
         <View style={styles.statsContainer}>
           <Card variant="default" style={styles.statCard}>
-            <Text style={styles.statValue}>{profile.splits_together}</Text>
-            <Text style={styles.statLabel}>Splits Together</Text>
+            <Text style={[styles.statValue, { color: colors.gray900 }]}>{profile.splits_together}</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Splits Together</Text>
           </Card>
           <Card variant="default" style={styles.statCard}>
-            <Text style={[styles.statValue, profile.total_you_owe > 0 && styles.oweText]}>
+            <Text style={[styles.statValue, profile.total_you_owe > 0 ? { color: colors.error } : { color: colors.gray900 }]}>
               ${profile.total_you_owe.toFixed(2)}
             </Text>
-            <Text style={styles.statLabel}>You Owe</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>You Owe</Text>
           </Card>
           <Card variant="default" style={styles.statCard}>
-            <Text style={[styles.statValue, profile.total_they_owe > 0 && styles.owedText]}>
+            <Text style={[styles.statValue, profile.total_they_owe > 0 ? { color: colors.success } : { color: colors.gray900 }]}>
               ${profile.total_they_owe.toFixed(2)}
             </Text>
-            <Text style={styles.statLabel}>They Owe</Text>
+            <Text style={[styles.statLabel, { color: colors.gray500 }]}>They Owe</Text>
           </Card>
         </View>
 
         {/* Actions */}
         <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Actions</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Actions</Text>
 
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
+          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="receipt-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>View Shared Splits</Text>
-              <Text style={styles.actionSubtitle}>See all splits with this friend</Text>
+              <Text style={[styles.actionTitle, { color: colors.gray900 }]}>View Shared Splits</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.gray500 }]}>See all splits with this friend</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
+          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Create Split</Text>
-              <Text style={styles.actionSubtitle}>Start a new split with this friend</Text>
+              <Text style={[styles.actionTitle, { color: colors.gray900 }]}>Create Split</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.gray500 }]}>Start a new split with this friend</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
+          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="chatbubble-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Send Reminder</Text>
-              <Text style={styles.actionSubtitle}>Remind about pending payments</Text>
+              <Text style={[styles.actionTitle, { color: colors.gray900 }]}>Send Reminder</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.gray500 }]}>Remind about pending payments</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
-        <View style={styles.dangerSection}>
-          <Text style={styles.dangerSectionTitle}>Manage</Text>
+        <View style={[styles.dangerSection, { borderTopColor: colors.gray200 }]}>
+          <Text style={[styles.dangerSectionTitle, { color: colors.gray500 }]}>Manage</Text>
 
           <TouchableOpacity
-            style={styles.dangerButton}
+            style={[styles.dangerButton, { borderColor: colors.error }]}
             onPress={handleRemoveFriend}
             disabled={actionLoading}
           >
             <Ionicons name="person-remove-outline" size={20} color={colors.error} />
-            <Text style={styles.dangerButtonText}>Remove Friend</Text>
+            <Text style={[styles.dangerButtonText, { color: colors.error }]}>Remove Friend</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.dangerButton, styles.blockButton]}
+            style={[styles.dangerButton, styles.blockButton, { borderColor: colors.error }]}
             onPress={handleBlockUser}
             disabled={actionLoading}
           >
             <Ionicons name="ban-outline" size={20} color={colors.error} />
-            <Text style={styles.dangerButtonText}>Block User</Text>
+            <Text style={[styles.dangerButtonText, { color: colors.error }]}>Block User</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.dangerButton, styles.reportButton]}
+            style={[styles.dangerButton, styles.reportButton, { borderColor: colors.warning }]}
             onPress={handleReportUser}
             disabled={actionLoading}
           >
@@ -350,26 +353,22 @@ export default function FriendProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
-    padding: 20,
+    padding: spacing.lg,
   },
   errorText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray600,
-    marginVertical: 16,
+    marginVertical: spacing.md,
   },
   favoriteButton: {
     width: 40,
@@ -379,130 +378,108 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: spacing.lg,
   },
   profileCard: {
     alignItems: 'center',
-    padding: 24,
-    marginBottom: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   name: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.gray900,
-    marginTop: 16,
+    marginTop: spacing.md,
   },
   username: {
     fontSize: 16,
-    color: colors.primary,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   email: {
     fontSize: 14,
-    color: colors.gray500,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   statsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: radius.md,
+    marginBottom: spacing.lg,
   },
   statCard: {
     flex: 1,
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   statValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   statLabel: {
     fontSize: 12,
-    color: colors.gray500,
-    marginTop: 4,
+    marginTop: spacing.xs,
     textAlign: 'center',
   },
-  oweText: {
-    color: colors.error,
-  },
-  owedText: {
-    color: colors.success,
-  },
   actionsSection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
-    marginBottom: 12,
+    marginBottom: radius.md,
   },
   actionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    ...shadows.low,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
   },
   actionIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   actionContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: radius.md,
   },
   actionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   actionSubtitle: {
     fontSize: 13,
-    color: colors.gray500,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   dangerSection: {
-    paddingTop: 16,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
     marginBottom: 40,
   },
   dangerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.error,
-    gap: 8,
+    gap: spacing.sm,
   },
   dangerButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.error,
   },
   dangerSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: radius.md,
   },
   blockButton: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   reportButton: {
-    marginTop: 8,
-    borderColor: colors.warning,
+    marginTop: spacing.sm,
   },
 });

@@ -15,10 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import Button from '../../components/common/Button';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export default function ChangePasswordScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -113,7 +115,7 @@ export default function ChangePasswordScreen() {
   const passwordStrength = getPasswordStrength();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header title="Change Password" onBack={() => navigation.goBack()} />
 
@@ -127,9 +129,9 @@ export default function ChangePasswordScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Info */}
-          <View style={styles.infoBox}>
+          <View style={[styles.infoBox, { backgroundColor: colors.primaryLight }]}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.gray700 }]}>
               Choose a strong password that you don't use for other accounts. It should be at least 8 characters with a mix of letters, numbers, and symbols.
             </Text>
           </View>
@@ -138,10 +140,15 @@ export default function ChangePasswordScreen() {
           <View style={styles.formSection}>
             {/* Current Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Current Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Current Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
-                  style={[styles.input, styles.passwordInput, errors.currentPassword && styles.inputError]}
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
+                    errors.currentPassword && { borderColor: colors.error }
+                  ]}
                   value={currentPassword}
                   onChangeText={(text) => {
                     setCurrentPassword(text);
@@ -166,16 +173,21 @@ export default function ChangePasswordScreen() {
                 </TouchableOpacity>
               </View>
               {errors.currentPassword && (
-                <Text style={styles.errorText}>{errors.currentPassword}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>{errors.currentPassword}</Text>
               )}
             </View>
 
             {/* New Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>New Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>New Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
-                  style={[styles.input, styles.passwordInput, errors.newPassword && styles.inputError]}
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
+                    errors.newPassword && { borderColor: colors.error }
+                  ]}
                   value={newPassword}
                   onChangeText={(text) => {
                     setNewPassword(text);
@@ -200,13 +212,13 @@ export default function ChangePasswordScreen() {
                 </TouchableOpacity>
               </View>
               {errors.newPassword && (
-                <Text style={styles.errorText}>{errors.newPassword}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>{errors.newPassword}</Text>
               )}
 
               {/* Password Strength Indicator */}
               {newPassword && (
                 <View style={styles.strengthContainer}>
-                  <View style={styles.strengthBar}>
+                  <View style={[styles.strengthBar, { backgroundColor: colors.gray200 }]}>
                     <View
                       style={[
                         styles.strengthFill,
@@ -223,10 +235,15 @@ export default function ChangePasswordScreen() {
 
             {/* Confirm Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Confirm New Password</Text>
+              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Confirm New Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
-                  style={[styles.input, styles.passwordInput, errors.confirmPassword && styles.inputError]}
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
+                    errors.confirmPassword && { borderColor: colors.error }
+                  ]}
                   value={confirmPassword}
                   onChangeText={(text) => {
                     setConfirmPassword(text);
@@ -251,25 +268,25 @@ export default function ChangePasswordScreen() {
                 </TouchableOpacity>
               </View>
               {errors.confirmPassword && (
-                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>{errors.confirmPassword}</Text>
               )}
               {confirmPassword && newPassword === confirmPassword && !errors.confirmPassword && (
                 <View style={styles.matchIndicator}>
                   <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                  <Text style={styles.matchText}>Passwords match</Text>
+                  <Text style={[styles.matchText, { color: colors.success }]}>Passwords match</Text>
                 </View>
               )}
             </View>
           </View>
 
           {/* Password Requirements */}
-          <View style={styles.requirementsSection}>
-            <Text style={styles.requirementsTitle}>Password Requirements</Text>
+          <View style={[styles.requirementsSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.requirementsTitle, { color: colors.gray700 }]}>Password Requirements</Text>
             <View style={styles.requirementsList}>
-              <RequirementItem met={newPassword.length >= 8} text="At least 8 characters" />
-              <RequirementItem met={/[A-Z]/.test(newPassword)} text="One uppercase letter" />
-              <RequirementItem met={/[a-z]/.test(newPassword)} text="One lowercase letter" />
-              <RequirementItem met={/[0-9]/.test(newPassword)} text="One number" />
+              <RequirementItem met={newPassword.length >= 8} text="At least 8 characters" colors={colors} />
+              <RequirementItem met={/[A-Z]/.test(newPassword)} text="One uppercase letter" colors={colors} />
+              <RequirementItem met={/[a-z]/.test(newPassword)} text="One lowercase letter" colors={colors} />
+              <RequirementItem met={/[0-9]/.test(newPassword)} text="One number" colors={colors} />
             </View>
           </View>
 
@@ -292,7 +309,7 @@ export default function ChangePasswordScreen() {
 }
 
 // Requirement Item Component
-function RequirementItem({ met, text }: { met: boolean; text: string }) {
+function RequirementItem({ met, text, colors }: { met: boolean; text: string; colors: any }) {
   return (
     <View style={styles.requirementItem}>
       <Ionicons
@@ -300,7 +317,7 @@ function RequirementItem({ met, text }: { met: boolean; text: string }) {
         size={18}
         color={met ? colors.success : colors.gray400}
       />
-      <Text style={[styles.requirementText, met && styles.requirementMet]}>
+      <Text style={[styles.requirementText, { color: met ? colors.gray700 : colors.gray500 }]}>
         {text}
       </Text>
     </View>
@@ -310,31 +327,28 @@ function RequirementItem({ met, text }: { met: boolean; text: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   keyboardAvoid: {
     flex: 1,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: spacing.lg,
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: colors.primaryLight,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-    gap: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.lg,
+    gap: spacing.sm + 4,
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: colors.gray700,
     lineHeight: 20,
   },
   formSection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   inputGroup: {
     marginBottom: 20,
@@ -342,47 +356,38 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray700,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   passwordContainer: {
     position: 'relative',
   },
   input: {
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.gray200,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: radius.md,
+    padding: spacing.md,
     fontSize: 16,
-    color: colors.gray900,
   },
   passwordInput: {
     paddingRight: 50,
   },
-  inputError: {
-    borderColor: colors.error,
-  },
   eyeButton: {
     position: 'absolute',
-    right: 16,
-    top: 16,
+    right: spacing.md,
+    top: spacing.md,
   },
   errorText: {
     fontSize: 12,
-    color: colors.error,
     marginTop: 6,
   },
   strengthContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    gap: 12,
+    marginTop: spacing.sm,
+    gap: spacing.sm + 4,
   },
   strengthBar: {
     flex: 1,
     height: 4,
-    backgroundColor: colors.gray200,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -402,23 +407,20 @@ const styles = StyleSheet.create({
   },
   matchText: {
     fontSize: 12,
-    color: colors.success,
     fontWeight: '500',
   },
   requirementsSection: {
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 32,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.xl,
   },
   requirementsTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray700,
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
   },
   requirementsList: {
-    gap: 8,
+    gap: spacing.sm,
   },
   requirementItem: {
     flexDirection: 'row',
@@ -427,10 +429,6 @@ const styles = StyleSheet.create({
   },
   requirementText: {
     fontSize: 14,
-    color: colors.gray500,
-  },
-  requirementMet: {
-    color: colors.gray700,
   },
   saveSection: {
     marginBottom: 40,

@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase';
-import { colors, spacing, typography } from '../../constants/theme';
-import Card from '../../components/common/Card';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import Avatar from '../../components/common/Avatar';
-import Button from '../../components/common/Button';
 
 interface Profile {
   id: string;
@@ -20,6 +26,7 @@ interface Profile {
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   // Fetch profile when screen focuses (to get updated avatar after editing)
@@ -45,120 +52,155 @@ export default function ProfileScreen() {
     }
   };
 
+  const MenuItem = ({
+    icon,
+    label,
+    onPress,
+  }: {
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      style={[styles.menuItem, { backgroundColor: colors.surface }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Ionicons name={icon} size={22} color={colors.gray600} />
+      <Text style={[styles.menuItemText, { color: colors.gray900 }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+    </TouchableOpacity>
+  );
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Card variant="elevated" padding="lg" style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <Avatar
-              uri={profile?.avatar_url ?? undefined}
-              name={profile?.full_name || user?.email || 'User'}
-              size="xl"
-              showBorder
-            />
-            <View style={styles.profileInfo}>
-              <Text style={styles.name}>
-                {profile?.full_name || 'User'}
-              </Text>
-              <Text style={styles.email}>{profile?.email || user?.email}</Text>
-            </View>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Profile</Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Card */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
+          <Avatar
+            uri={profile?.avatar_url ?? undefined}
+            name={profile?.full_name || user?.email || 'User'}
+            size="xl"
+            showBorder
+          />
+          <View style={styles.profileInfo}>
+            <Text style={[styles.profileName, { color: colors.gray900 }]}>
+              {profile?.full_name || 'User'}
+            </Text>
+            <Text style={[styles.profileEmail, { color: colors.gray500 }]}>
+              {profile?.email || user?.email}
+            </Text>
           </View>
-        </Card>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payments</Text>
-
-          <TouchableOpacity onPress={() => navigation.navigate('ConnectStripe')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="card-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Connect Stripe Account</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('PaymentHistory')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="time-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Payment History</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
+          <TouchableOpacity
+            style={[styles.editButton, { backgroundColor: colors.gray100 }]}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
 
+        {/* Payments Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Social</Text>
-
-          <TouchableOpacity onPress={() => navigation.navigate('Friends')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="people-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Friends</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('Groups')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="people-circle-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Groups</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
-          </TouchableOpacity>
+          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>PAYMENTS</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
+            <MenuItem
+              icon="card-outline"
+              label="Connect Stripe Account"
+              onPress={() => navigation.navigate('ConnectStripe')}
+            />
+            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
+            <MenuItem
+              icon="time-outline"
+              label="Payment History"
+              onPress={() => navigation.navigate('PaymentHistory')}
+            />
+          </View>
         </View>
 
+        {/* Social Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="person-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Edit Profile</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            <Card style={styles.menuCard}>
-              <View style={styles.menuItemRow}>
-                <Ionicons name="settings-outline" size={20} color={colors.text} />
-                <Text style={styles.menuItem}>Settings</Text>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </Card>
-          </TouchableOpacity>
+          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>SOCIAL</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
+            <MenuItem
+              icon="people-outline"
+              label="Friends"
+              onPress={() => navigation.navigate('Friends')}
+            />
+            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
+            <MenuItem
+              icon="people-circle-outline"
+              label="Groups"
+              onPress={() => navigation.navigate('Groups')}
+            />
+          </View>
         </View>
 
-        <Button
-          variant="outline"
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>ACCOUNT</Text>
+          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
+            <MenuItem
+              icon="settings-outline"
+              label="Settings"
+              onPress={() => navigation.navigate('Settings')}
+            />
+            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
+            <MenuItem
+              icon="help-circle-outline"
+              label="Help & Support"
+              onPress={() => navigation.navigate('Settings')}
+            />
+          </View>
+        </View>
+
+        {/* Log Out Button */}
+        <TouchableOpacity
+          style={[styles.logoutButton, { borderColor: colors.error }]}
           onPress={signOut}
         >
-          Log Out
-        </Button>
-      </View>
-    </ScrollView>
+          <Ionicons name="log-out-outline" size={20} color={colors.error} />
+          <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
-  content: {
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: spacing.lg,
     gap: spacing.lg,
   },
   profileCard: {
-    marginTop: spacing.lg,
-  },
-  profileHeader: {
+    borderRadius: radius.lg,
+    padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
   },
@@ -166,33 +208,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  name: {
-    ...typography.h3,
-    color: colors.text,
+  profileName: {
+    fontSize: 22,
+    fontWeight: '700',
   },
-  email: {
-    ...typography.body,
-    color: colors.textSecondary,
+  profileEmail: {
+    fontSize: 15,
+  },
+  editButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    marginTop: spacing.sm,
+  },
+  editButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   section: {
     gap: spacing.sm,
   },
   sectionTitle: {
-    ...typography.h5,
-    color: colors.text,
-    marginBottom: spacing.sm,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    paddingHorizontal: spacing.sm,
   },
-  menuCard: {
-    marginBottom: spacing.xs,
-  },
-  menuItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+  menuGroup: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
   },
   menuItem: {
-    ...typography.body,
-    color: colors.text,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  menuItemText: {
     flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    marginLeft: spacing.md + 22 + spacing.md,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    marginTop: spacing.md,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  bottomSpacer: {
+    height: 100,
   },
 });

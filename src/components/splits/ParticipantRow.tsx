@@ -60,9 +60,9 @@ export default function ParticipantRow({
     return participant.status === 'paid' ? colors.success : colors.warning;
   };
 
-  const getStatusIcon = (): string => {
-    if (!participant.status) return 'time-outline';
-    return participant.status === 'paid' ? 'checkmark-circle' : 'time';
+  const getStatusIcon = () => {
+    if (!participant.status) return 'time-outline' as const;
+    return participant.status === 'paid' ? 'checkmark-circle' as const : 'time' as const;
   };
 
   return (

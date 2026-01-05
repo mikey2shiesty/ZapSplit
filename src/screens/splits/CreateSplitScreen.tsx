@@ -14,11 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CreateSplitScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius, typography } from '../../constants/theme';
 import { AmountInput } from '../../components/splits';
 
 export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -45,8 +47,8 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -60,23 +62,23 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
           keyboardShouldPersistTaps="handled"
         >
           {/* Page Title */}
-          <Text style={styles.pageTitle}>Create Split</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Create Split</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
             Enter the bill amount and details, or scan a receipt
           </Text>
 
           {/* Scan Receipt Button */}
           <TouchableOpacity
-            style={styles.scanReceiptButton}
+            style={[styles.scanReceiptButton, { backgroundColor: colors.surface, borderColor: colors.primary + '30', shadowColor: colors.primary }]}
             onPress={handleScanReceipt}
             activeOpacity={0.7}
           >
-            <View style={styles.scanIconContainer}>
+            <View style={[styles.scanIconContainer, { backgroundColor: colors.primary + '15' }]}>
               <Ionicons name="camera-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.scanTextContainer}>
-              <Text style={styles.scanButtonTitle}>Scan Receipt</Text>
-              <Text style={styles.scanButtonSubtitle}>
+              <Text style={[styles.scanButtonTitle, { color: colors.gray900 }]}>Scan Receipt</Text>
+              <Text style={[styles.scanButtonSubtitle, { color: colors.gray500 }]}>
                 AI will automatically extract items and split the bill
               </Text>
             </View>
@@ -85,9 +87,9 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or enter manually</Text>
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.gray200 }]} />
+            <Text style={[styles.dividerText, { color: colors.gray500 }]}>or enter manually</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.gray200 }]} />
           </View>
 
           {/* Amount Input */}
@@ -102,10 +104,10 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
 
           {/* Title Input */}
           <View style={styles.section}>
-            <Text style={styles.inputLabel}>Split Title</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.inputLabel, { color: colors.gray500 }]}>Split Title</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { color: colors.gray900 }]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g., Dinner at Nobu"
@@ -117,7 +119,7 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
               />
             </View>
             {title.trim().length > 0 && title.trim().length < 3 && (
-              <Text style={styles.errorText}>
+              <Text style={[styles.errorText, { color: colors.error }]}>
                 Title must be at least 3 characters
               </Text>
             )}
@@ -125,12 +127,12 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
 
           {/* Description Input (Optional) */}
           <View style={styles.section}>
-            <Text style={styles.inputLabel}>
-              Description <Text style={styles.optionalLabel}>(optional)</Text>
+            <Text style={[styles.inputLabel, { color: colors.gray500 }]}>
+              Description <Text style={[styles.optionalLabel, { color: colors.gray400 }]}>(optional)</Text>
             </Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
+            <View style={[styles.inputContainer, styles.textAreaContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.textInput, styles.textArea, { color: colors.gray900 }]}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Add details about this split..."
@@ -142,28 +144,28 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
                 returnKeyType="done"
               />
             </View>
-            <Text style={styles.charCount}>
+            <Text style={[styles.charCount, { color: colors.gray500 }]}>
               {description.length}/200
             </Text>
           </View>
 
           {/* Helper Text */}
-          <View style={styles.helperSection}>
-            <Text style={styles.helperText}>
+          <View style={[styles.helperSection, { backgroundColor: colors.infoLight }]}>
+            <Text style={[styles.helperText, { color: colors.gray900 }]}>
               You'll select friends and split method in the next steps
             </Text>
           </View>
         </ScrollView>
 
         {/* Continue Button - Fixed at Bottom */}
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
           <TouchableOpacity
-            style={[styles.continueButton, !isValid && styles.continueButtonDisabled]}
+            style={[styles.continueButton, { backgroundColor: isValid ? colors.primary : colors.gray200 }]}
             onPress={handleContinue}
             disabled={!isValid}
             activeOpacity={0.7}
           >
-            <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
+            <Text style={[styles.continueButtonText, { color: isValid ? colors.surface : colors.gray400 }]}>
               Continue
             </Text>
           </TouchableOpacity>
@@ -176,7 +178,6 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -190,13 +191,11 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...typography.h2,
-    color: colors.text,
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
   pageSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
     marginBottom: spacing.xl,
     textAlign: 'center',
   },
@@ -206,7 +205,6 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -214,20 +212,16 @@ const styles = StyleSheet.create({
   optionalLabel: {
     fontSize: 12,
     fontWeight: '400',
-    color: colors.gray400,
     textTransform: 'none',
   },
   inputContainer: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 2,
-    borderColor: colors.gray200,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   textInput: {
     fontSize: 16,
-    color: colors.text,
     padding: 0,
     minHeight: 24,
   },
@@ -240,63 +234,46 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: colors.error,
     marginTop: spacing.xs,
   },
   charCount: {
     fontSize: 12,
-    color: colors.textTertiary,
     marginTop: spacing.xs,
     textAlign: 'right',
   },
   helperSection: {
-    backgroundColor: colors.infoLight,
     borderRadius: radius.md,
     padding: spacing.md,
     marginTop: spacing.md,
   },
   helperText: {
     fontSize: 14,
-    color: colors.text,
     textAlign: 'center',
     lineHeight: 20,
   },
   buttonContainer: {
     padding: spacing.lg,
-    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   continueButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  continueButtonDisabled: {
-    backgroundColor: colors.gray200,
-  },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
     letterSpacing: 0.5,
-  },
-  continueButtonTextDisabled: {
-    color: colors.gray400,
   },
   scanReceiptButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     borderWidth: 2,
-    borderColor: colors.primary + '30',
     marginBottom: spacing.lg,
     gap: spacing.md,
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -306,7 +283,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius.md,
-    backgroundColor: colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -317,11 +293,9 @@ const styles = StyleSheet.create({
   scanButtonTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   scanButtonSubtitle: {
     fontSize: 13,
-    color: colors.textSecondary,
     lineHeight: 18,
   },
   dividerContainer: {
@@ -333,12 +307,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.gray200,
   },
   dividerText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

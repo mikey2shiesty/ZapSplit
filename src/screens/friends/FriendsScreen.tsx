@@ -17,13 +17,15 @@ import { supabase } from '../../services/supabase';
 import { getFriends, getIncomingFriendRequests, Friend, FriendRequest } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius, shadows } from '../../constants/theme';
 
 type TabType = 'friends' | 'requests';
 
 export default function FriendsScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
@@ -83,13 +85,21 @@ export default function FriendsScreen() {
     const isActive = activeTab === tab;
     return (
       <TouchableOpacity
-        style={[styles.tabButton, isActive && styles.tabButtonActive]}
+        style={[
+          styles.tabButton,
+          { backgroundColor: isActive ? colors.primary : colors.surface }
+        ]}
         onPress={() => setActiveTab(tab)}
       >
-        <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+        <Text style={[
+          styles.tabText,
+          { color: isActive ? colors.surface : colors.gray700 }
+        ]}>
+          {label}
+        </Text>
         {count !== undefined && count > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count}</Text>
+          <View style={[styles.badge, { backgroundColor: colors.error }]}>
+            <Text style={[styles.badgeText, { color: colors.surface }]}>{count}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -108,8 +118,8 @@ export default function FriendsScreen() {
             size="md"
           />
           <View style={styles.friendInfo}>
-            <Text style={styles.friendName}>{item.full_name}</Text>
-            <Text style={styles.friendEmail}>{item.email}</Text>
+            <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.full_name}</Text>
+            <Text style={[styles.friendEmail, { color: colors.gray500 }]}>{item.email}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
         </View>
@@ -126,16 +136,16 @@ export default function FriendsScreen() {
           size="md"
         />
         <View style={styles.requestInfo}>
-          <Text style={styles.friendName}>{item.sender?.full_name || 'Unknown'}</Text>
-          <Text style={styles.friendEmail}>{item.sender?.email}</Text>
+          <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.sender?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.friendEmail, { color: colors.gray500 }]}>{item.sender?.email}</Text>
         </View>
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={styles.acceptButton}
+          style={[styles.acceptButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('FriendRequests')}
         >
-          <Text style={styles.acceptButtonText}>View</Text>
+          <Text style={[styles.acceptButtonText, { color: colors.surface }]}>View</Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -148,39 +158,39 @@ export default function FriendsScreen() {
         size={64}
         color={colors.gray300}
       />
-      <Text style={styles.emptyTitle}>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>
         {activeTab === 'friends' ? 'No Friends Yet' : 'No Pending Requests'}
       </Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
         {activeTab === 'friends'
           ? 'Add friends to easily split bills together'
           : 'Friend requests will appear here'}
       </Text>
       {activeTab === 'friends' && (
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('AddFriend')}
         >
           <Ionicons name="person-add" size={20} color={colors.surface} />
-          <Text style={styles.addButtonText}>Add Friends</Text>
+          <Text style={[styles.addButtonText, { color: colors.surface }]}>Add Friends</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title}>Friends</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Friends</Text>
         <TouchableOpacity
-          style={styles.headerButton}
+          style={[styles.headerButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.navigate('AddFriend')}
         >
           <Ionicons name="person-add-outline" size={24} color={colors.primary} />
@@ -189,10 +199,10 @@ export default function FriendsScreen() {
 
       {/* Search Bar */}
       {activeTab === 'friends' && (
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
           <Ionicons name="search" size={20} color={colors.gray400} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.gray900 }]}
             placeholder="Search friends..."
             placeholderTextColor={colors.gray400}
             value={searchQuery}
@@ -255,20 +265,18 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 12,
+    padding: spacing.lg,
+    paddingBottom: spacing.md,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -276,13 +284,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   headerButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -290,25 +296,23 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
     height: 48,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radius.md,
     ...shadows.low,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
     fontSize: 16,
-    color: colors.gray900,
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    gap: 8,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   tabButton: {
     flex: 1,
@@ -316,24 +320,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-    gap: 8,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    gap: spacing.sm,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray700,
-  },
-  tabTextActive: {
-    color: colors.surface,
   },
   badge: {
-    backgroundColor: colors.error,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -342,7 +337,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: colors.surface,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -352,13 +346,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 20,
+    padding: spacing.lg,
     paddingTop: 0,
     flexGrow: 1,
   },
   friendCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: spacing.md,
+    padding: spacing.md,
   },
   friendContent: {
     flexDirection: 'row',
@@ -366,44 +360,40 @@ const styles = StyleSheet.create({
   },
   friendInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   friendName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 2,
   },
   friendEmail: {
     fontSize: 14,
-    color: colors.gray500,
   },
   requestCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: spacing.md,
+    padding: spacing.md,
   },
   requestContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   requestInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   requestActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
+    gap: spacing.md,
   },
   acceptButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.sm,
   },
   acceptButtonText: {
-    color: colors.surface,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -416,28 +406,24 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    gap: spacing.sm,
   },
   addButtonText: {
-    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
-import { colors, spacing, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 
@@ -22,6 +23,7 @@ type FilterType = 'all' | 'pending' | 'paid';
 export default function SplitsScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { splits, loading, refresh } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -114,13 +116,13 @@ export default function SplitsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <View style={styles.placeholder} />
-        <Text style={styles.headerTitle}>Your Splits</Text>
+        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Your Splits</Text>
         <TouchableOpacity
-          style={styles.newSplitButton}
+          style={[styles.newSplitButton, { backgroundColor: colors.primary + '15' }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             navigation.navigate('SplitFlow');
@@ -131,13 +133,14 @@ export default function SplitsScreen() {
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.gray100 }]}>
         {(['all', 'pending', 'paid'] as FilterType[]).map((filterType) => (
           <TouchableOpacity
             key={filterType}
             style={[
               styles.filterTab,
-              filter === filterType && styles.filterTabActive,
+              { backgroundColor: colors.gray100 },
+              filter === filterType && { backgroundColor: colors.primary },
             ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -147,7 +150,8 @@ export default function SplitsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                filter === filterType && styles.filterTabTextActive,
+                { color: colors.gray600 },
+                filter === filterType && { color: colors.textInverse },
               ]}
             >
               {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
@@ -177,24 +181,24 @@ export default function SplitsScreen() {
         ) : filteredSplits.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="receipt-outline" size={64} color={colors.gray300} />
-            <Text style={styles.emptyTitle}>
+            <Text style={[styles.emptyTitle, { color: colors.gray700 }]}>
               {filter === 'all' ? 'No splits yet' : `No ${filter} splits`}
             </Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptySubtitle, { color: colors.gray500 }]}>
               {filter === 'all'
                 ? 'Create your first split to get started'
                 : `You don't have any ${filter} splits`}
             </Text>
             {filter === 'all' && (
               <TouchableOpacity
-                style={styles.createButton}
+                style={[styles.createButton, { backgroundColor: colors.primary }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   navigation.navigate('SplitFlow');
                 }}
               >
                 <Ionicons name="add-circle" size={20} color={colors.textInverse} />
-                <Text style={styles.createButtonText}>Create Split</Text>
+                <Text style={[styles.createButtonText, { color: colors.textInverse }]}>Create Split</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -203,13 +207,13 @@ export default function SplitsScreen() {
             {filteredSplits.map((split) => (
               <TouchableOpacity
                 key={split.id}
-                style={styles.splitCard}
+                style={[styles.splitCard, { backgroundColor: colors.surface }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate('SplitFlow', {
                     screen: 'SplitDetail',
                     params: { splitId: split.id },
-                  });
+                  } as any);
                 }}
               >
                 <View style={styles.splitCardLeft}>
@@ -221,10 +225,10 @@ export default function SplitsScreen() {
                     />
                   </View>
                   <View style={styles.splitInfo}>
-                    <Text style={styles.splitTitle} numberOfLines={1}>
+                    <Text style={[styles.splitTitle, { color: colors.gray900 }]} numberOfLines={1}>
                       {split.title}
                     </Text>
-                    <Text style={styles.splitMeta}>
+                    <Text style={[styles.splitMeta, { color: colors.gray500 }]}>
                       {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
                     </Text>
                   </View>
@@ -246,15 +250,15 @@ export default function SplitsScreen() {
 
         {/* Summary Card */}
         {filteredSplits.length > 0 && (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Summary</Text>
+          <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>Summary</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Splits</Text>
-              <Text style={styles.summaryValue}>{filteredSplits.length}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.gray600 }]}>Total Splits</Text>
+              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{filteredSplits.length}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Amount</Text>
-              <Text style={styles.summaryValue}>
+              <Text style={[styles.summaryLabel, { color: colors.gray600 }]}>Total Amount</Text>
+              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
                 ${filteredSplits.reduce((sum, s) => sum + getUserAmount(s), 0).toFixed(2)}
               </Text>
             </View>
@@ -270,7 +274,6 @@ export default function SplitsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
@@ -279,12 +282,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: spacing.md,
-    backgroundColor: colors.surface,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.gray900,
   },
   placeholder: {
     width: 44,
@@ -293,7 +294,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -301,27 +301,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
     gap: spacing.sm,
   },
   filterTab: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
-    backgroundColor: colors.gray100,
-  },
-  filterTabActive: {
-    backgroundColor: colors.primary,
   },
   filterTabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray600,
-  },
-  filterTabTextActive: {
-    color: colors.textInverse,
   },
   scrollView: {
     flex: 1,
@@ -343,18 +333,15 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.gray700,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: colors.gray500,
     textAlign: 'center',
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
@@ -363,7 +350,6 @@ const styles = StyleSheet.create({
   createButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.textInverse,
   },
   splitsList: {
     gap: spacing.md,
@@ -372,7 +358,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     shadowColor: '#000',
@@ -401,11 +386,9 @@ const styles = StyleSheet.create({
   splitTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   splitMeta: {
     fontSize: 13,
-    color: colors.gray500,
   },
   splitCardRight: {
     alignItems: 'flex-end',
@@ -425,7 +408,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   summaryCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginTop: spacing.lg,
@@ -438,7 +420,6 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: spacing.md,
   },
   summaryRow: {
@@ -449,12 +430,10 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: colors.gray600,
   },
   summaryValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   bottomSpacer: {
     height: 100,

@@ -15,13 +15,14 @@ import Avatar from '../../components/common/Avatar';
 import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { format } from 'date-fns';
 
 type TabType = 'all' | 'sent' | 'received';
 
 export default function PaymentHistoryScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,10 +71,22 @@ export default function PaymentHistoryScreen() {
     const isActive = activeTab === tab;
     return (
       <TouchableOpacity
-        style={[styles.tabButton, isActive && styles.tabButtonActive]}
+        style={[
+          styles.tabButton,
+          { backgroundColor: colors.surface },
+          isActive && { backgroundColor: colors.primary },
+        ]}
         onPress={() => setActiveTab(tab)}
       >
-        <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+        <Text
+          style={[
+            styles.tabText,
+            { color: colors.gray700 },
+            isActive && { color: colors.textInverse },
+          ]}
+        >
+          {label}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -120,7 +133,7 @@ export default function PaymentHistoryScreen() {
     const prefix = isSent ? '-' : '+';
 
     return (
-      <Card variant="default" style={styles.paymentCard}>
+      <Card variant="default" style={[styles.paymentCard, { backgroundColor: colors.surface }]}>
         <View style={styles.paymentContent}>
           {/* Left: Avatar and Person Info */}
           <View style={styles.paymentLeft}>
@@ -130,13 +143,13 @@ export default function PaymentHistoryScreen() {
               size="md"
             />
             <View style={styles.paymentInfo}>
-              <Text style={styles.personName}>
+              <Text style={[styles.personName, { color: colors.gray900 }]}>
                 {isSent ? 'Paid' : 'Received from'} {otherPerson?.full_name || 'Unknown'}
               </Text>
               {item.split?.title && (
-                <Text style={styles.splitTitle}>{item.split.title}</Text>
+                <Text style={[styles.splitTitle, { color: colors.gray600 }]}>{item.split.title}</Text>
               )}
-              <Text style={styles.paymentDate}>
+              <Text style={[styles.paymentDate, { color: colors.gray500 }]}>
                 {format(new Date(item.created_at), 'MMM d, yyyy • h:mm a')}
               </Text>
             </View>
@@ -151,8 +164,8 @@ export default function PaymentHistoryScreen() {
               {getStatusText(item.status)}
             </Badge>
             {item.payment_method && (
-              <Text style={styles.paymentMethod}>
-                {item.payment_method === 'stripe' ? '💳 Card' : item.payment_method}
+              <Text style={[styles.paymentMethod, { color: colors.gray500 }]}>
+                {item.payment_method === 'stripe' ? 'Card' : item.payment_method}
               </Text>
             )}
           </View>
@@ -160,8 +173,8 @@ export default function PaymentHistoryScreen() {
 
         {/* Fee Info (for sent payments) */}
         {isSent && item.stripe_fee_amount && item.stripe_fee_amount > 0 && (
-          <View style={styles.feeInfo}>
-            <Text style={styles.feeText}>
+          <View style={[styles.feeInfo, { borderTopColor: colors.gray200 }]}>
+            <Text style={[styles.feeText, { color: colors.gray500 }]}>
               Fee: ${item.stripe_fee_amount.toFixed(2)}
             </Text>
           </View>
@@ -172,9 +185,9 @@ export default function PaymentHistoryScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>💸</Text>
-      <Text style={styles.emptyTitle}>No Payments Yet</Text>
-      <Text style={styles.emptyText}>
+      <Text style={styles.emptyIcon}>$</Text>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Payments Yet</Text>
+      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
         {activeTab === 'sent' && 'You haven\'t sent any payments yet'}
         {activeTab === 'received' && 'You haven\'t received any payments yet'}
         {activeTab === 'all' && 'No payment history to show'}
@@ -184,23 +197,23 @@ export default function PaymentHistoryScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading payment history...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading payment history...</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header title="Payment History" onBack={() => navigation.goBack()} />
 
       {/* Subtitle */}
       <View style={styles.subtitleContainer}>
-        <Text style={styles.subtitle}>View all your transactions</Text>
+        <Text style={[styles.subtitle, { color: colors.gray600 }]}>View all your transactions</Text>
       </View>
 
       {/* Tabs */}
@@ -228,7 +241,6 @@ export default function PaymentHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
@@ -238,7 +250,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: colors.gray600,
   },
   subtitleContainer: {
     paddingHorizontal: 20,
@@ -246,7 +257,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: colors.gray600,
   },
   tabs: {
     flexDirection: 'row',
@@ -259,20 +269,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tabButtonActive: {
-    backgroundColor: colors.primary,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray700,
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
   },
   listContent: {
     padding: 20,
@@ -298,17 +300,14 @@ const styles = StyleSheet.create({
   personName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 4,
   },
   splitTitle: {
     fontSize: 14,
-    color: colors.gray600,
     marginBottom: 4,
   },
   paymentDate: {
     fontSize: 13,
-    color: colors.gray500,
   },
   paymentRight: {
     alignItems: 'flex-end',
@@ -320,18 +319,15 @@ const styles = StyleSheet.create({
   },
   paymentMethod: {
     fontSize: 12,
-    color: colors.gray500,
     marginTop: 4,
   },
   feeInfo: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   feeText: {
     fontSize: 12,
-    color: colors.gray500,
   },
   emptyState: {
     alignItems: 'center',
@@ -345,12 +341,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
   },

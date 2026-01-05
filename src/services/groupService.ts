@@ -332,7 +332,11 @@ export async function getGroupSplits(groupId: string): Promise<GroupSplit[]> {
       .limit(50);
 
     if (error) throw error;
-    return data || [];
+    // Transform creator from array to object (Supabase returns arrays for joins)
+    return (data || []).map((item: any) => ({
+      ...item,
+      creator: Array.isArray(item.creator) ? item.creator[0] : item.creator,
+    }));
   } catch (error) {
     console.error('Error getting group splits:', error);
     return [];

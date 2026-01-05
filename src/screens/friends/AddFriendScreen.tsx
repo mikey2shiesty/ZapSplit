@@ -17,10 +17,12 @@ import { supabase } from '../../services/supabase';
 import { searchUsers, sendFriendRequest, UserSearchResult } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { colors, shadows } from '../../constants/theme';
+import { shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function AddFriendScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,7 +92,7 @@ export default function AddFriendScreen() {
   };
 
   const renderUserItem = ({ item }: { item: UserSearchResult }) => (
-    <Card variant="default" style={styles.userCard}>
+    <Card variant="default" style={[styles.userCard, { backgroundColor: colors.surface }]}>
       <View style={styles.userContent}>
         <Avatar
           name={item.full_name}
@@ -98,25 +100,25 @@ export default function AddFriendScreen() {
           size="md"
         />
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>{item.full_name}</Text>
-          <Text style={styles.userEmail}>{item.email}</Text>
+          <Text style={[styles.userName, { color: colors.gray900 }]}>{item.full_name}</Text>
+          <Text style={[styles.userEmail, { color: colors.gray500 }]}>{item.email}</Text>
           {item.username && (
-            <Text style={styles.userUsername}>@{item.username}</Text>
+            <Text style={[styles.userUsername, { color: colors.primary }]}>@{item.username}</Text>
           )}
         </View>
         {item.isFriend ? (
-          <View style={styles.friendBadge}>
+          <View style={[styles.friendBadge, { backgroundColor: colors.successLight }]}>
             <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-            <Text style={styles.friendBadgeText}>Friends</Text>
+            <Text style={[styles.friendBadgeText, { color: colors.success }]}>Friends</Text>
           </View>
         ) : item.hasPendingRequest ? (
-          <View style={styles.pendingBadge}>
+          <View style={[styles.pendingBadge, { backgroundColor: colors.warningLight }]}>
             <Ionicons name="time-outline" size={16} color={colors.warning} />
-            <Text style={styles.pendingBadgeText}>Pending</Text>
+            <Text style={[styles.pendingBadgeText, { color: colors.warning }]}>Pending</Text>
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
             onPress={() => handleSendRequest(item.id, item.full_name)}
             disabled={sendingTo === item.id}
           >
@@ -125,7 +127,7 @@ export default function AddFriendScreen() {
             ) : (
               <>
                 <Ionicons name="person-add" size={18} color={colors.surface} />
-                <Text style={styles.addButtonText}>Add</Text>
+                <Text style={[styles.addButtonText, { color: colors.surface }]}>Add</Text>
               </>
             )}
           </TouchableOpacity>
@@ -139,8 +141,8 @@ export default function AddFriendScreen() {
       return (
         <View style={styles.emptyState}>
           <Ionicons name="search" size={64} color={colors.gray300} />
-          <Text style={styles.emptyTitle}>Find Friends</Text>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>Find Friends</Text>
+          <Text style={[styles.emptyText, { color: colors.gray600 }]}>
             Search by name, email, or username to find and add friends
           </Text>
         </View>
@@ -154,8 +156,8 @@ export default function AddFriendScreen() {
     return (
       <View style={styles.emptyState}>
         <Ionicons name="person-outline" size={64} color={colors.gray300} />
-        <Text style={styles.emptyTitle}>No Users Found</Text>
-        <Text style={styles.emptyText}>
+        <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Users Found</Text>
+        <Text style={[styles.emptyText, { color: colors.gray600 }]}>
           Try a different search term or invite them to join ZapSplit
         </Text>
       </View>
@@ -164,26 +166,26 @@ export default function AddFriendScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.gray50 }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title}>Add Friend</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Add Friend</Text>
         <View style={styles.placeholder} />
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
         <Ionicons name="search" size={20} color={colors.gray400} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.gray900 }]}
           placeholder="Search by name, email, or username..."
           placeholderTextColor={colors.gray400}
           value={searchQuery}
@@ -203,7 +205,7 @@ export default function AddFriendScreen() {
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Searching...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Searching...</Text>
         </View>
       )}
 
@@ -224,7 +226,6 @@ export default function AddFriendScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
@@ -237,7 +238,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.low,
@@ -245,7 +245,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   placeholder: {
     width: 44,
@@ -257,7 +256,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     height: 52,
-    backgroundColor: colors.surface,
     borderRadius: 12,
     ...shadows.low,
   },
@@ -265,7 +263,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: colors.gray900,
   },
   loadingContainer: {
     padding: 40,
@@ -274,7 +271,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 15,
-    color: colors.gray600,
   },
   listContent: {
     padding: 20,
@@ -296,57 +292,48 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 14,
-    color: colors.gray500,
   },
   userUsername: {
     fontSize: 13,
-    color: colors.primary,
     marginTop: 2,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
     gap: 6,
   },
   addButtonText: {
-    color: colors.surface,
     fontSize: 14,
     fontWeight: '600',
   },
   friendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.successLight,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
     gap: 4,
   },
   friendBadgeText: {
-    color: colors.success,
     fontSize: 13,
     fontWeight: '600',
   },
   pendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warningLight,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
     gap: 4,
   },
   pendingBadgeText: {
-    color: colors.warning,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -359,13 +346,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
   },

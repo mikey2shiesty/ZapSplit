@@ -19,11 +19,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { HomeScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 import GetStartedCard from '../../components/onboarding/GetStartedCard';
 import RecentSplitCard from '../../components/splits/RecentSplitCard';
-import ActivityItem from '../../components/activity/ActivityItem';
 import { format } from 'date-fns';
 import { getUnreadCount, registerForPushNotifications } from '../../services/notificationService';
 import { getFriends, Friend } from '../../services/friendService';
@@ -31,9 +31,9 @@ import { createSplit } from '../../services/splitService';
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { splits, loading, stats, refresh, hasRecentSplits, isNewUser } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState('1W');
   const [unreadCount, setUnreadCount] = useState(0);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,9 +48,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [requestNote, setRequestNote] = useState('');
   const [sendingRequest, setSendingRequest] = useState(false);
 
-  const { totalBalance, youOwe, owedToYou, recentActivityCount } = stats;
-
-  const periods = ['1D', '1W', '1M', 'All'];
+  const { totalBalance, youOwe, owedToYou } = stats;
 
   // Register for push notifications on mount
   useEffect(() => {
@@ -100,7 +98,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setRequestAmount('');
     setRequestNote('');
 
-    // Load friends
     if (user?.id) {
       setLoadingFriends(true);
       try {
@@ -146,8 +143,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         currency: 'AUD',
         split_method: 'custom',
         participants: [
-          { user_id: user.id, amount_owed: 0 }, // Creator owes nothing
-          { user_id: selectedFriend.id, amount_owed: amount }, // Friend owes the full amount
+          { user_id: user.id, amount_owed: 0 },
+          { user_id: selectedFriend.id, amount_owed: amount },
         ],
       });
 
@@ -157,7 +154,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         'Request Sent!',
         `${selectedFriend.full_name} has been notified to pay you $${amount.toFixed(2)}`
       );
-      refresh(); // Refresh splits list
+      refresh();
     } catch (error) {
       console.error('Error sending request:', error);
       Alert.alert('Error', 'Failed to send request. Please try again.');
@@ -167,9 +164,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Coinbase-style Top Navigation */}
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, { backgroundColor: colors.surface }]}>
         <TouchableOpacity
           style={styles.menuButton}
           onPress={() => {
@@ -180,12 +177,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Ionicons name="grid-outline" size={24} color={colors.gray700} />
         </TouchableOpacity>
 
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, { backgroundColor: colors.gray100 }]}>
           <Ionicons name="search" size={18} color={colors.gray400} />
           <TextInput
             placeholder="Search splits..."
             placeholderTextColor={colors.gray400}
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.gray900 }]}
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={() => searchQuery.trim() && setShowSearchResults(true)}
@@ -210,8 +207,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           onPress={() => navigation.navigate('Notifications')}
         >
           {unreadCount > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
+              <Text style={[styles.badgeText, { color: colors.textInverse }]}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
             </View>
           )}
           <Ionicons name="notifications-outline" size={24} color={colors.gray700} />
@@ -225,10 +224,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             style={styles.searchResultsBackdrop}
             onPress={() => setShowSearchResults(false)}
           />
-          <View style={styles.searchResultsContent}>
+          <View style={[styles.searchResultsContent, { backgroundColor: colors.surface }]}>
             {filteredSplits.length > 0 ? (
               <ScrollView style={styles.searchResultsList} keyboardShouldPersistTaps="handled">
-                <Text style={styles.searchResultsHeader}>
+                <Text style={[styles.searchResultsHeader, { color: colors.gray500 }]}>
                   Splits ({filteredSplits.length})
                 </Text>
                 {filteredSplits.slice(0, 10).map((split) => (
@@ -241,17 +240,17 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       navigation.navigate('SplitFlow', {
                         screen: 'SplitDetail',
                         params: { splitId: split.id },
-                      });
+                      } as any);
                     }}
                   >
-                    <View style={styles.searchResultIcon}>
+                    <View style={[styles.searchResultIcon, { backgroundColor: colors.primary + '15' }]}>
                       <Ionicons name="receipt-outline" size={20} color={colors.primary} />
                     </View>
                     <View style={styles.searchResultInfo}>
-                      <Text style={styles.searchResultTitle} numberOfLines={1}>
+                      <Text style={[styles.searchResultTitle, { color: colors.gray900 }]} numberOfLines={1}>
                         {split.title}
                       </Text>
-                      <Text style={styles.searchResultSubtitle}>
+                      <Text style={[styles.searchResultSubtitle, { color: colors.gray500 }]}>
                         ${split.total_amount.toFixed(2)} • {split.participant_count} people
                       </Text>
                     </View>
@@ -262,8 +261,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             ) : (
               <View style={styles.noSearchResults}>
                 <Ionicons name="search-outline" size={40} color={colors.gray300} />
-                <Text style={styles.noSearchResultsText}>No splits found</Text>
-                <Text style={styles.noSearchResultsSubtext}>
+                <Text style={[styles.noSearchResultsText, { color: colors.gray700 }]}>No splits found</Text>
+                <Text style={[styles.noSearchResultsSubtext, { color: colors.gray500 }]}>
                   Try a different search term
                 </Text>
               </View>
@@ -285,172 +284,158 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         }
       >
         <View style={styles.content}>
-          {/* Main Balance Card - Coinbase Style */}
-          <View>
-            <View style={styles.balanceCard}>
-              {/* Huge Balance Number */}
-              <Text style={styles.balanceAmount}>
-                ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
+          {/* Main Balance Card */}
+          <View style={[styles.balanceCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.balanceAmount, { color: colors.gray900 }]}>
+              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
 
-              {/* Owe/Owed Row */}
-              <View style={styles.oweRow}>
-                <View style={styles.oweItem}>
-                  <View style={styles.oweHeader}>
-                    <Ionicons name="trending-up" size={16} color={colors.error} />
-                    <Text style={styles.oweLabel}>You owe</Text>
-                  </View>
-                  <Text style={[styles.oweAmount, { color: colors.error }]}>
-                    ${youOwe.toFixed(2)}
-                  </Text>
+            <View style={[styles.oweRow, { borderTopColor: colors.gray200 }]}>
+              <View style={styles.oweItem}>
+                <View style={styles.oweHeader}>
+                  <Ionicons name="trending-up" size={16} color={colors.error} />
+                  <Text style={[styles.oweLabel, { color: colors.gray600 }]}>You owe</Text>
                 </View>
+                <Text style={[styles.oweAmount, { color: colors.error }]}>
+                  ${youOwe.toFixed(2)}
+                </Text>
+              </View>
 
-                <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
 
-                <View style={styles.oweItem}>
-                  <View style={styles.oweHeader}>
-                    <Ionicons name="trending-down" size={16} color={colors.success} />
-                    <Text style={styles.oweLabel}>Owed to you</Text>
-                  </View>
-                  <Text style={[styles.oweAmount, { color: colors.success }]}>
-                    ${owedToYou.toFixed(2)}
-                  </Text>
+              <View style={styles.oweItem}>
+                <View style={styles.oweHeader}>
+                  <Ionicons name="trending-down" size={16} color={colors.success} />
+                  <Text style={[styles.oweLabel, { color: colors.gray600 }]}>Owed to you</Text>
                 </View>
+                <Text style={[styles.oweAmount, { color: colors.success }]}>
+                  ${owedToYou.toFixed(2)}
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Primary Action Buttons - Coinbase Style */}
-          <View>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  navigation.navigate('SplitFlow');
-                }}
-              >
-                <Text style={styles.primaryButtonText}>Split Bill</Text>
-              </TouchableOpacity>
+          {/* Primary Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                navigation.navigate('SplitFlow');
+              }}
+            >
+              <Text style={[styles.primaryButtonText, { color: colors.textInverse }]}>Split Bill</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={openRequestModal}
-              >
-                <Text style={styles.secondaryButtonText}>Request</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: colors.gray100 }]}
+              onPress={openRequestModal}
+            >
+              <Text style={[styles.secondaryButtonText, { color: colors.gray900 }]}>Request</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Get Started Card - Only for new users */}
           {isNewUser && (
-            <View>
-              <GetStartedCard
-                onInviteFriends={() => console.log('Invite friends')}
-                onScanReceipt={() => console.log('Scan receipt')}
-              />
-            </View>
+            <GetStartedCard
+              onInviteFriends={() => console.log('Invite friends')}
+              onScanReceipt={() => console.log('Scan receipt')}
+            />
           )}
 
-          {/* Recent Splits - Only when user has splits */}
+          {/* Recent Splits */}
           {hasRecentSplits && (
-            <View>
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent Splits</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      navigation.navigate('Splits');
-                    }}
-                  >
-                    <Text style={styles.viewAllText}>View all</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {loading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                  </View>
-                ) : (
-                  <View style={styles.splitsContainer}>
-                    {splits.slice(0, 5).map((split) => (
-                      <RecentSplitCard
-                        key={split.id}
-                        title={split.title}
-                        paidCount={split.paid_count}
-                        totalCount={split.participant_count}
-                        amount={split.total_amount}
-                        date={format(new Date(split.created_at), 'MMM d')}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          navigation.navigate('SplitFlow', {
-                            screen: 'SplitDetail',
-                            params: { splitId: split.id },
-                          });
-                        }}
-                      />
-                    ))}
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-
-          {/* Activity List */}
-          <View>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Activity</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Recent Splits</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    navigation.navigate('Splits');
+                  }}
+                >
+                  <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
+                </TouchableOpacity>
+              </View>
 
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color={colors.primary} />
                 </View>
-              ) : splits.length === 0 ? (
-                /* Empty State */
-                <View style={styles.emptyState}>
-                  <Ionicons name="document-text-outline" size={64} color={colors.gray300} />
-                  <Text style={styles.emptyStateTitle}>No activity yet</Text>
-                  <Text style={styles.emptyStateSubtitle}>
-                    Create your first split to get started
-                  </Text>
-                </View>
               ) : (
-                /* Activity List */
-                <View style={styles.activityList}>
-                  {splits.slice(0, 10).map((split) => {
-                    const userParticipant = split.participants.find(p => p.user_id === user?.id);
-                    const amountOwed = userParticipant ? userParticipant.amount_owed : 0;
-                    const isPaid = userParticipant?.status === 'paid';
-
-                    return (
-                      <View key={split.id} style={styles.activityRow}>
-                        <View style={[styles.activityIcon, { backgroundColor: colors.primary + '20' }]}>
-                          <Ionicons name="receipt-outline" size={20} color={colors.primary} />
-                        </View>
-                        <View style={styles.activityContent}>
-                          <Text style={styles.activityTitle}>{split.title}</Text>
-                          <Text style={styles.activitySubtitle}>
-                            {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
-                          </Text>
-                        </View>
-                        <View style={styles.activityRight}>
-                          <Text style={[
-                            styles.activityAmount,
-                            { color: split.creator_id === user?.id ? colors.success : colors.error }
-                          ]}>
-                            {split.creator_id === user?.id ? '+' : '-'}${amountOwed.toFixed(2)}
-                          </Text>
-                          {isPaid && (
-                            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                          )}
-                        </View>
-                      </View>
-                    );
-                  })}
+                <View style={styles.splitsContainer}>
+                  {splits.slice(0, 5).map((split) => (
+                    <RecentSplitCard
+                      key={split.id}
+                      title={split.title}
+                      paidCount={split.paid_count}
+                      totalCount={split.participant_count}
+                      amount={split.total_amount}
+                      date={format(new Date(split.created_at), 'MMM d')}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.navigate('SplitFlow', {
+                          screen: 'SplitDetail',
+                          params: { splitId: split.id },
+                        } as any);
+                      }}
+                    />
+                  ))}
                 </View>
               )}
             </View>
+          )}
+
+          {/* Activity List */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Activity</Text>
+
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
+            ) : splits.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="document-text-outline" size={64} color={colors.gray300} />
+                <Text style={[styles.emptyStateTitle, { color: colors.gray700 }]}>No activity yet</Text>
+                <Text style={[styles.emptyStateSubtitle, { color: colors.gray500 }]}>
+                  Create your first split to get started
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.activityList}>
+                {splits.slice(0, 10).map((split) => {
+                  const userParticipant = split.participants.find(p => p.user_id === user?.id);
+                  const amountOwed = userParticipant ? userParticipant.amount_owed : 0;
+                  const isPaid = userParticipant?.status === 'paid';
+
+                  return (
+                    <View key={split.id} style={[styles.activityRow, { backgroundColor: colors.surface }]}>
+                      <View style={[styles.activityIcon, { backgroundColor: colors.primary + '20' }]}>
+                        <Ionicons name="receipt-outline" size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.activityContent}>
+                        <Text style={[styles.activityTitle, { color: colors.gray900 }]}>{split.title}</Text>
+                        <Text style={[styles.activitySubtitle, { color: colors.gray600 }]}>
+                          {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
+                        </Text>
+                      </View>
+                      <View style={styles.activityRight}>
+                        <Text style={[
+                          styles.activityAmount,
+                          { color: split.creator_id === user?.id ? colors.success : colors.error }
+                        ]}>
+                          {split.creator_id === user?.id ? '+' : '-'}${amountOwed.toFixed(2)}
+                        </Text>
+                        {isPaid && (
+                          <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -466,9 +451,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           style={styles.modalOverlay}
           onPress={() => setShowQuickActions(false)}
         >
-          <Pressable style={styles.quickActionsModal} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.quickActionsModal, { backgroundColor: colors.surface }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Quick Actions</Text>
+              <Text style={[styles.modalTitle, { color: colors.gray900 }]}>Quick Actions</Text>
               <TouchableOpacity
                 onPress={() => setShowQuickActions(false)}
                 style={styles.modalCloseButton}
@@ -479,21 +464,21 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
             <View style={styles.quickActionsGrid}>
               <TouchableOpacity
-                style={styles.quickActionItem}
+                style={[styles.quickActionItem, { backgroundColor: colors.gray100 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   setShowQuickActions(false);
-                  navigation.navigate('SplitFlow', { screen: 'ScanReceipt' });
+                  navigation.navigate('SplitFlow', { screen: 'ScanReceipt' } as any);
                 }}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
                   <Ionicons name="camera" size={28} color={colors.primary} />
                 </View>
-                <Text style={styles.quickActionLabel}>Scan Receipt</Text>
+                <Text style={[styles.quickActionLabel, { color: colors.gray800 }]}>Scan Receipt</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionItem}
+                style={[styles.quickActionItem, { backgroundColor: colors.gray100 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   setShowQuickActions(false);
@@ -503,11 +488,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <View style={[styles.quickActionIcon, { backgroundColor: colors.success + '15' }]}>
                   <Ionicons name="add-circle" size={28} color={colors.success} />
                 </View>
-                <Text style={styles.quickActionLabel}>New Split</Text>
+                <Text style={[styles.quickActionLabel, { color: colors.gray800 }]}>New Split</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionItem}
+                style={[styles.quickActionItem, { backgroundColor: colors.gray100 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   setShowQuickActions(false);
@@ -517,11 +502,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <View style={[styles.quickActionIcon, { backgroundColor: colors.warning + '15' }]}>
                   <Ionicons name="person-add" size={28} color={colors.warning} />
                 </View>
-                <Text style={styles.quickActionLabel}>Add Friend</Text>
+                <Text style={[styles.quickActionLabel, { color: colors.gray800 }]}>Add Friend</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionItem}
+                style={[styles.quickActionItem, { backgroundColor: colors.gray100 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   setShowQuickActions(false);
@@ -531,7 +516,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <View style={[styles.quickActionIcon, { backgroundColor: colors.error + '15' }]}>
                   <Ionicons name="people" size={28} color={colors.error} />
                 </View>
-                <Text style={styles.quickActionLabel}>Create Group</Text>
+                <Text style={[styles.quickActionLabel, { color: colors.gray800 }]}>Create Group</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -550,12 +535,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           style={styles.requestModalContainer}
         >
           <Pressable
-            style={styles.requestModalBackdrop}
+            style={[styles.requestModalBackdrop, { backgroundColor: colors.surface }]}
             onPress={closeRequestModal}
           />
-          <View style={styles.requestModalContent}>
-            {/* Modal Header */}
-            <View style={styles.requestModalHeader}>
+          <View style={[styles.requestModalContent, { backgroundColor: colors.surface }]}>
+            <View style={[styles.requestModalHeader, { borderBottomColor: colors.gray100 }]}>
               <TouchableOpacity
                 onPress={requestStep === 'amount' ? () => setRequestStep('select') : closeRequestModal}
                 style={styles.requestBackButton}
@@ -566,59 +550,55 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   color={colors.gray700}
                 />
               </TouchableOpacity>
-              <Text style={styles.requestModalTitle}>
+              <Text style={[styles.requestModalTitle, { color: colors.gray900 }]}>
                 {requestStep === 'select' ? 'Request Payment' : 'Enter Amount'}
               </Text>
               <View style={{ width: 40 }} />
             </View>
 
             {requestStep === 'select' ? (
-              /* Step 1: Select Friend */
               <View style={styles.requestStepContent}>
-                <Text style={styles.requestStepLabel}>Select who to request from</Text>
+                <Text style={[styles.requestStepLabel, { color: colors.gray600 }]}>Select who to request from</Text>
 
                 {loadingFriends ? (
                   <View style={styles.requestLoadingContainer}>
                     <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.requestLoadingText}>Loading friends...</Text>
+                    <Text style={[styles.requestLoadingText, { color: colors.gray500 }]}>Loading friends...</Text>
                   </View>
                 ) : friends.length === 0 ? (
                   <View style={styles.requestEmptyState}>
                     <Ionicons name="people-outline" size={48} color={colors.gray300} />
-                    <Text style={styles.requestEmptyTitle}>No friends yet</Text>
-                    <Text style={styles.requestEmptySubtitle}>
+                    <Text style={[styles.requestEmptyTitle, { color: colors.gray700 }]}>No friends yet</Text>
+                    <Text style={[styles.requestEmptySubtitle, { color: colors.gray500 }]}>
                       Add some friends to send payment requests
                     </Text>
                     <TouchableOpacity
-                      style={styles.requestAddFriendButton}
+                      style={[styles.requestAddFriendButton, { backgroundColor: colors.primary + '15' }]}
                       onPress={() => {
                         closeRequestModal();
                         navigation.navigate('AddFriend');
                       }}
                     >
                       <Ionicons name="person-add" size={20} color={colors.primary} />
-                      <Text style={styles.requestAddFriendText}>Add Friends</Text>
+                      <Text style={[styles.requestAddFriendText, { color: colors.primary }]}>Add Friends</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <ScrollView
-                    style={styles.requestFriendsList}
-                    showsVerticalScrollIndicator={false}
-                  >
+                  <ScrollView style={styles.requestFriendsList} showsVerticalScrollIndicator={false}>
                     {friends.map((friend) => (
                       <TouchableOpacity
                         key={friend.id}
                         style={styles.requestFriendItem}
                         onPress={() => selectFriendForRequest(friend)}
                       >
-                        <View style={styles.requestFriendAvatar}>
-                          <Text style={styles.requestFriendInitial}>
+                        <View style={[styles.requestFriendAvatar, { backgroundColor: colors.primary }]}>
+                          <Text style={[styles.requestFriendInitial, { color: colors.textInverse }]}>
                             {friend.full_name?.charAt(0).toUpperCase() || '?'}
                           </Text>
                         </View>
                         <View style={styles.requestFriendInfo}>
-                          <Text style={styles.requestFriendName}>{friend.full_name}</Text>
-                          <Text style={styles.requestFriendEmail}>{friend.email}</Text>
+                          <Text style={[styles.requestFriendName, { color: colors.gray900 }]}>{friend.full_name}</Text>
+                          <Text style={[styles.requestFriendEmail, { color: colors.gray500 }]}>{friend.email}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
                       </TouchableOpacity>
@@ -627,23 +607,22 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 )}
               </View>
             ) : (
-              /* Step 2: Enter Amount */
               <View style={styles.requestStepContent}>
                 <View style={styles.requestSelectedFriend}>
-                  <View style={styles.requestFriendAvatar}>
-                    <Text style={styles.requestFriendInitial}>
+                  <View style={[styles.requestFriendAvatar, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.requestFriendInitial, { color: colors.textInverse }]}>
                       {selectedFriend?.full_name?.charAt(0).toUpperCase() || '?'}
                     </Text>
                   </View>
-                  <Text style={styles.requestSelectedName}>
+                  <Text style={[styles.requestSelectedName, { color: colors.gray700 }]}>
                     Request from {selectedFriend?.full_name}
                   </Text>
                 </View>
 
                 <View style={styles.requestAmountContainer}>
-                  <Text style={styles.requestCurrency}>$</Text>
+                  <Text style={[styles.requestCurrency, { color: colors.gray400 }]}>$</Text>
                   <TextInput
-                    style={styles.requestAmountInput}
+                    style={[styles.requestAmountInput, { color: colors.gray900 }]}
                     placeholder="0.00"
                     placeholderTextColor={colors.gray300}
                     keyboardType="decimal-pad"
@@ -654,7 +633,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 </View>
 
                 <TextInput
-                  style={styles.requestNoteInput}
+                  style={[styles.requestNoteInput, { backgroundColor: colors.gray100, color: colors.gray900 }]}
                   placeholder="Add a note (optional)"
                   placeholderTextColor={colors.gray400}
                   value={requestNote}
@@ -666,7 +645,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <TouchableOpacity
                   style={[
                     styles.requestSendButton,
-                    (!requestAmount || sendingRequest) && styles.requestSendButtonDisabled,
+                    { backgroundColor: colors.primary },
+                    (!requestAmount || sendingRequest) && { backgroundColor: colors.gray300 },
                   ]}
                   onPress={sendRequest}
                   disabled={!requestAmount || sendingRequest}
@@ -674,7 +654,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   {sendingRequest ? (
                     <ActivityIndicator size="small" color={colors.textInverse} />
                   ) : (
-                    <Text style={styles.requestSendButtonText}>Send Request</Text>
+                    <Text style={[styles.requestSendButtonText, { color: colors.textInverse }]}>Send Request</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -689,7 +669,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   topNav: {
     flexDirection: 'row',
@@ -697,7 +676,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: spacing.md,
-    backgroundColor: colors.surface,
     gap: spacing.sm,
   },
   menuButton: {
@@ -707,7 +685,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray100,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
@@ -716,7 +693,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: colors.gray900,
     padding: 0,
   },
   iconButton: {
@@ -727,7 +703,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: colors.error,
     borderRadius: radius.pill,
     minWidth: 18,
     height: 18,
@@ -736,7 +711,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   badgeText: {
-    color: colors.textInverse,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -749,56 +723,20 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl + spacing.xl,
   },
   balanceCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   balanceAmount: {
     fontSize: 48,
     fontWeight: '700',
-    color: colors.gray900,
     letterSpacing: -1,
     marginBottom: spacing.md,
     textAlign: 'center',
-  },
-  chartContainer: {
-    marginVertical: spacing.md,
-    alignItems: 'center',
-  },
-  periodSelector: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  periodButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    borderRadius: radius.sm,
-  },
-  periodButtonActive: {
-    backgroundColor: colors.gray100,
-  },
-  periodText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.gray500,
-  },
-  periodTextActive: {
-    color: colors.primary,
-    fontWeight: '600',
   },
   oweRow: {
     flexDirection: 'row',
     paddingTop: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   oweItem: {
     flex: 1,
@@ -812,7 +750,6 @@ const styles = StyleSheet.create({
   },
   oweLabel: {
     fontSize: 13,
-    color: colors.gray600,
     fontWeight: '500',
   },
   oweAmount: {
@@ -822,7 +759,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    backgroundColor: colors.gray200,
     marginHorizontal: spacing.lg,
   },
   actionButtons: {
@@ -831,85 +767,25 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: colors.primary,
     borderRadius: radius.pill,
     paddingVertical: spacing.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   primaryButtonText: {
-    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: colors.gray100,
     borderRadius: radius.pill,
     paddingVertical: spacing.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: colors.gray900,
     fontSize: 16,
     fontWeight: '600',
-  },
-  recentCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadows.low,
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  recentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.gray900,
-  },
-  viewAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  splitItem: {
-    gap: spacing.md,
-  },
-  splitInfo: {
-    gap: spacing.xs,
-  },
-  splitName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray900,
-  },
-  splitDate: {
-    fontSize: 14,
-    color: colors.gray600,
-  },
-  progressContainer: {
-    marginTop: spacing.xs,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: colors.gray200,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
   },
   section: {
     gap: spacing.md,
@@ -922,19 +798,31 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray900,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   splitsContainer: {
     gap: spacing.md,
+  },
+  activityList: {
+    gap: spacing.sm,
   },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     paddingHorizontal: spacing.sm,
     gap: spacing.md,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activityContent: {
     flex: 1,
@@ -943,11 +831,9 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   activitySubtitle: {
     fontSize: 14,
-    color: colors.gray600,
   },
   activityRight: {
     flexDirection: 'row',
@@ -969,12 +855,10 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray700,
     textAlign: 'center',
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: colors.gray500,
     textAlign: 'center',
   },
   loadingContainer: {
@@ -982,77 +866,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activityList: {
-    gap: spacing.sm,
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Quick Actions Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  quickActionsModal: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    width: '100%',
-    maxWidth: 340,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray900,
-  },
-  modalCloseButton: {
-    padding: spacing.xs,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  quickActionItem: {
-    width: '47%',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.gray50,
-    gap: spacing.sm,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray800,
-    textAlign: 'center',
-  },
-  // Search Results Styles
+  // Search Results
   searchResultsContainer: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 110 : 90,
@@ -1070,15 +884,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   searchResultsContent: {
-    backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     borderRadius: radius.lg,
     maxHeight: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
     overflow: 'hidden',
   },
   searchResultsList: {
@@ -1087,7 +895,6 @@ const styles = StyleSheet.create({
   searchResultsHeader: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     paddingHorizontal: spacing.sm,
@@ -1104,7 +911,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.md,
-    backgroundColor: colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1115,11 +921,9 @@ const styles = StyleSheet.create({
   searchResultTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray900,
   },
   searchResultSubtitle: {
     fontSize: 13,
-    color: colors.gray500,
   },
   noSearchResults: {
     alignItems: 'center',
@@ -1130,13 +934,62 @@ const styles = StyleSheet.create({
   noSearchResultsText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray700,
   },
   noSearchResultsSubtext: {
     fontSize: 14,
-    color: colors.gray500,
   },
-  // Request Modal Styles
+  // Modals
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  quickActionsModal: {
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: spacing.xs,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  quickActionItem: {
+    width: '47%',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    gap: spacing.sm,
+  },
+  quickActionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Request Modal
   requestModalContainer: {
     flex: 1,
   },
@@ -1146,11 +999,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.surface,
   },
   requestModalContent: {
     flex: 1,
-    backgroundColor: colors.surface,
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: Platform.OS === 'ios' ? 34 : spacing.lg,
   },
@@ -1160,7 +1011,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
   },
   requestBackButton: {
     width: 40,
@@ -1171,7 +1021,6 @@ const styles = StyleSheet.create({
   requestModalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.gray900,
   },
   requestStepContent: {
     flex: 1,
@@ -1179,7 +1028,6 @@ const styles = StyleSheet.create({
   },
   requestStepLabel: {
     fontSize: 15,
-    color: colors.gray600,
     marginBottom: spacing.md,
   },
   requestLoadingContainer: {
@@ -1190,7 +1038,6 @@ const styles = StyleSheet.create({
   },
   requestLoadingText: {
     fontSize: 14,
-    color: colors.gray500,
   },
   requestEmptyState: {
     alignItems: 'center',
@@ -1201,11 +1048,9 @@ const styles = StyleSheet.create({
   requestEmptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray700,
   },
   requestEmptySubtitle: {
     fontSize: 14,
-    color: colors.gray500,
     textAlign: 'center',
   },
   requestAddFriendButton: {
@@ -1214,14 +1059,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary + '15',
     borderRadius: radius.pill,
     marginTop: spacing.md,
   },
   requestAddFriendText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.primary,
   },
   requestFriendsList: {
     flex: 1,
@@ -1238,14 +1081,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   requestFriendInitial: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textInverse,
   },
   requestFriendInfo: {
     flex: 1,
@@ -1254,11 +1095,9 @@ const styles = StyleSheet.create({
   requestFriendName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   requestFriendEmail: {
     fontSize: 13,
-    color: colors.gray500,
   },
   requestSelectedFriend: {
     flexDirection: 'row',
@@ -1270,7 +1109,6 @@ const styles = StyleSheet.create({
   requestSelectedName: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.gray700,
   },
   requestAmountContainer: {
     flexDirection: 'row',
@@ -1281,38 +1119,29 @@ const styles = StyleSheet.create({
   requestCurrency: {
     fontSize: 48,
     fontWeight: '300',
-    color: colors.gray400,
   },
   requestAmountInput: {
     fontSize: 48,
     fontWeight: '700',
-    color: colors.gray900,
     minWidth: 150,
     textAlign: 'center',
   },
   requestNoteInput: {
-    backgroundColor: colors.gray50,
     borderRadius: radius.md,
     padding: spacing.md,
     fontSize: 15,
-    color: colors.gray900,
     marginBottom: spacing.lg,
     minHeight: 60,
     textAlignVertical: 'top',
   },
   requestSendButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.pill,
     paddingVertical: spacing.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  requestSendButtonDisabled: {
-    backgroundColor: colors.gray300,
-  },
   requestSendButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textInverse,
   },
 });

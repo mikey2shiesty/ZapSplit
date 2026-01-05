@@ -1,14 +1,17 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 interface WelcomeScreenProps {
   navigation: any;
 }
 
 export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       <View style={styles.content}>
         <Image
           source={require('../../assets/images/logo.png')}
@@ -16,8 +19,8 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           resizeMode="contain"
         />
 
-        <Text style={styles.title}>Welcome to ZapSplit</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Welcome to ZapSplit</Text>
+        <Text style={[styles.subtitle, { color: colors.gray500 }]}>
           Split bills instantly with friends.{'\n'}
           Scan receipts, split costs, get paid fast.
         </Text>
@@ -25,18 +28,18 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('Signup')}
         >
-          <Text style={styles.primaryButtonText}>Get Started</Text>
+          <Text style={[styles.primaryButtonText, { color: colors.surface }]}>Get Started</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={() => navigation.navigate('Login')}
         >
-          <Text style={styles.secondaryButtonText}>
-            Already have an account? <Text style={styles.linkText}>Log in</Text>
+          <Text style={[styles.secondaryButtonText, { color: colors.gray500 }]}>
+            Already have an account? <Text style={[styles.linkText, { color: colors.primary }]}>Log in</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -47,7 +50,6 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     padding: spacing.lg,
   },
   content: {
@@ -63,13 +65,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: spacing.lg,
@@ -79,13 +79,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 12,
+    borderRadius: radius.md,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -94,11 +92,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: colors.textSecondary,
     fontSize: 16,
   },
   linkText: {
-    color: colors.primary,
     fontWeight: '600',
   },
 });

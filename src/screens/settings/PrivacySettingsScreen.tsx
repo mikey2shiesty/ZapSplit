@@ -26,12 +26,14 @@ import {
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
-import * as FileSystem from 'expo-file-system';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
+import { Paths, File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 export default function PrivacySettingsScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [settings, setSettings] = useState<PrivacySettings | null>(null);
   const [blockedCount, setBlockedCount] = useState(0);
   const [deletionRequest, setDeletionRequest] = useState<DeletionRequest | null>(null);
@@ -91,21 +93,18 @@ export default function PrivacySettingsScreen() {
 
       // Save to file and share
       const fileName = `zapsplit_data_${Date.now()}.json`;
-      const filePath = `${FileSystem.documentDirectory}${fileName}`;
+      const file = new File(Paths.document, fileName);
 
-      await FileSystem.writeAsStringAsync(
-        filePath,
-        JSON.stringify(result.data, null, 2)
-      );
+      await file.write(JSON.stringify(result.data, null, 2));
 
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(filePath, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'application/json',
           dialogTitle: 'Export Your Data',
         });
       } else {
-        Alert.alert('Success', 'Data exported to: ' + filePath);
+        Alert.alert('Success', 'Data exported to: ' + file.uri);
       }
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -173,12 +172,12 @@ export default function PrivacySettingsScreen() {
     icon: string
   ) => (
     <View style={styles.toggleRow}>
-      <View style={styles.toggleIconContainer}>
+      <View style={[styles.toggleIconContainer, { backgroundColor: colors.gray100 }]}>
         <Ionicons name={icon as any} size={22} color={colors.gray600} />
       </View>
       <View style={styles.toggleContent}>
-        <Text style={styles.toggleLabel}>{label}</Text>
-        <Text style={styles.toggleDescription}>{description}</Text>
+        <Text style={[styles.toggleLabel, { color: colors.gray900 }]}>{label}</Text>
+        <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>{description}</Text>
       </View>
       <Switch
         value={settings?.[key] as boolean}
@@ -192,14 +191,14 @@ export default function PrivacySettingsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header
         title="Privacy & Security"
@@ -216,28 +215,28 @@ export default function PrivacySettingsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Pending Deletion Banner */}
         {deletionRequest && (
-          <Card variant="default" style={styles.deletionBanner}>
+          <Card variant="default" style={[styles.deletionBanner, { backgroundColor: colors.errorLight }]}>
             <View style={styles.deletionBannerContent}>
               <Ionicons name="warning" size={24} color={colors.error} />
               <View style={styles.deletionBannerText}>
-                <Text style={styles.deletionBannerTitle}>Account Deletion Scheduled</Text>
-                <Text style={styles.deletionBannerDate}>
+                <Text style={[styles.deletionBannerTitle, { color: colors.error }]}>Account Deletion Scheduled</Text>
+                <Text style={[styles.deletionBannerDate, { color: colors.gray700 }]}>
                   Your account will be deleted on{'\n'}
                   {formatDeletionDate(deletionRequest.scheduled_for)}
                 </Text>
               </View>
             </View>
             <TouchableOpacity
-              style={styles.cancelDeletionButton}
+              style={[styles.cancelDeletionButton, { backgroundColor: colors.surface }]}
               onPress={handleCancelDeletion}
             >
-              <Text style={styles.cancelDeletionText}>Cancel Deletion</Text>
+              <Text style={[styles.cancelDeletionText, { color: colors.primary }]}>Cancel Deletion</Text>
             </TouchableOpacity>
           </Card>
         )}
 
         {/* Profile Visibility */}
-        <Text style={styles.sectionTitle}>Profile Visibility</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Profile Visibility</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Public Profile',
@@ -245,14 +244,14 @@ export default function PrivacySettingsScreen() {
             'profile_visible',
             'eye-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Online Status',
             'Show when you were last active',
             'show_online_status',
             'radio-button-on-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Friend Requests',
             'Allow others to send you friend requests',
@@ -262,7 +261,7 @@ export default function PrivacySettingsScreen() {
         </Card>
 
         {/* Data & Analytics */}
-        <Text style={styles.sectionTitle}>Data & Analytics</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Data & Analytics</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Share Statistics',
@@ -273,18 +272,18 @@ export default function PrivacySettingsScreen() {
         </Card>
 
         {/* Blocked Users */}
-        <Text style={styles.sectionTitle}>Blocked Users</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Blocked Users</Text>
         <TouchableOpacity
-          style={styles.blockedUsersCard}
+          style={[styles.blockedUsersCard, { backgroundColor: colors.surface }]}
           onPress={() => navigation.navigate('BlockedUsers')}
         >
           <View style={styles.blockedUsersContent}>
-            <View style={styles.blockedIconContainer}>
+            <View style={[styles.blockedIconContainer, { backgroundColor: colors.gray100 }]}>
               <Ionicons name="ban-outline" size={22} color={colors.gray600} />
             </View>
             <View style={styles.blockedTextContainer}>
-              <Text style={styles.blockedUsersLabel}>Manage Blocked Users</Text>
-              <Text style={styles.blockedUsersCount}>
+              <Text style={[styles.blockedUsersLabel, { color: colors.gray900 }]}>Manage Blocked Users</Text>
+              <Text style={[styles.blockedUsersCount, { color: colors.gray500 }]}>
                 {blockedCount} {blockedCount === 1 ? 'user' : 'users'} blocked
               </Text>
             </View>
@@ -293,19 +292,19 @@ export default function PrivacySettingsScreen() {
         </TouchableOpacity>
 
         {/* Data Export */}
-        <Text style={styles.sectionTitle}>Your Data</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Your Data</Text>
         <Card variant="default" style={styles.card}>
           <TouchableOpacity
             style={styles.actionRow}
             onPress={handleExportData}
             disabled={exporting}
           >
-            <View style={styles.actionIconContainer}>
+            <View style={[styles.actionIconContainer, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="download-outline" size={22} color={colors.primary} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionLabel}>Export Your Data</Text>
-              <Text style={styles.actionDescription}>
+              <Text style={[styles.actionLabel, { color: colors.gray900 }]}>Export Your Data</Text>
+              <Text style={[styles.actionDescription, { color: colors.gray500 }]}>
                 Download a copy of all your ZapSplit data
               </Text>
             </View>
@@ -318,8 +317,8 @@ export default function PrivacySettingsScreen() {
         </Card>
 
         {/* Delete Account */}
-        <Text style={styles.sectionTitle}>Danger Zone</Text>
-        <Card variant="default" style={styles.dangerCard}>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Danger Zone</Text>
+        <Card variant="default" style={[styles.dangerCard, { borderColor: colors.errorLight }]}>
           {!showDeleteConfirm ? (
             <TouchableOpacity
               style={styles.deleteButton}
@@ -328,21 +327,21 @@ export default function PrivacySettingsScreen() {
             >
               <Ionicons name="trash-outline" size={22} color={colors.error} />
               <View style={styles.deleteContent}>
-                <Text style={styles.deleteLabel}>Delete Account</Text>
-                <Text style={styles.deleteDescription}>
+                <Text style={[styles.deleteLabel, { color: colors.error }]}>Delete Account</Text>
+                <Text style={[styles.deleteDescription, { color: colors.gray500 }]}>
                   Permanently delete your account and all data
                 </Text>
               </View>
             </TouchableOpacity>
           ) : (
             <View style={styles.deleteConfirmContainer}>
-              <Text style={styles.deleteConfirmTitle}>Delete Your Account?</Text>
-              <Text style={styles.deleteConfirmText}>
+              <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>Delete Your Account?</Text>
+              <Text style={[styles.deleteConfirmText, { color: colors.gray600 }]}>
                 This will permanently delete your account, including all splits, payments, and friendships.
                 You have 30 days to change your mind.
               </Text>
               <TextInput
-                style={styles.deleteReasonInput}
+                style={[styles.deleteReasonInput, { borderColor: colors.gray200, color: colors.gray900, backgroundColor: colors.gray50 }]}
                 placeholder="Why are you leaving? (optional)"
                 placeholderTextColor={colors.gray400}
                 value={deleteReason}
@@ -352,19 +351,19 @@ export default function PrivacySettingsScreen() {
               />
               <View style={styles.deleteConfirmButtons}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, { backgroundColor: colors.gray100 }]}
                   onPress={() => {
                     setShowDeleteConfirm(false);
                     setDeleteReason('');
                   }}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.gray700 }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.confirmDeleteButton}
+                  style={[styles.confirmDeleteButton, { backgroundColor: colors.error }]}
                   onPress={handleRequestDeletion}
                 >
-                  <Text style={styles.confirmDeleteText}>Delete Account</Text>
+                  <Text style={[styles.confirmDeleteText, { color: colors.surface }]}>Delete Account</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -374,7 +373,7 @@ export default function PrivacySettingsScreen() {
         {/* Info Footer */}
         <View style={styles.infoFooter}>
           <Ionicons name="shield-checkmark-outline" size={18} color={colors.gray400} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.gray400 }]}>
             Your data is encrypted and stored securely. We comply with GDPR and Australian privacy laws.
           </Text>
         </View>
@@ -386,72 +385,64 @@ export default function PrivacySettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: spacing.sm + 4,
+    marginTop: spacing.sm,
   },
   card: {
     padding: 0,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
     overflow: 'hidden',
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   toggleIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
   toggleContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
   },
   toggleLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   toggleDescription: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray100,
     marginLeft: 68,
   },
   blockedUsersCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.lg,
   },
   blockedUsersContent: {
     flexDirection: 'row',
@@ -461,140 +452,121 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
   blockedTextContainer: {
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
   },
   blockedUsersLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   blockedUsersCount: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   actionIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   actionContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
   },
   actionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   actionDescription: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   dangerCard: {
     padding: 0,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.errorLight,
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   deleteContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
   },
   deleteLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.error,
   },
   deleteDescription: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   deleteConfirmContainer: {
-    padding: 16,
+    padding: spacing.md,
   },
   deleteConfirmTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.error,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   deleteConfirmText: {
     fontSize: 14,
-    color: colors.gray600,
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   deleteReasonInput: {
     borderWidth: 1,
-    borderColor: colors.gray200,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: radius.sm,
+    padding: spacing.sm + 4,
     fontSize: 14,
-    color: colors.gray900,
-    backgroundColor: colors.gray50,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   deleteConfirmButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm + 4,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.gray100,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray700,
   },
   confirmDeleteButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.error,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   confirmDeleteText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
   },
   deletionBanner: {
-    backgroundColor: colors.errorLight,
-    padding: 16,
-    marginBottom: 24,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   deletionBannerContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: spacing.sm + 4,
   },
   deletionBannerText: {
     flex: 1,
@@ -602,38 +574,33 @@ const styles = StyleSheet.create({
   deletionBannerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.error,
     marginBottom: 4,
   },
   deletionBannerDate: {
     fontSize: 14,
-    color: colors.gray700,
     lineHeight: 20,
   },
   cancelDeletionButton: {
-    marginTop: 12,
+    marginTop: spacing.sm + 4,
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
     alignSelf: 'flex-start',
   },
   cancelDeletionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
   },
   infoFooter: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: spacing.sm,
     paddingHorizontal: 4,
     marginBottom: 40,
   },
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray400,
     lineHeight: 18,
   },
 });

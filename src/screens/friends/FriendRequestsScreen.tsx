@@ -21,12 +21,14 @@ import {
 } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 type TabType = 'incoming' | 'outgoing';
 
 export default function FriendRequestsScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('incoming');
   const [incoming, setIncoming] = useState<FriendRequest[]>([]);
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([]);
@@ -128,13 +130,19 @@ export default function FriendRequestsScreen() {
     const isActive = activeTab === tab;
     return (
       <TouchableOpacity
-        style={[styles.tabButton, isActive && styles.tabButtonActive]}
+        style={[
+          styles.tabButton,
+          { backgroundColor: isActive ? colors.primary : colors.surface }
+        ]}
         onPress={() => setActiveTab(tab)}
       >
-        <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+        <Text style={[styles.tabText, { color: isActive ? colors.surface : colors.gray700 }]}>{label}</Text>
         {count > 0 && (
-          <View style={[styles.badge, isActive && styles.badgeActive]}>
-            <Text style={[styles.badgeText, isActive && styles.badgeTextActive]}>{count}</Text>
+          <View style={[
+            styles.badge,
+            { backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : colors.gray200 }
+          ]}>
+            <Text style={[styles.badgeText, { color: isActive ? colors.surface : colors.gray700 }]}>{count}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -150,30 +158,30 @@ export default function FriendRequestsScreen() {
           size="lg"
         />
         <View style={styles.requestInfo}>
-          <Text style={styles.requestName}>{item.sender?.full_name || 'Unknown'}</Text>
-          <Text style={styles.requestEmail}>{item.sender?.email}</Text>
-          <Text style={styles.requestTime}>
+          <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.sender?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.requestEmail, { color: colors.gray500 }]}>{item.sender?.email}</Text>
+          <Text style={[styles.requestTime, { color: colors.gray400 }]}>
             Sent {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={styles.declineButton}
+          style={[styles.declineButton, { backgroundColor: colors.gray100 }]}
           onPress={() => handleDecline(item.id)}
           disabled={processingId === item.id}
         >
-          <Text style={styles.declineButtonText}>Decline</Text>
+          <Text style={[styles.declineButtonText, { color: colors.gray700 }]}>Decline</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.acceptButton}
+          style={[styles.acceptButton, { backgroundColor: colors.primary }]}
           onPress={() => handleAccept(item.id, item.sender?.full_name || 'Unknown')}
           disabled={processingId === item.id}
         >
           {processingId === item.id ? (
             <ActivityIndicator size="small" color={colors.surface} />
           ) : (
-            <Text style={styles.acceptButtonText}>Accept</Text>
+            <Text style={[styles.acceptButtonText, { color: colors.surface }]}>Accept</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -189,15 +197,15 @@ export default function FriendRequestsScreen() {
           size="lg"
         />
         <View style={styles.requestInfo}>
-          <Text style={styles.requestName}>{item.receiver?.full_name || 'Unknown'}</Text>
-          <Text style={styles.requestEmail}>{item.receiver?.email}</Text>
-          <Text style={styles.requestTime}>
+          <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.receiver?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.requestEmail, { color: colors.gray500 }]}>{item.receiver?.email}</Text>
+          <Text style={[styles.requestTime, { color: colors.gray400 }]}>
             Sent {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
-        <View style={styles.pendingBadge}>
+        <View style={[styles.pendingBadge, { backgroundColor: colors.warningLight }]}>
           <Ionicons name="time-outline" size={14} color={colors.warning} />
-          <Text style={styles.pendingText}>Pending</Text>
+          <Text style={[styles.pendingText, { color: colors.warning }]}>Pending</Text>
         </View>
       </View>
     </Card>
@@ -206,10 +214,10 @@ export default function FriendRequestsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="mail-outline" size={64} color={colors.gray300} />
-      <Text style={styles.emptyTitle}>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>
         {activeTab === 'incoming' ? 'No Incoming Requests' : 'No Pending Requests'}
       </Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
         {activeTab === 'incoming'
           ? 'When someone sends you a friend request, it will appear here'
           : 'Requests you send will appear here until accepted'}
@@ -218,16 +226,16 @@ export default function FriendRequestsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.gray900} />
         </TouchableOpacity>
-        <Text style={styles.title}>Friend Requests</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Friend Requests</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -265,37 +273,33 @@ export default function FriendRequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 12,
+    padding: spacing.lg,
+    paddingBottom: radius.md,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.low,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   placeholder: {
     width: 44,
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    gap: 8,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   tabButton: {
     flex: 1,
@@ -303,24 +307,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-    gap: 8,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    gap: spacing.sm,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.gray700,
-  },
-  tabTextActive: {
-    color: colors.surface,
   },
   badge: {
-    backgroundColor: colors.gray200,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -328,16 +323,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 6,
   },
-  badgeActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
   badgeText: {
-    color: colors.gray700,
     fontSize: 12,
     fontWeight: '600',
-  },
-  badgeTextActive: {
-    color: colors.surface,
   },
   loadingContainer: {
     flex: 1,
@@ -345,13 +333,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 20,
+    padding: spacing.lg,
     paddingTop: 0,
     flexGrow: 1,
   },
   requestCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: radius.md,
+    padding: spacing.md,
   },
   requestContent: {
     flexDirection: 'row',
@@ -359,66 +347,57 @@ const styles = StyleSheet.create({
   },
   requestInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: radius.md,
   },
   requestName: {
     fontSize: 17,
     fontWeight: '600',
-    color: colors.gray900,
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   requestEmail: {
     fontSize: 14,
-    color: colors.gray500,
   },
   requestTime: {
     fontSize: 12,
-    color: colors.gray400,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   requestActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 16,
-    gap: 12,
+    marginTop: spacing.md,
+    gap: radius.md,
   },
   declineButton: {
     flex: 1,
-    backgroundColor: colors.gray100,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: radius.md,
+    paddingHorizontal: spacing.lg,
     borderRadius: 10,
     alignItems: 'center',
   },
   declineButtonText: {
-    color: colors.gray700,
     fontSize: 15,
     fontWeight: '600',
   },
   acceptButton: {
     flex: 1,
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: radius.md,
+    paddingHorizontal: spacing.lg,
     borderRadius: 10,
     alignItems: 'center',
   },
   acceptButtonText: {
-    color: colors.surface,
     fontSize: 15,
     fontWeight: '600',
   },
   pendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warningLight,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
-    gap: 4,
+    gap: spacing.xs,
   },
   pendingText: {
-    color: colors.warning,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -431,13 +410,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 15,
-    color: colors.gray600,
     textAlign: 'center',
     paddingHorizontal: 40,
   },

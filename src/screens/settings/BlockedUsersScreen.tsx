@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,12 @@ import { getBlockedUsers, unblockUser, BlockedUser } from '../../services/privac
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Header from '../../components/common/Header';
-import { colors, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export default function BlockedUsersScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -99,20 +101,20 @@ export default function BlockedUsersScreen() {
             size="md"
           />
           <View style={styles.userDetails}>
-            <Text style={styles.userName}>{profile?.full_name || 'Unknown User'}</Text>
-            <Text style={styles.userEmail}>{profile?.email || 'No email'}</Text>
-            <Text style={styles.blockedDate}>Blocked {formatDate(item.created_at)}</Text>
+            <Text style={[styles.userName, { color: colors.gray900 }]}>{profile?.full_name || 'Unknown User'}</Text>
+            <Text style={[styles.userEmail, { color: colors.gray500 }]}>{profile?.email || 'No email'}</Text>
+            <Text style={[styles.blockedDate, { color: colors.gray400 }]}>Blocked {formatDate(item.created_at)}</Text>
           </View>
         </View>
         <TouchableOpacity
-          style={[styles.unblockButton, isUnblocking && styles.unblockButtonDisabled]}
+          style={[styles.unblockButton, { backgroundColor: colors.primaryLight }, isUnblocking && styles.unblockButtonDisabled]}
           onPress={() => handleUnblock(item)}
           disabled={isUnblocking}
         >
           {isUnblocking ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={styles.unblockButtonText}>Unblock</Text>
+            <Text style={[styles.unblockButtonText, { color: colors.primary }]}>Unblock</Text>
           )}
         </TouchableOpacity>
       </Card>
@@ -121,11 +123,11 @@ export default function BlockedUsersScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconContainer}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: colors.gray100 }]}>
         <Ionicons name="ban-outline" size={48} color={colors.gray300} />
       </View>
-      <Text style={styles.emptyTitle}>No Blocked Users</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Blocked Users</Text>
+      <Text style={[styles.emptySubtitle, { color: colors.gray500 }]}>
         Users you block won't be able to see your profile or send you friend requests.
       </Text>
     </View>
@@ -133,14 +135,14 @@ export default function BlockedUsersScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header title="Blocked Users" onBack={() => navigation.goBack()} />
 
@@ -165,9 +167,9 @@ export default function BlockedUsersScreen() {
 
       {/* Info Footer */}
       {blockedUsers.length > 0 && (
-        <View style={styles.infoFooter}>
+        <View style={[styles.infoFooter, { backgroundColor: colors.gray50 }]}>
           <Ionicons name="information-circle-outline" size={18} color={colors.gray400} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.gray400 }]}>
             Blocked users cannot see your profile, send friend requests, or add you to splits.
           </Text>
         </View>
@@ -179,16 +181,14 @@ export default function BlockedUsersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   listContent: {
-    padding: 16,
+    padding: spacing.md,
   },
   emptyListContent: {
     flex: 1,
@@ -197,8 +197,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    marginBottom: 12,
+    padding: spacing.md,
+    marginBottom: spacing.sm + 4,
   },
   userInfo: {
     flexDirection: 'row',
@@ -206,29 +206,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userDetails: {
-    marginLeft: 12,
+    marginLeft: spacing.sm + 4,
     flex: 1,
   },
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   userEmail: {
     fontSize: 14,
-    color: colors.gray500,
     marginTop: 2,
   },
   blockedDate: {
     fontSize: 12,
-    color: colors.gray400,
     marginTop: 4,
   },
   unblockButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
     minWidth: 80,
     alignItems: 'center',
   },
@@ -238,47 +234,41 @@ const styles = StyleSheet.create({
   unblockButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: spacing.xl,
   },
   emptyIconContainer: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: colors.gray500,
     textAlign: 'center',
     lineHeight: 22,
   },
   infoFooter: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 16,
-    paddingBottom: 32,
-    gap: 8,
-    backgroundColor: colors.gray50,
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.sm,
   },
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray400,
     lineHeight: 18,
   },
 });

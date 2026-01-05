@@ -10,13 +10,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { SelectFriendsScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
 
 export default function SelectFriendsScreen({ navigation, route }: SelectFriendsScreenProps) {
   const { amount, title, description } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   // Load real friends from Supabase
   const { friends, loading, error } = useFriends();
@@ -47,22 +49,22 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const isValid = selectedFriendIds.length > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.pageTitle}>Select Friends</Text>
-          <Text style={styles.pageSubtitle}>
+          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Select Friends</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
             Who are you splitting with?
           </Text>
         </View>
 
         {/* Split Details Badge */}
-        <View style={styles.splitBadge}>
-          <Text style={styles.splitBadgeTitle}>{title}</Text>
-          <Text style={styles.splitBadgeAmount}>
+        <View style={[styles.splitBadge, { backgroundColor: colors.infoLight }]}>
+          <Text style={[styles.splitBadgeTitle, { color: colors.gray900 }]}>{title}</Text>
+          <Text style={[styles.splitBadgeAmount, { color: colors.primary }]}>
             ${amount.toFixed(2)}
           </Text>
         </View>
@@ -71,15 +73,15 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading friends...</Text>
+            <Text style={[styles.loadingText, { color: colors.gray500 }]}>Loading friends...</Text>
           </View>
         )}
 
         {/* Error State */}
         {error && !loading && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Text style={styles.errorHint}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+            <Text style={[styles.errorHint, { color: colors.gray500 }]}>
               Try adding friends from your profile first
             </Text>
           </View>
@@ -99,8 +101,8 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {/* Empty State - Only show when no friends */}
         {!loading && !error && friends.length === 0 && (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No friends yet</Text>
-            <Text style={styles.emptyHint}>
+            <Text style={[styles.emptyText, { color: colors.gray900 }]}>No friends yet</Text>
+            <Text style={[styles.emptyHint, { color: colors.gray500 }]}>
               Add friends from your profile to start splitting bills
             </Text>
           </View>
@@ -108,19 +110,27 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       </View>
 
       {/* Continue Button - Fixed at Bottom */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
         {selectedFriendIds.length > 0 && (
-          <Text style={styles.selectedCount}>
+          <Text style={[styles.selectedCount, { color: colors.primary }]}>
             {selectedFriendIds.length} friend{selectedFriendIds.length > 1 ? 's' : ''} selected
           </Text>
         )}
         <TouchableOpacity
-          style={[styles.continueButton, !isValid && styles.continueButtonDisabled]}
+          style={[
+            styles.continueButton,
+            { backgroundColor: colors.primary },
+            !isValid && { backgroundColor: colors.gray200 }
+          ]}
           onPress={handleContinue}
           disabled={!isValid}
           activeOpacity={0.7}
         >
-          <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
+          <Text style={[
+            styles.continueButtonText,
+            { color: colors.surface },
+            !isValid && { color: colors.gray400 }
+          ]}>
             Continue
           </Text>
         </TouchableOpacity>
@@ -132,7 +142,6 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -143,17 +152,14 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...typography.h2,
-    color: colors.text,
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
   pageSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   splitBadge: {
-    backgroundColor: colors.infoLight,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
@@ -164,48 +170,35 @@ const styles = StyleSheet.create({
   splitBadgeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
     flex: 1,
   },
   splitBadgeAmount: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.primary,
   },
   friendSelectorContainer: {
     flex: 1,
   },
   buttonContainer: {
     padding: spacing.lg,
-    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   selectedCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   continueButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  continueButtonDisabled: {
-    backgroundColor: colors.gray200,
-  },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
     letterSpacing: 0.5,
-  },
-  continueButtonTextDisabled: {
-    color: colors.gray400,
   },
   loadingContainer: {
     flex: 1,
@@ -215,7 +208,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -226,13 +218,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   errorHint: {
     fontSize: 14,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   emptyContainer: {
@@ -244,12 +234,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   emptyHint: {
     fontSize: 14,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

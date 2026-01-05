@@ -15,12 +15,14 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function ScanScreen() {
   // Request camera permission
   if (!permission) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, styles.cameraBackground]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -38,14 +40,17 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.gray50 }]}>
         <Ionicons name="camera-outline" size={80} color={colors.gray400} />
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionMessage}>
+        <Text style={[styles.permissionTitle, { color: colors.gray900 }]}>Camera Access Required</Text>
+        <Text style={[styles.permissionMessage, { color: colors.gray500 }]}>
           ZapSplit needs camera access to scan receipts and automatically split bills.
         </Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        <TouchableOpacity
+          style={[styles.permissionButton, { backgroundColor: colors.primary }]}
+          onPress={requestPermission}
+        >
+          <Text style={[styles.permissionButtonText, { color: colors.surface }]}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -116,16 +121,16 @@ export default function ScanScreen() {
   // If image is captured, show preview
   if (capturedImage) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, styles.cameraBackground, { paddingTop: insets.top }]}>
         <StatusBar barStyle="light-content" />
 
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={handleRetake}>
-            <Ionicons name="arrow-back" size={28} color={colors.surface} />
+            <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Review Photo</Text>
-          <View style={{ width: 28 }} />
+          <View style={styles.headerSpacer} />
         </View>
 
         {/* Image Preview */}
@@ -147,17 +152,17 @@ export default function ScanScreen() {
             onPress={handleRetake}
             activeOpacity={0.7}
           >
-            <Ionicons name="camera-reverse-outline" size={24} color={colors.text} />
+            <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
             <Text style={styles.retakeButtonText}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.usePhotoButton}
+            style={[styles.usePhotoButton, { backgroundColor: colors.primary }]}
             onPress={handleUsePhoto}
             activeOpacity={0.7}
           >
             <Text style={styles.usePhotoButtonText}>Use Photo</Text>
-            <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
+            <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -166,14 +171,14 @@ export default function ScanScreen() {
 
   // Camera view
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, styles.cameraBackground, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>Scan Receipt</Text>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Camera View */}
@@ -192,7 +197,7 @@ export default function ScanScreen() {
 
       {/* Instructions */}
       <View style={styles.instructionsContainer}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.gray400} />
+        <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
         <Text style={styles.instructionsText}>
           Position the entire receipt within the frame
         </Text>
@@ -205,7 +210,7 @@ export default function ScanScreen() {
           onPress={handlePickImage}
           activeOpacity={0.7}
         >
-          <Ionicons name="images-outline" size={28} color={colors.surface} />
+          <Ionicons name="images-outline" size={28} color="#FFFFFF" />
           <Text style={styles.galleryButtonText}>Gallery</Text>
         </TouchableOpacity>
 
@@ -216,13 +221,13 @@ export default function ScanScreen() {
           activeOpacity={0.8}
         >
           {isProcessing ? (
-            <ActivityIndicator size="large" color={colors.surface} />
+            <ActivityIndicator size="large" color="#FFFFFF" />
           ) : (
             <View style={styles.captureButtonInner} />
           )}
         </TouchableOpacity>
 
-        <View style={{ width: 80 }} />
+        <View style={styles.galleryButton} />
       </View>
     </View>
   );
@@ -231,31 +236,29 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+  },
+  cameraBackground: {
+    backgroundColor: '#000000',
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
-    backgroundColor: colors.background,
   },
   permissionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   permissionMessage: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
   permissionButton: {
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
@@ -264,7 +267,6 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -283,7 +285,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.surface,
+    color: '#FFFFFF',
+  },
+  headerSpacer: {
+    width: 28,
   },
   cameraContainer: {
     flex: 1,
@@ -304,7 +309,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
     borderWidth: 2,
-    borderColor: colors.surface,
+    borderColor: '#FFFFFF',
     borderRadius: radius.md,
     opacity: 0.5,
   },
@@ -318,7 +323,7 @@ const styles = StyleSheet.create({
   },
   instructionsText: {
     fontSize: 14,
-    color: colors.gray400,
+    color: '#9CA3AF',
     textAlign: 'center',
   },
   bottomActions: {
@@ -335,31 +340,30 @@ const styles = StyleSheet.create({
   },
   galleryButtonText: {
     fontSize: 12,
-    color: colors.surface,
+    color: '#FFFFFF',
     marginTop: spacing.xs,
   },
   captureButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: colors.gray700,
+    borderColor: '#374151',
   },
   captureButtonInner: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   captureButtonDisabled: {
     opacity: 0.5,
   },
   previewContainer: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -379,7 +383,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray800,
+    backgroundColor: '#1F2937',
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
     gap: spacing.sm,
@@ -387,14 +391,13 @@ const styles = StyleSheet.create({
   retakeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   usePhotoButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
     gap: spacing.sm,
@@ -402,6 +405,6 @@ const styles = StyleSheet.create({
   usePhotoButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
+    color: '#FFFFFF',
   },
 });

@@ -14,11 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export default function DeleteAccountScreen() {
   const navigation = useNavigation();
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -76,57 +78,57 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header title="Delete Account" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Warning Card */}
-        <View style={styles.warningCard}>
-          <View style={styles.warningIconContainer}>
+        <View style={[styles.warningCard, { backgroundColor: colors.errorLight }]}>
+          <View style={[styles.warningIconContainer, { backgroundColor: colors.surface }]}>
             <Ionicons name="warning" size={40} color={colors.error} />
           </View>
-          <Text style={styles.warningTitle}>This action is permanent</Text>
-          <Text style={styles.warningText}>
+          <Text style={[styles.warningTitle, { color: colors.error }]}>This action is permanent</Text>
+          <Text style={[styles.warningText, { color: colors.gray700 }]}>
             Deleting your account will permanently remove all your data from ZapSplit.
             This cannot be undone.
           </Text>
         </View>
 
         {/* What gets deleted */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What will be deleted:</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>What will be deleted:</Text>
 
-          <View style={styles.deleteItem}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
             <Ionicons name="person-outline" size={20} color={colors.error} />
-            <Text style={styles.deleteItemText}>Your profile and account information</Text>
+            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your profile and account information</Text>
           </View>
 
-          <View style={styles.deleteItem}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
             <Ionicons name="receipt-outline" size={20} color={colors.error} />
-            <Text style={styles.deleteItemText}>All splits you've created or participated in</Text>
+            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>All splits you've created or participated in</Text>
           </View>
 
-          <View style={styles.deleteItem}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
             <Ionicons name="card-outline" size={20} color={colors.error} />
-            <Text style={styles.deleteItemText}>Your payment history</Text>
+            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your payment history</Text>
           </View>
 
-          <View style={styles.deleteItem}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
             <Ionicons name="people-outline" size={20} color={colors.error} />
-            <Text style={styles.deleteItemText}>Your friends list and group memberships</Text>
+            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your friends list and group memberships</Text>
           </View>
 
-          <View style={styles.deleteItem}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
             <Ionicons name="notifications-outline" size={20} color={colors.error} />
-            <Text style={styles.deleteItemText}>All notifications and preferences</Text>
+            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>All notifications and preferences</Text>
           </View>
         </View>
 
         {/* Important notes */}
-        <View style={styles.notesSection}>
-          <Text style={styles.notesTitle}>Important notes:</Text>
-          <Text style={styles.notesText}>
+        <View style={[styles.notesSection, { backgroundColor: colors.gray100 }]}>
+          <Text style={[styles.notesTitle, { color: colors.gray700 }]}>Important notes:</Text>
+          <Text style={[styles.notesText, { color: colors.gray600 }]}>
             {'\u2022'} Outstanding payments may still be processed through Stripe{'\n'}
             {'\u2022'} Your Stripe Connect account (if linked) will remain active unless you deactivate it separately{'\n'}
             {'\u2022'} We may retain anonymized transaction data for legal compliance{'\n'}
@@ -136,11 +138,11 @@ export default function DeleteAccountScreen() {
 
         {/* Confirmation input */}
         <View style={styles.confirmSection}>
-          <Text style={styles.confirmLabel}>
-            Type <Text style={styles.confirmKeyword}>"delete my account"</Text> to confirm:
+          <Text style={[styles.confirmLabel, { color: colors.gray700 }]}>
+            Type <Text style={[styles.confirmKeyword, { color: colors.error }]}>"delete my account"</Text> to confirm:
           </Text>
           <TextInput
-            style={styles.confirmInput}
+            style={[styles.confirmInput, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
             value={confirmText}
             onChangeText={setConfirmText}
             placeholder="delete my account"
@@ -154,6 +156,7 @@ export default function DeleteAccountScreen() {
         <TouchableOpacity
           style={[
             styles.deleteButton,
+            { backgroundColor: colors.error },
             !isDeleteEnabled && styles.deleteButtonDisabled,
           ]}
           onPress={handleDeleteAccount}
@@ -174,7 +177,7 @@ export default function DeleteAccountScreen() {
           style={styles.cancelButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.cancelButtonText}>Cancel and go back</Text>
+          <Text style={[styles.cancelButtonText, { color: colors.gray500 }]}>Cancel and go back</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomSpacer} />
@@ -186,113 +189,95 @@ export default function DeleteAccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   content: {
     flex: 1,
     padding: 20,
   },
   warningCard: {
-    backgroundColor: colors.errorLight,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   warningIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   warningTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.error,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   warningText: {
     fontSize: 15,
-    color: colors.gray700,
     textAlign: 'center',
     lineHeight: 22,
   },
   section: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   deleteItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm + 4,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
   },
   deleteItemText: {
     flex: 1,
     fontSize: 15,
-    color: colors.gray700,
   },
   notesSection: {
-    backgroundColor: colors.gray100,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   notesTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray700,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   notesText: {
     fontSize: 13,
-    color: colors.gray600,
     lineHeight: 20,
   },
   confirmSection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   confirmLabel: {
     fontSize: 15,
-    color: colors.gray700,
-    marginBottom: 12,
+    marginBottom: spacing.sm + 4,
   },
   confirmKeyword: {
     fontWeight: '700',
-    color: colors.error,
   },
   confirmInput: {
-    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.gray200,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: radius.md,
+    padding: spacing.md,
     fontSize: 16,
-    color: colors.gray900,
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.error,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
   },
   deleteButtonDisabled: {
     opacity: 0.5,
@@ -304,11 +289,10 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.sm + 4,
   },
   cancelButtonText: {
     fontSize: 15,
-    color: colors.gray500,
   },
   bottomSpacer: {
     height: 40,
