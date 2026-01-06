@@ -140,8 +140,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             try {
               await deleteSplit(splitId);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Success', 'Split deleted');
               navigation.goBack();
-              // TODO: Show toast "Split deleted"
             } catch (error) {
               console.error('Error deleting split:', error);
               Alert.alert('Error', 'Failed to delete split');

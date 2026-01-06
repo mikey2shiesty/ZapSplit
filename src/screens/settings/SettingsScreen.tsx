@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -221,13 +222,20 @@ export default function SettingsScreen() {
           <SettingsItem
             icon="help-circle-outline"
             label="Help & FAQ"
-            onPress={() => Alert.alert('Help', 'Help center coming soon!')}
+            onPress={() => Alert.alert(
+              'Need Help?',
+              'For questions or support, email us at support@zapsplit.app',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Email Support', onPress: () => Linking.openURL('mailto:support@zapsplit.app?subject=ZapSplit%20Support') }
+              ]
+            )}
             colors={colors}
           />
           <SettingsItem
             icon="chatbubble-outline"
             label="Contact Support"
-            onPress={() => Alert.alert('Contact', 'support@zapsplit.com')}
+            onPress={() => Linking.openURL('mailto:support@zapsplit.app?subject=ZapSplit%20Feedback')}
             colors={colors}
           />
           <SettingsItem

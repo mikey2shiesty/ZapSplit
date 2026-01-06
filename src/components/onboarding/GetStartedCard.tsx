@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius } from '../../constants/theme';
+import { spacing, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
 interface GetStartedCardProps {
@@ -13,11 +14,13 @@ export default function GetStartedCard({
   onInviteFriends,
   onScanReceipt,
 }: GetStartedCardProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Get Started</Text>
-        <Text style={styles.subtitle}>Complete these steps to make the most of ZapSplit</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>Get Started</Text>
+        <Text style={[styles.subtitle, { color: colors.gray600 }]}>Complete these steps to make the most of ZapSplit</Text>
       </View>
 
       {/* Step 1: Invite Friends */}
@@ -28,12 +31,12 @@ export default function GetStartedCard({
           onInviteFriends?.();
         }}
       >
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.gray100 }]}>
           <Ionicons name="person-add" size={24} color={colors.primary} />
         </View>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>Invite your first friend</Text>
-          <Text style={styles.stepDescription}>
+          <Text style={[styles.stepTitle, { color: colors.gray900 }]}>Invite your first friend</Text>
+          <Text style={[styles.stepDescription, { color: colors.gray600 }]}>
             Start splitting bills with friends and family
           </Text>
         </View>
@@ -48,12 +51,12 @@ export default function GetStartedCard({
           onScanReceipt?.();
         }}
       >
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.gray100 }]}>
           <Ionicons name="camera" size={24} color={colors.primary} />
         </View>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>Scan your first receipt</Text>
-          <Text style={styles.stepDescription}>
+          <Text style={[styles.stepTitle, { color: colors.gray900 }]}>Scan your first receipt</Text>
+          <Text style={[styles.stepDescription, { color: colors.gray600 }]}>
             Automatically split bills by scanning receipts
           </Text>
         </View>
@@ -65,7 +68,6 @@ export default function GetStartedCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     shadowColor: '#000',
@@ -82,11 +84,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.gray900,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.gray600,
     lineHeight: 20,
   },
   step: {
@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius.md,
-    backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -110,11 +109,9 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   stepDescription: {
     fontSize: 14,
-    color: colors.gray600,
     lineHeight: 18,
   },
 });

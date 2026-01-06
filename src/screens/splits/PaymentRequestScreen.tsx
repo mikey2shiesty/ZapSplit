@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,46 +22,64 @@ import {
   formatPayID,
   PaymentRequest,
 } from '../../services/paymentService';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../hooks/useAuth';
+
+interface UserPaymentDetails {
+  payid: string | null;
+  full_name: string;
+  phone_number: string | null;
+}
 
 export default function PaymentRequestScreen({ navigation, route }: PaymentRequestScreenProps) {
   const { amount, description, splitId } = route.params;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { user } = useAuth();
 
-  // TODO: Get from user profile
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('payid');
+  const [loading, setLoading] = useState(true);
+  const [userDetails, setUserDetails] = useState<UserPaymentDetails | null>(null);
 
-  // Mock user payment details (TODO: fetch from profile)
-  const mockPaymentDetails = {
-    payid: '0412345678',
-    payidType: 'phone' as const,
-    bsb: '062000',
-    accountNumber: '12345678',
-    accountName: 'John Smith',
-    bankName: 'CommBank' as const,
-    paypalUsername: 'johnsmith',
+  useEffect(() => {
+    loadUserPaymentDetails();
+  }, []);
+
+  const loadUserPaymentDetails = async () => {
+    try {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('payid, full_name, phone_number')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setUserDetails(data);
+    } catch (error) {
+      console.error('Error loading payment details:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Use real user data, fall back to phone number as PayID if not set
+  const payid = userDetails?.payid || userDetails?.phone_number || '';
+  const accountName = userDetails?.full_name || 'Unknown';
+  const hasPaymentDetails = !!payid;
+
   const paymentRequest: PaymentRequest = {
-    recipientName: mockPaymentDetails.accountName,
+    recipientName: accountName,
     amount,
     description,
     splitId,
     paymentDetails: {
       method: selectedMethod,
       ...(selectedMethod === 'payid' && {
-        payid: mockPaymentDetails.payid,
-        payidType: mockPaymentDetails.payidType,
-        accountName: mockPaymentDetails.accountName,
-      }),
-      ...(selectedMethod === 'bank_transfer' && {
-        bsb: mockPaymentDetails.bsb,
-        accountNumber: mockPaymentDetails.accountNumber,
-        accountName: mockPaymentDetails.accountName,
-        bankName: mockPaymentDetails.bankName,
-      }),
-      ...(selectedMethod === 'paypal' && {
-        paypalUsername: mockPaymentDetails.paypalUsername,
+        payid: payid,
+        payidType: 'phone' as const,
+        accountName: accountName,
       }),
     },
   };
@@ -85,6 +104,25 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
       Alert.alert('Error', 'Failed to share payment details');
     }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Request Payment</Text>
+          </View>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
@@ -186,7 +224,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
                 PayID
               </Text>
               <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>
-                {formatPayID(mockPaymentDetails.payid, 'phone')}
+                {hasPaymentDetails ? formatPayID(payid, 'phone') : 'Not set up'}
               </Text>
             </View>
             {selectedMethod === 'payid' && (
@@ -223,7 +261,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
                 Bank Transfer
               </Text>
               <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>
-                {mockPaymentDetails.bankName} - BSB {formatBSB(mockPaymentDetails.bsb)}
+                Coming soon
               </Text>
             </View>
             {selectedMethod === 'bank_transfer' && (
@@ -259,7 +297,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
               ]}>
                 PayPal
               </Text>
-              <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>paypal.me/{mockPaymentDetails.paypalUsername}</Text>
+              <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>Coming soon</Text>
             </View>
             {selectedMethod === 'paypal' && (
               <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -271,23 +309,38 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Payment Details</Text>
           <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
-            {selectedMethod === 'payid' && (
+            {selectedMethod === 'payid' && hasPaymentDetails && (
               <>
-                <DetailRow label="PayID" value={formatPayID(mockPaymentDetails.payid, 'phone')} colors={colors} />
-                <DetailRow label="Name" value={mockPaymentDetails.accountName} colors={colors} />
+                <DetailRow label="PayID" value={formatPayID(payid, 'phone')} colors={colors} />
+                <DetailRow label="Name" value={accountName} colors={colors} />
               </>
+            )}
+            {selectedMethod === 'payid' && !hasPaymentDetails && (
+              <View style={styles.noPaymentDetails}>
+                <Ionicons name="alert-circle-outline" size={24} color={colors.warning} />
+                <Text style={[styles.noPaymentText, { color: colors.gray700 }]}>
+                  Add your phone number in Profile to receive payments via PayID
+                </Text>
+              </View>
             )}
             {selectedMethod === 'bank_transfer' && (
-              <>
-                <DetailRow label="Bank" value={mockPaymentDetails.bankName} colors={colors} />
-                <DetailRow label="BSB" value={formatBSB(mockPaymentDetails.bsb)} colors={colors} />
-                <DetailRow label="Account" value={mockPaymentDetails.accountNumber} colors={colors} />
-                <DetailRow label="Name" value={mockPaymentDetails.accountName} colors={colors} />
-              </>
+              <View style={styles.noPaymentDetails}>
+                <Ionicons name="construct-outline" size={24} color={colors.gray400} />
+                <Text style={[styles.noPaymentText, { color: colors.gray600 }]}>
+                  Bank transfer coming soon
+                </Text>
+              </View>
             )}
             {selectedMethod === 'paypal' && (
+              <View style={styles.noPaymentDetails}>
+                <Ionicons name="construct-outline" size={24} color={colors.gray400} />
+                <Text style={[styles.noPaymentText, { color: colors.gray600 }]}>
+                  PayPal integration coming soon
+                </Text>
+              </View>
+            )}
+            {selectedMethod === 'payid' && hasPaymentDetails && (
               <>
-                <DetailRow label="PayPal" value={`paypal.me/${mockPaymentDetails.paypalUsername}`} colors={colors} />
                 <DetailRow label="Amount" value={`$${amount.toFixed(2)} AUD`} colors={colors} />
               </>
             )}
@@ -507,5 +560,20 @@ const styles = StyleSheet.create({
     ...typography.caption,
     paddingHorizontal: spacing.sm,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noPaymentDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  noPaymentText: {
+    flex: 1,
+    ...typography.body,
   },
 });

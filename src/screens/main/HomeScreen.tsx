@@ -338,8 +338,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           {/* Get Started Card - Only for new users */}
           {isNewUser && (
             <GetStartedCard
-              onInviteFriends={() => console.log('Invite friends')}
-              onScanReceipt={() => console.log('Scan receipt')}
+              onInviteFriends={() => navigation.navigate('AddFriend')}
+              onScanReceipt={() => navigation.navigate('SplitFlow')}
             />
           )}
 

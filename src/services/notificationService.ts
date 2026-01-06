@@ -90,7 +90,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   // Must be a physical device
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device');
     return null;
   }
 
@@ -105,7 +104,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Push notification permission not granted');
     return null;
   }
 
@@ -115,7 +113,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
     // Skip if no projectId configured (EAS not set up yet)
     if (!projectId) {
-      console.log('Push notifications: No projectId configured. Skipping token registration.');
       return null;
     }
 
@@ -171,7 +168,6 @@ async function savePushToken(token: string): Promise<void> {
       .eq('id', user.id);
 
     if (error) throw error;
-    console.log('Push token saved successfully');
   } catch (error) {
     console.error('Error saving push token:', error);
   }

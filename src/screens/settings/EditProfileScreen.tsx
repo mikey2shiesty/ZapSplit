@@ -62,16 +62,11 @@ export default function EditProfileScreen() {
     try {
       if (!user) return;
 
-      console.log('Loading profile for user:', user.id);
-
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
-
-      console.log('Profile loaded:', { data, error });
-      console.log('Avatar URL from DB:', data?.avatar_url);
 
       if (error) throw error;
 
@@ -165,7 +160,6 @@ export default function EditProfileScreen() {
       }
 
       setUploadingAvatar(true);
-      console.log('Uploading avatar for user:', user.id);
 
       // Always use jpg for consistency
       const fileName = `${user.id}/avatar.jpg`;
@@ -182,10 +176,7 @@ export default function EditProfileScreen() {
           upsert: true,
         });
 
-      console.log('Upload result:', { uploadData, uploadError });
-
       if (uploadError) {
-        console.error('Storage upload error:', uploadError);
         throw uploadError;
       }
 
@@ -195,7 +186,6 @@ export default function EditProfileScreen() {
         .getPublicUrl(fileName);
 
       const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      console.log('New avatar URL:', newAvatarUrl);
 
       // Update profile
       const { data: updateData, error: updateError } = await supabase
@@ -204,10 +194,7 @@ export default function EditProfileScreen() {
         .eq('id', user.id)
         .select();
 
-      console.log('Profile update result:', { updateData, updateError });
-
       if (updateError) {
-        console.error('Profile update error:', updateError);
         throw updateError;
       }
 
