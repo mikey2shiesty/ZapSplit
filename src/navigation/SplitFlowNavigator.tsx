@@ -3,7 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { SplitFlowParamList } from '../types/navigation';
-import { colors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Import split flow screens
 import CreateSplitScreen from '../screens/splits/CreateSplitScreen';
@@ -23,11 +23,13 @@ import SplitSuccessScreen from '../screens/splits/SplitSuccessScreen';
 const Stack = createStackNavigator<SplitFlowParamList>();
 
 export default function SplitFlowNavigator() {
+  const { colors } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.gray50,
           elevation: 0, // Remove shadow on Android
           shadowOpacity: 0, // Remove shadow on iOS
         },
@@ -35,10 +37,11 @@ export default function SplitFlowNavigator() {
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 17,
+          color: colors.gray900,
         },
         headerBackButtonDisplayMode: 'minimal', // Hide "Back" text on iOS
         cardStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.gray50,
         },
         presentation: 'card', // Smooth card-style transitions
       }}
@@ -54,7 +57,7 @@ export default function SplitFlowNavigator() {
               onPress={() => navigation.getParent()?.goBack()}
               style={{ marginRight: 16 }}
             >
-              <Ionicons name="close" size={28} color={colors.gray700} />
+              <Ionicons name="close" size={28} color={colors.gray400} />
             </TouchableOpacity>
           ),
         })}

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface AmountInputProps {
   value: string;
@@ -21,6 +21,7 @@ export default function AmountInput({
 }: AmountInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const { colors } = useTheme();
 
   // Format the value as currency (e.g., "12345" -> "123.45")
   const formatCurrency = (text: string): string => {
@@ -61,15 +62,16 @@ export default function AmountInput({
     <View style={styles.container}>
       {/* Label */}
       {label && (
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[styles.label, { color: colors.gray500 }]}>{label}</Text>
       )}
 
       {/* Large Amount Display */}
       <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
         <Text style={[
           styles.formattedValue,
-          numericValue === 0 && styles.formattedValueEmpty,
-          error && styles.formattedValueError,
+          { color: colors.gray900 },
+          numericValue === 0 && { color: colors.gray300 },
+          error && { color: colors.error },
         ]}>
           {currency}{displayValue}
         </Text>
@@ -79,14 +81,15 @@ export default function AmountInput({
       <TouchableOpacity
         style={[
           styles.inputContainer,
-          isFocused && styles.inputContainerFocused,
-          error && styles.inputContainerError,
+          { backgroundColor: colors.surface, borderColor: colors.gray200 },
+          isFocused && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+          error && { borderColor: colors.error, backgroundColor: colors.errorLight },
         ]}
         activeOpacity={0.7}
         onPress={handlePress}
       >
         {/* Instruction Text */}
-        <Text style={styles.instructionText}>Tap to enter amount</Text>
+        <Text style={[styles.instructionText, { color: colors.gray500 }]}>Tap to enter amount</Text>
 
         {/* Clear Button */}
         {value && value !== '0' && (
@@ -116,11 +119,11 @@ export default function AmountInput({
 
       {/* Error Message */}
       {error && (
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
       )}
 
       {/* Helper Text */}
-      <Text style={styles.helperText}>
+      <Text style={[styles.helperText, { color: colors.gray500 }]}>
         Enter the total bill amount
       </Text>
     </View>
@@ -135,7 +138,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -144,42 +146,24 @@ const styles = StyleSheet.create({
   formattedValue: {
     fontSize: 64,
     fontWeight: '700',
-    color: colors.text,
     textAlign: 'center',
     marginVertical: 24,
     letterSpacing: -2,
-  },
-  formattedValueEmpty: {
-    color: colors.gray300,
-  },
-  formattedValueError: {
-    color: colors.error,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.gray200,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
     width: '100%',
   },
-  inputContainerFocused: {
-    borderColor: colors.primary,
-    backgroundColor: colors.infoLight,
-  },
-  inputContainerError: {
-    borderColor: colors.error,
-    backgroundColor: colors.errorLight,
-  },
   instructionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     flex: 1,
     textAlign: 'center',
   },
@@ -195,13 +179,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: colors.error,
     marginTop: 4,
     marginBottom: 8,
   },
   helperText: {
     fontSize: 14,
-    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
