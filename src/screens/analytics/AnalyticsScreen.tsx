@@ -265,7 +265,9 @@ export default function AnalyticsScreen() {
                     />
                   </View>
                   <Text style={[styles.categoryPercentage, { color: colors.gray500 }]}>
-                    {item.percentage.toFixed(0)}% of total
+                    {item.percentage < 1
+                      ? item.percentage.toFixed(1)
+                      : item.percentage.toFixed(0)}% of total
                   </Text>
                 </View>
               ))}
