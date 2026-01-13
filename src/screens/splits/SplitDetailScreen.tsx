@@ -21,6 +21,8 @@ import {
   markParticipantAsPaid,
   deleteSplit,
   generateShareMessage,
+  getOrCreatePaymentLink,
+  generateShareMessageWithLink,
   SplitWithParticipants,
   SplitParticipant,
 } from '../../services/splitService';
@@ -155,16 +157,34 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const handleShare = async () => {
     if (!split || !currentUserId) return;
 
-    const message = generateShareMessage(split, currentUserId);
-
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Generate or get existing payment link
+      const result = await getOrCreatePaymentLink(split.id, currentUserId);
+
+      if (!result) {
+        // Fallback to simple share without link
+        const message = generateShareMessage(split, currentUserId);
+        await RNShare.share({
+          message,
+          title: `Split: ${split.title}`,
+        });
+        return;
+      }
+
+      // Share with payment link
+      const message = generateShareMessageWithLink(split, result.url);
       await RNShare.share({
         message,
         title: `Split: ${split.title}`,
+        url: result.url, // iOS will show this as a clickable link
       });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error sharing:', error);
+      Alert.alert('Error', 'Failed to create share link. Please try again.');
     }
   };
 

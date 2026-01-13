@@ -618,3 +618,117 @@ export function generateShareMessage(
 
   return message;
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Payment Link Generation
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const WEB_BASE_URL = 'https://zapsplit-web.vercel.app';
+
+/**
+ * Generate a random short code for payment links
+ */
+function generateShortCode(length: number = 8): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars: 0, O, I, 1
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export interface PaymentLink {
+  id: string;
+  split_id: string;
+  short_code: string;
+  creator_id: string;
+  created_at: string;
+  expires_at: string | null;
+  is_active: boolean;
+}
+
+/**
+ * Get or create a payment link for a split
+ * If a link already exists, return it. Otherwise, create a new one.
+ */
+export async function getOrCreatePaymentLink(
+  splitId: string,
+  creatorId: string
+): Promise<{ link: PaymentLink; url: string } | null> {
+  try {
+    // Check if a payment link already exists for this split
+    const { data: existingLink, error: fetchError } = await supabase
+      .from('payment_links')
+      .select('*')
+      .eq('split_id', splitId)
+      .eq('is_active', true)
+      .single();
+
+    if (existingLink && !fetchError) {
+      return {
+        link: existingLink,
+        url: `${WEB_BASE_URL}/pay/${existingLink.short_code}`,
+      };
+    }
+
+    // Generate a unique short code
+    let shortCode = generateShortCode();
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    // Ensure uniqueness
+    while (attempts < maxAttempts) {
+      const { data: existing } = await supabase
+        .from('payment_links')
+        .select('id')
+        .eq('short_code', shortCode)
+        .single();
+
+      if (!existing) break;
+      shortCode = generateShortCode();
+      attempts++;
+    }
+
+    // Create new payment link
+    const { data: newLink, error: createError } = await supabase
+      .from('payment_links')
+      .insert({
+        split_id: splitId,
+        short_code: shortCode,
+        creator_id: creatorId,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating payment link:', createError);
+      throw createError;
+    }
+
+    return {
+      link: newLink,
+      url: `${WEB_BASE_URL}/pay/${newLink.short_code}`,
+    };
+  } catch (error) {
+    console.error('Failed to get or create payment link:', error);
+    return null;
+  }
+}
+
+/**
+ * Generate a shareable message with payment link
+ */
+export function generateShareMessageWithLink(
+  split: SplitWithParticipants,
+  paymentUrl: string
+): string {
+  let message = `💸 ${split.title}\n\n`;
+  message += `Total: $${split.total_amount.toFixed(2)} AUD\n`;
+  message += `Split between ${split.participant_count} people\n\n`;
+  message += `Tap to select your items and pay:\n`;
+  message += `${paymentUrl}\n\n`;
+  message += `Powered by ZapSplit ⚡`;
+
+  return message;
+}
