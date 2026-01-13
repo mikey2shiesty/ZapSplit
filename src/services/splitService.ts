@@ -695,7 +695,7 @@ export async function getOrCreatePaymentLink(
       .insert({
         split_id: splitId,
         short_code: shortCode,
-        creator_id: creatorId,
+        created_by: creatorId,
         is_active: true,
       })
       .select()
