@@ -44,9 +44,8 @@ export interface SplitParticipant {
 /**
  * Create a new split in the database with participants
  *
- * NOTE: RLS is currently disabled on splits and split_participants tables
- * This is a temporary solution for MVP to avoid infinite recursion issues
- * TODO: Re-implement proper non-recursive RLS policies in Phase 6/7
+ * RLS is enabled with proper non-recursive policies using SECURITY DEFINER functions.
+ * Users can only see/modify splits they created or participate in.
  */
 export async function createSplit(data: CreateSplitData): Promise<Split> {
   // Get current user
