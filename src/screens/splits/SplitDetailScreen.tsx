@@ -262,11 +262,20 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   const isCreator = currentUserId === split.creator_id;
   const isSettled = split.status === 'settled';
+  const isReceiptSplit = split.split_type === 'receipt';
 
   // Check if current user owes money
   const userParticipant = split.participants.find(p => p.user_id === currentUserId);
   const userOwesMoney = userParticipant && userParticipant.amount_owed > 0 && userParticipant.status !== 'paid';
   const amountOwed = userParticipant?.amount_owed || 0;
+
+  // Check if user can claim items (receipt split and hasn't paid yet)
+  const canClaimItems = isReceiptSplit && userParticipant && userParticipant.status !== 'paid' && !isCreator;
+
+  const handleClaimItems = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate('ClaimItems', { splitId });
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
@@ -344,8 +353,20 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
       {/* Action Bar */}
       <View style={[styles.actionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-        {/* Pay Button - shown if user owes money */}
-        {userOwesMoney && (
+        {/* Claim Items Button - shown for receipt splits */}
+        {canClaimItems && (
+          <TouchableOpacity
+            style={[styles.payButton, { backgroundColor: colors.primary }]}
+            onPress={handleClaimItems}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="receipt-outline" size={20} color={colors.surface} />
+            <Text style={[styles.payButtonText, { color: colors.surface }]}>Claim Items</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Pay Button - shown if user owes money and has claimed items */}
+        {userOwesMoney && !canClaimItems && (
           <TouchableOpacity
             style={[styles.payButton, { backgroundColor: colors.primary }]}
             onPress={handlePayNow}

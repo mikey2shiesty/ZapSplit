@@ -19,6 +19,7 @@ import SplitMethodScreen from '../screens/splits/SplitMethodScreen';
 import CustomAmountsScreen from '../screens/splits/CustomAmountsScreen';
 import ReviewSplitScreen from '../screens/splits/ReviewSplitScreen';
 import SplitSuccessScreen from '../screens/splits/SplitSuccessScreen';
+import ClaimItemsScreen from '../screens/splits/ClaimItemsScreen';
 
 const Stack = createStackNavigator<SplitFlowParamList>();
 
@@ -150,6 +151,14 @@ export default function SplitFlowNavigator() {
         component={SplitSuccessScreen}
         options={{
           headerShown: false, // Hide header on success screen for cleaner look
+        }}
+      />
+      <Stack.Screen
+        name="ClaimItems"
+        component={ClaimItemsScreen}
+        options={{
+          title: 'Claim Items',
+          headerShown: false, // Custom header in screen
         }}
       />
     </Stack.Navigator>

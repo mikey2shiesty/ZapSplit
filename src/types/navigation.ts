@@ -108,6 +108,10 @@ export type SplitFlowParamList = {
     recipientId: string;
     amount: number;
   };
+  ClaimItems: {
+    splitId: string;
+    paymentLinkCode?: string;
+  };
 };
 
 // Settings/Payment Navigation Types
@@ -132,6 +136,7 @@ export type PaymentRequestScreenProps = StackScreenProps<SplitFlowParamList, 'Pa
 export type SplitDetailScreenProps = StackScreenProps<SplitFlowParamList, 'SplitDetail'>;
 export type SplitSuccessScreenProps = StackScreenProps<SplitFlowParamList, 'SplitSuccess'>;
 export type PayScreenProps = StackScreenProps<SplitFlowParamList, 'PayScreen'>;
+export type ClaimItemsScreenProps = StackScreenProps<SplitFlowParamList, 'ClaimItems'>;
 
 // Settings/Payment Screen Props
 export type ConnectStripeScreenProps = StackScreenProps<SettingsStackParamList, 'ConnectStripe'>;
