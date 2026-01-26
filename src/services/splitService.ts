@@ -212,10 +212,23 @@ export async function uploadSplitImage(uri: string, splitId: string): Promise<st
   return publicUrl;
 }
 
+export interface WebPayment {
+  id: string;
+  split_id: string;
+  payer_email: string;
+  payer_name: string;
+  amount: number;
+  status: string;
+  created_at: string;
+}
+
 export interface SplitWithParticipants extends Split {
   participants: SplitParticipant[];
   participant_count: number;
   paid_count: number;
+  web_payments?: WebPayment[];
+  total_paid?: number;
+  amount_remaining?: number;
 }
 
 /**
@@ -425,13 +438,30 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
 
   if (participantsError) throw participantsError;
 
+  // Get web payments for this split
+  const { data: webPayments } = await supabase
+    .from('web_payments')
+    .select('id, split_id, payer_email, payer_name, amount, status, created_at')
+    .eq('split_id', splitId)
+    .eq('status', 'settled')
+    .order('created_at', { ascending: false });
+
   const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+
+  // Calculate total paid from both participants and web payments
+  const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
+  const webPaymentsPaid = webPayments?.reduce((sum, wp) => sum + (Number(wp.amount) || 0), 0) || 0;
+  const totalPaid = participantsPaid + webPaymentsPaid;
+  const amountRemaining = Math.max(0, split.total_amount - totalPaid);
 
   return {
     ...split,
     participants: participants || [],
     participant_count: participants?.length || 0,
     paid_count: paidCount,
+    web_payments: webPayments || [],
+    total_paid: totalPaid,
+    amount_remaining: amountRemaining,
   };
 }
 

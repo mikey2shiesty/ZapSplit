@@ -326,7 +326,70 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Created</Text>
             <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{formatDate(split.created_at)}</Text>
           </View>
+
+          {/* Payment Progress */}
+          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.summaryRow}>
+            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
+            <Text style={[styles.summaryValue, { color: colors.success }]}>
+              ${(split.total_paid || 0).toFixed(2)} of ${split.total_amount.toFixed(2)}
+            </Text>
+          </View>
+          {(split.amount_remaining || 0) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Remaining</Text>
+              <Text style={[styles.summaryValue, { color: colors.warning }]}>
+                ${(split.amount_remaining || 0).toFixed(2)}
+              </Text>
+            </View>
+          )}
+          {/* Progress Bar */}
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  backgroundColor: (split.amount_remaining || 0) === 0 ? colors.success : colors.primary,
+                  width: `${Math.min(100, ((split.total_paid || 0) / split.total_amount) * 100)}%`,
+                },
+              ]}
+            />
+          </View>
         </View>
+
+        {/* Web Payments Section */}
+        {split.web_payments && split.web_payments.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Payments Received</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
+                {split.web_payments.length} payment{split.web_payments.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+
+            {split.web_payments.map((payment) => (
+              <View
+                key={payment.id}
+                style={[styles.paymentCard, { backgroundColor: colors.surface }]}
+              >
+                <View style={[styles.paymentIcon, { backgroundColor: colors.successLight }]}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                </View>
+                <View style={styles.paymentInfo}>
+                  <Text style={[styles.paymentName, { color: colors.gray900 }]}>
+                    {payment.payer_name || payment.payer_email}
+                  </Text>
+                  <Text style={[styles.paymentDate, { color: colors.gray500 }]}>
+                    {formatDate(payment.created_at)}
+                  </Text>
+                </View>
+                <Text style={[styles.paymentAmount, { color: colors.success }]}>
+                  +${Number(payment.amount).toFixed(2)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Participants Section */}
         <View style={styles.section}>
@@ -710,6 +773,47 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     ...typography.body,
+    fontWeight: '700',
+  },
+  progressBarContainer: {
+    height: 8,
+    borderRadius: 4,
+    marginTop: spacing.md,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  paymentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
+    ...shadows.low,
+  },
+  paymentIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  paymentInfo: {
+    flex: 1,
+  },
+  paymentName: {
+    ...typography.body,
+    fontWeight: '600',
+  },
+  paymentDate: {
+    ...typography.caption,
+    marginTop: 2,
+  },
+  paymentAmount: {
+    ...typography.h4,
     fontWeight: '700',
   },
 });
