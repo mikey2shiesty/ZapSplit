@@ -622,7 +622,7 @@ export function generateShareMessage(
 // Payment Link Generation
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const WEB_BASE_URL = 'https://zapsplit-web.vercel.app';
+const WEB_BASE_URL = 'https://zapsplit.com.au';
 
 /**
  * Generate a random short code for payment links
