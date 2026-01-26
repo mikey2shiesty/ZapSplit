@@ -5,15 +5,18 @@ import {
   StyleSheet,
   StatusBar,
   TouchableOpacity,
+  Share,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
 import { SplitSuccessScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
-  const { splitId, amount, participantCount, splitMethod, participantAmounts } = route.params;
+  const { splitId, amount, participantCount, splitMethod, participantAmounts, paymentLink } = route.params;
   const insets = useSafeAreaInsets();
   const isEqualSplit = splitMethod === 'equal' || !splitMethod;
 
@@ -32,6 +35,33 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to split detail screen
     navigation.navigate('SplitDetail', { splitId });
+  };
+
+  const handleShareLink = async () => {
+    if (!paymentLink) {
+      // Fallback to view split if no link
+      handleViewSplit();
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    try {
+      await Share.share({
+        message: `Hey! I'm splitting a bill with you. Claim your items and pay here: ${paymentLink}`,
+        url: paymentLink,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!paymentLink) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Clipboard.setStringAsync(paymentLink);
+    Alert.alert('Copied!', 'Payment link copied to clipboard');
   };
 
   return (
@@ -97,28 +127,47 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            Friends can pay their share via card, Apple Pay, or Google Pay
+            Share the link below - friends can claim their items and pay via card, Apple Pay, or Google Pay
           </Text>
         </View>
+
+        {/* Payment Link Card */}
+        {paymentLink && (
+          <TouchableOpacity style={styles.linkCard} onPress={handleCopyLink} activeOpacity={0.7}>
+            <View style={styles.linkContent}>
+              <Ionicons name="link" size={20} color={colors.primary} />
+              <Text style={styles.linkText} numberOfLines={1}>{paymentLink}</Text>
+            </View>
+            <Ionicons name="copy-outline" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={handleViewSplit}
+          onPress={handleShareLink}
           activeOpacity={0.7}
         >
           <Ionicons name="share-outline" size={20} color={colors.surface} style={{ marginRight: 8 }} />
-          <Text style={styles.primaryButtonText}>View & Share Split</Text>
+          <Text style={styles.primaryButtonText}>Share Link</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
+          onPress={handleViewSplit}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.secondaryButtonText}>View Split Details</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.doneButton}
           onPress={handleDone}
           activeOpacity={0.7}
         >
-          <Text style={styles.secondaryButtonText}>Done</Text>
+          <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -245,11 +294,46 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
     letterSpacing: 0.5,
+  },
+  doneButton: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  linkCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    width: '100%',
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  linkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  linkText: {
+    fontSize: 14,
+    color: colors.primary,
+    marginLeft: spacing.sm,
+    flex: 1,
   },
 });

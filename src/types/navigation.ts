@@ -100,6 +100,7 @@ export type SplitFlowParamList = {
     participantCount: number;
     splitMethod?: 'equal' | 'custom' | 'percentage' | 'receipt';
     participantAmounts?: { name: string; amount: number }[];
+    paymentLink?: string; // For sharing the split link
   };
   PayScreen: {
     splitId: string;

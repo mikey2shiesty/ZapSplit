@@ -6,6 +6,7 @@ import {
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +15,10 @@ import { SelectFriendsForReceiptScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
+import { supabase } from '../../services/supabase';
+import { createReceiptSplit, getOrCreatePaymentLink } from '../../services/splitService';
+import { createSplitItems } from '../../services/itemService';
+import { uploadReceiptToStorage } from '../../services/receiptService';
 
 export default function SelectFriendsForReceiptScreen({
   navigation,
@@ -26,6 +31,7 @@ export default function SelectFriendsForReceiptScreen({
   const { friends, loading, error } = useFriends();
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const handleToggleFriend = (friendId: string) => {
     setSelectedFriendIds((prev) =>
@@ -35,27 +41,121 @@ export default function SelectFriendsForReceiptScreen({
     );
   };
 
-  const handleContinue = () => {
+  // Create split and generate payment link (skip item assignment)
+  const handleContinue = async () => {
     if (selectedFriendIds.length === 0) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      setSaving(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    navigation.navigate('ItemAssignment', {
-      receipt,
-      imageUri,
-      selectedFriends: selectedFriendIds,
-    });
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('User not authenticated');
+
+      // 1. Upload receipt image to storage
+      const receiptImageUrl = await uploadReceiptToStorage(imageUri, currentUser.id);
+
+      // 2. Build participants data - friends will claim items later, so amount_owed starts at 0
+      const participantsData = selectedFriendIds.map(friendId => ({
+        user_id: friendId,
+        amount_owed: 0, // Will be calculated when they claim items
+      }));
+
+      // 3. Create the split record (without item assignments)
+      const splitData = {
+        title: receipt.merchant || 'Receipt Split',
+        description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
+        total_amount: receipt.total,
+        currency: 'USD',
+        split_method: 'receipt' as const,
+        participants: participantsData,
+        image_url: receiptImageUrl,
+        receipt_data: {
+          subtotal: receipt.subtotal,
+          tax: receipt.tax,
+          tip: receipt.tip,
+        },
+      };
+
+      const split = await createReceiptSplit(splitData, receipt.items, []);
+
+      // 4. Create split items in database (no assignments yet - friends will claim)
+      await createSplitItems(split.id, receipt.items);
+
+      // 5. Generate payment link for sharing
+      const paymentLink = await getOrCreatePaymentLink(split.id, currentUser.id);
+
+      // Success!
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      // Navigate to success screen
+      navigation.navigate('SplitSuccess', {
+        splitId: split.id,
+        amount: receipt.total,
+        participantCount: selectedFriendIds.length,
+        splitMethod: 'receipt',
+        participantAmounts: [], // No amounts yet - friends will claim items
+        paymentLink: paymentLink?.url, // Pass the payment link for sharing
+      });
+    } catch (error: any) {
+      console.error('Error creating split:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to create split. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSkip = () => {
-    // Allow continuing without friends (solo receipt tracking)
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleSkip = async () => {
+    // Solo receipt tracking - create split just for yourself
+    try {
+      setSaving(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    navigation.navigate('ItemAssignment', {
-      receipt,
-      imageUri,
-      selectedFriends: [],
-    });
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('User not authenticated');
+
+      const receiptImageUrl = await uploadReceiptToStorage(imageUri, currentUser.id);
+
+      const splitData = {
+        title: receipt.merchant || 'Receipt Split',
+        description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
+        total_amount: receipt.total,
+        currency: 'USD',
+        split_method: 'receipt' as const,
+        participants: [], // No other participants
+        image_url: receiptImageUrl,
+        receipt_data: {
+          subtotal: receipt.subtotal,
+          tax: receipt.tax,
+          tip: receipt.tip,
+        },
+      };
+
+      const split = await createReceiptSplit(splitData, receipt.items, []);
+      await createSplitItems(split.id, receipt.items);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      navigation.navigate('SplitSuccess', {
+        splitId: split.id,
+        amount: receipt.total,
+        participantCount: 1,
+        splitMethod: 'receipt',
+        participantAmounts: [],
+      });
+    } catch (error: any) {
+      console.error('Error creating split:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', error.message || 'Failed to create split.', [{ text: 'OK' }]);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const isValid = selectedFriendIds.length > 0;
@@ -142,31 +242,38 @@ export default function SelectFriendsForReceiptScreen({
 
       {/* Footer Buttons */}
       <View style={styles.buttonContainer}>
-        {selectedFriendIds.length > 0 && (
+        {selectedFriendIds.length > 0 && !saving && (
           <Text style={styles.selectedCount}>
             {selectedFriendIds.length} friend{selectedFriendIds.length > 1 ? 's' : ''} selected
           </Text>
         )}
 
         <TouchableOpacity
-          style={[styles.continueButton, !isValid && styles.continueButtonDisabled]}
+          style={[styles.continueButton, (!isValid || saving) && styles.continueButtonDisabled]}
           onPress={handleContinue}
-          disabled={!isValid}
+          disabled={!isValid || saving}
           activeOpacity={0.7}
         >
-          <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
-            Continue with Friends
-          </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={20}
-            color={isValid ? colors.surface : colors.gray400}
-          />
+          {saving ? (
+            <ActivityIndicator size="small" color={colors.surface} />
+          ) : (
+            <>
+              <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
+                Create & Share Split
+              </Text>
+              <Ionicons
+                name="share-outline"
+                size={20}
+                color={isValid ? colors.surface : colors.gray400}
+              />
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.skipButton}
           onPress={handleSkip}
+          disabled={saving}
           activeOpacity={0.7}
         >
           <Text style={styles.skipButtonText}>
