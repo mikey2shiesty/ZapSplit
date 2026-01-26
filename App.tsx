@@ -1,9 +1,63 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, LinkingOptions } from '@react-navigation/native';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Linking from 'expo-linking';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+
+// Deep linking configuration
+const linking: LinkingOptions<any> = {
+  prefixes: [
+    Linking.createURL('/'),
+    'https://zapsplit.app',
+    'https://www.zapsplit.app',
+    'zapsplit://',
+  ],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: 'home',
+          Splits: 'splits',
+        },
+      },
+      SplitFlow: {
+        screens: {
+          ClaimItems: 'pay/:code',
+          SplitDetail: 'split/:splitId',
+        },
+      },
+    },
+  },
+  // Custom function to get the split ID from the payment link code
+  async getStateFromPath(path, options) {
+    // Handle /pay/:code URLs - need to look up splitId from code
+    const payMatch = path.match(/\/pay\/([^/?]+)/);
+    if (payMatch) {
+      const code = payMatch[1];
+      // Return state that navigates to ClaimItems with the code
+      // The screen will look up the splitId from the code
+      return {
+        routes: [
+          {
+            name: 'SplitFlow',
+            state: {
+              routes: [
+                {
+                  name: 'ClaimItems',
+                  params: { paymentLinkCode: code },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
+    // Default behavior for other paths
+    return undefined;
+  },
+};
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -39,7 +93,7 @@ function AppContent() {
   if (!stripePublishableKey) {
     console.warn('⚠️ Stripe publishable key not found. Payment features will not work.');
     return (
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer theme={navigationTheme} linking={linking}>
         <AppNavigator />
       </NavigationContainer>
     );
@@ -51,7 +105,7 @@ function AppContent() {
       merchantIdentifier="merchant.com.zapsplit.app"
       urlScheme="zapsplit"
     >
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer theme={navigationTheme} linking={linking}>
         <AppNavigator />
       </NavigationContainer>
     </StripeProvider>

@@ -24,10 +24,17 @@ export interface Split {
   title: string;
   description?: string;
   total_amount: number;
+  tax_amount?: number;
+  tip_amount?: number;
   currency: string;
   image_url?: string;
   split_type?: 'equal' | 'custom' | 'percentage' | 'receipt';
   status: 'active' | 'settled';
+  receipt_parsed_data?: {
+    tax?: number;
+    tip?: number;
+    subtotal?: number;
+  };
   created_at: string;
   updated_at: string;
 }

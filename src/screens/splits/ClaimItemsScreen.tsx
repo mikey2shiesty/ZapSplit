@@ -29,11 +29,12 @@ interface ItemClaim {
 }
 
 export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreenProps) {
-  const { splitId } = route.params;
+  const { splitId: initialSplitId, paymentLinkCode } = route.params;
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [splitId, setSplitId] = useState<string | null>(initialSplitId || null);
   const [split, setSplit] = useState<SplitWithParticipants | null>(null);
   const [items, setItems] = useState<SplitItem[]>([]);
   const [claims, setClaims] = useState<ItemClaim[]>([]);
@@ -44,7 +45,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
   // Load data
   useEffect(() => {
     loadData();
-  }, [splitId]);
+  }, [initialSplitId, paymentLinkCode]);
 
   const loadData = async () => {
     try {
@@ -63,19 +64,44 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
         }
       }
 
+      // Resolve splitId from payment link code if needed
+      let resolvedSplitId: string | null = initialSplitId || null;
+      if (!resolvedSplitId && paymentLinkCode) {
+        const { data: paymentLink, error: linkError } = await supabase
+          .from('payment_links')
+          .select('split_id')
+          .eq('short_code', paymentLinkCode)
+          .eq('is_active', true)
+          .single();
+
+        if (linkError || !paymentLink) {
+          Alert.alert('Error', 'Invalid or expired payment link');
+          navigation.goBack();
+          return;
+        }
+        resolvedSplitId = paymentLink.split_id;
+        setSplitId(resolvedSplitId);
+      }
+
+      if (!resolvedSplitId) {
+        Alert.alert('Error', 'No split ID provided');
+        navigation.goBack();
+        return;
+      }
+
       // Load split details
-      const splitData = await getSplitById(splitId);
+      const splitData = await getSplitById(resolvedSplitId);
       setSplit(splitData);
 
       // Load items
-      const itemsData = await getSplitItems(splitId);
+      const itemsData = await getSplitItems(resolvedSplitId);
       setItems(itemsData);
 
       // Load existing claims
       const { data: claimsData } = await supabase
         .from('item_claims')
         .select('*')
-        .eq('split_id', splitId);
+        .eq('split_id', resolvedSplitId);
 
       if (claimsData) {
         setClaims(claimsData);
@@ -106,7 +132,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     const proportion = billSubtotal > 0 ? selectedItemsTotal / billSubtotal : 0;
 
     // Get tax and tip from receipt_data if available
-    const receiptData = (split as any).receipt_parsed_data || {};
+    const receiptData = split.receipt_parsed_data || {};
     const totalTax = receiptData.tax || split.tax_amount || 0;
     const totalTip = receiptData.tip || split.tip_amount || 0;
 
@@ -185,7 +211,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
   // Save claims and proceed to payment
   const handleContinue = async () => {
-    if (selectedItems.size === 0 || !currentUser) return;
+    if (selectedItems.size === 0 || !currentUser || !splitId) return;
 
     try {
       setSaving(true);
@@ -229,9 +255,9 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       // Navigate to payment screen
-      if (split) {
+      if (split && splitId) {
         navigation.navigate('PayScreen', {
-          splitId,
+          splitId: splitId,
           participantId: '', // Will be found in PayScreen
           recipientId: split.creator_id,
           amount: total,

@@ -109,7 +109,7 @@ export type SplitFlowParamList = {
     amount: number;
   };
   ClaimItems: {
-    splitId: string;
+    splitId?: string;
     paymentLinkCode?: string;
   };
 };

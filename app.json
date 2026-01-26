@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "scheme": "zapsplit",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -16,6 +17,10 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.yourname.zapsplit",
       "buildNumber": "1.0.0",
+      "associatedDomains": [
+        "applinks:zapsplit.app",
+        "applinks:www.zapsplit.app"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "ZapSplit needs camera access to scan receipts and automatically split bills.",
         "NSPhotoLibraryUsageDescription": "ZapSplit needs access to your photos to upload receipt images."
@@ -34,7 +39,26 @@
         "WRITE_EXTERNAL_STORAGE"
       ],
       "targetSdkVersion": 35,
-      "compileSdkVersion": 35
+      "compileSdkVersion": 35,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "zapsplit.app",
+              "pathPrefix": "/pay"
+            },
+            {
+              "scheme": "https",
+              "host": "www.zapsplit.app",
+              "pathPrefix": "/pay"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "plugins": [
       [
