@@ -17,7 +17,6 @@ import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
 import { supabase } from '../../services/supabase';
 import { createReceiptSplit, getOrCreatePaymentLink } from '../../services/splitService';
-import { createSplitItems } from '../../services/itemService';
 import { uploadReceiptToStorage } from '../../services/receiptService';
 
 export default function SelectFriendsForReceiptScreen({
@@ -79,11 +78,9 @@ export default function SelectFriendsForReceiptScreen({
       };
 
       const split = await createReceiptSplit(splitData, receipt.items, []);
+      // Note: createReceiptSplit already creates items internally
 
-      // 4. Create split items in database (no assignments yet - friends will claim)
-      await createSplitItems(split.id, receipt.items);
-
-      // 5. Generate payment link for sharing
+      // 4. Generate payment link for sharing
       const paymentLink = await getOrCreatePaymentLink(split.id, currentUser.id);
 
       // Success!
@@ -138,7 +135,7 @@ export default function SelectFriendsForReceiptScreen({
       };
 
       const split = await createReceiptSplit(splitData, receipt.items, []);
-      await createSplitItems(split.id, receipt.items);
+      // Note: createReceiptSplit already creates items internally, no need to call createSplitItems again
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
