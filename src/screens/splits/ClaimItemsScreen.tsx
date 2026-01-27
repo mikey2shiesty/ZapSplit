@@ -40,6 +40,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
   const [claims, setClaims] = useState<ItemClaim[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [sharedItems, setSharedItems] = useState<Map<number, number>>(new Map());
+  const [selectedQuantities, setSelectedQuantities] = useState<Map<number, number>>(new Map()); // Track qty claimed per item
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; full_name: string } | null>(null);
 
   // Load data
@@ -125,7 +126,11 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       const item = items[index];
       if (!item) return sum;
       const shareCount = sharedItems.get(index) || 1;
-      return sum + (item.total_price / shareCount);
+      // Get selected quantity (default to full quantity if not specified)
+      const selectedQty = selectedQuantities.get(index) || item.quantity;
+      const unitPrice = item.total_price / item.quantity;
+      const itemTotal = unitPrice * selectedQty;
+      return sum + (itemTotal / shareCount);
     }, 0);
 
     const billSubtotal = items.reduce((sum, item) => sum + item.total_price, 0);
@@ -146,7 +151,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       tipShare: Math.round(calcTipShare * 100) / 100,
       total: Math.round(calcTotal * 100) / 100,
     };
-  }, [split, items, selectedItems, sharedItems]);
+  }, [split, items, selectedItems, sharedItems, selectedQuantities]);
 
   // Get claims by item index
   const claimsByItemIndex = useMemo(() => {
@@ -164,6 +169,37 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     const itemClaims = claimsByItemIndex.get(index) || [];
     return itemClaims.some(c => c.claimed_by_user_id === currentUser?.id);
   };
+
+  // Calculate what user has already claimed
+  const alreadyClaimedTotal = useMemo(() => {
+    if (!currentUser || !split || items.length === 0) return 0;
+
+    let claimedItemsTotal = 0;
+    claims.forEach(claim => {
+      if (claim.claimed_by_user_id === currentUser.id) {
+        claimedItemsTotal += claim.item_amount / (claim.share_count || 1);
+      }
+    });
+
+    // Calculate proportional tax/tip for claimed items
+    const billSubtotal = items.reduce((sum, item) => sum + item.total_price, 0);
+    const proportion = billSubtotal > 0 ? claimedItemsTotal / billSubtotal : 0;
+
+    const receiptData = split.receipt_parsed_data || {};
+    const totalTax = receiptData.tax || split.tax_amount || 0;
+    const totalTip = receiptData.tip || split.tip_amount || 0;
+
+    const taxShare = totalTax * proportion;
+    const tipShare = totalTip * proportion;
+
+    return Math.round((claimedItemsTotal + taxShare + tipShare) * 100) / 100;
+  }, [currentUser, split, items, claims]);
+
+  // Count items already claimed by current user
+  const myClaimedCount = useMemo(() => {
+    if (!currentUser) return 0;
+    return claims.filter(c => c.claimed_by_user_id === currentUser.id).length;
+  }, [currentUser, claims]);
 
   // Handle item toggle
   const handleToggleItem = (index: number) => {
@@ -183,9 +219,38 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
           nextShared.delete(index);
           return nextShared;
         });
+        setSelectedQuantities(prevQty => {
+          const nextQty = new Map(prevQty);
+          nextQty.delete(index);
+          return nextQty;
+        });
       } else {
         next.add(index);
+        // Set default quantity to 1 for items with qty > 1
+        const item = items[index];
+        if (item && item.quantity > 1) {
+          setSelectedQuantities(prevQty => {
+            const nextQty = new Map(prevQty);
+            nextQty.set(index, 1); // Default to claiming 1
+            return nextQty;
+          });
+        }
       }
+      return next;
+    });
+  };
+
+  // Handle quantity change for multi-quantity items
+  const handleQuantityChange = (index: number, delta: number) => {
+    const item = items[index];
+    if (!item) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedQuantities(prev => {
+      const next = new Map(prev);
+      const currentQty = prev.get(index) || 1;
+      const newQty = Math.max(1, Math.min(item.quantity, currentQty + delta));
+      next.set(index, newQty);
       return next;
     });
   };
@@ -220,22 +285,29 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       // Prepare claims data
       const claimsData = Array.from(selectedItems).map(index => {
         const item = items[index];
+        const selectedQty = selectedQuantities.get(index) || item.quantity;
+        const unitPrice = item.total_price / item.quantity;
+        const claimedAmount = unitPrice * selectedQty;
         return {
           split_id: splitId,
           item_index: index,
           item_name: item.name,
-          item_amount: item.total_price,
+          item_amount: claimedAmount, // Only the amount for selected quantity
           claimed_by_email: currentUser.email,
           claimed_by_name: currentUser.full_name,
           claimed_by_user_id: currentUser.id,
           share_count: sharedItems.get(index) || 1,
+          quantity_claimed: selectedQty, // Track how many were claimed
         };
       });
 
-      // Save claims to database
+      // Save claims to database (use upsert to handle re-claiming)
       const { error } = await supabase
         .from('item_claims')
-        .insert(claimsData);
+        .upsert(claimsData, {
+          onConflict: 'split_id,item_index,claimed_by_user_id',
+          ignoreDuplicates: false,
+        });
 
       if (error) {
         throw error;
@@ -328,7 +400,12 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
             const shareCount = sharedItems.get(index) || 1;
             const itemClaims = claimsByItemIndex.get(index) || [];
             const alreadyClaimedByMe = isClaimedByMe(index);
-            const displayPrice = isShared ? item.total_price / shareCount : item.total_price;
+            const hasMultipleQty = item.quantity > 1;
+            const selectedQty = selectedQuantities.get(index) || item.quantity;
+            const unitPrice = item.total_price / item.quantity;
+            const displayPrice = isShared
+              ? (unitPrice * selectedQty) / shareCount
+              : unitPrice * selectedQty;
 
             return (
               <TouchableOpacity
@@ -362,8 +439,43 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                   ]}>
                     {item.name}
                   </Text>
-                  {item.quantity > 1 && (
-                    <Text style={styles.itemQuantity}>x{item.quantity}</Text>
+                  {hasMultipleQty && !isSelected && (
+                    <Text style={styles.itemQuantity}>x{item.quantity} (${unitPrice.toFixed(2)} each)</Text>
+                  )}
+
+                  {/* Quantity Selector - show when selected and has multiple qty */}
+                  {isSelected && hasMultipleQty && !alreadyClaimedByMe && (
+                    <View style={styles.quantitySelector}>
+                      <TouchableOpacity
+                        style={styles.qtyButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleQuantityChange(index, -1);
+                        }}
+                        disabled={selectedQty <= 1}
+                      >
+                        <Ionicons
+                          name="remove"
+                          size={18}
+                          color={selectedQty <= 1 ? colors.gray300 : colors.primary}
+                        />
+                      </TouchableOpacity>
+                      <Text style={styles.qtyText}>{selectedQty} of {item.quantity}</Text>
+                      <TouchableOpacity
+                        style={styles.qtyButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleQuantityChange(index, 1);
+                        }}
+                        disabled={selectedQty >= item.quantity}
+                      >
+                        <Ionicons
+                          name="add"
+                          size={18}
+                          color={selectedQty >= item.quantity ? colors.gray300 : colors.primary}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   )}
 
                   {/* Show who claimed this item */}
@@ -425,6 +537,19 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
       {/* Payment Summary */}
       <View style={styles.summaryContainer}>
+        {/* Show already claimed total */}
+        {myClaimedCount > 0 && selectedItems.size === 0 && (
+          <View style={styles.alreadyClaimedCard}>
+            <View style={styles.alreadyClaimedHeader}>
+              <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+              <Text style={styles.alreadyClaimedTitle}>Already Claimed</Text>
+            </View>
+            <Text style={styles.alreadyClaimedText}>
+              You've claimed {myClaimedCount} item{myClaimedCount > 1 ? 's' : ''} totaling ${alreadyClaimedTotal.toFixed(2)}
+            </Text>
+          </View>
+        )}
+
         {selectedItems.size > 0 && (
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
@@ -451,26 +576,43 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
           </View>
         )}
 
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            (selectedItems.size === 0 || saving) && styles.continueButtonDisabled,
-          ]}
-          onPress={handleContinue}
-          disabled={selectedItems.size === 0 || saving}
-          activeOpacity={0.7}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.surface} />
-          ) : (
-            <>
-              <Text style={styles.continueButtonText}>
-                Continue to Pay ${total.toFixed(2)}
-              </Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.surface} />
-            </>
-          )}
-        </TouchableOpacity>
+        {selectedItems.size > 0 ? (
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              saving && styles.continueButtonDisabled,
+            ]}
+            onPress={handleContinue}
+            disabled={saving}
+            activeOpacity={0.7}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.surface} />
+            ) : (
+              <>
+                <Text style={styles.continueButtonText}>
+                  Continue to Pay ${total.toFixed(2)}
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+              </>
+            )}
+          </TouchableOpacity>
+        ) : myClaimedCount > 0 ? (
+          <TouchableOpacity
+            style={[styles.doneButton]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+            <Ionicons name="checkmark" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={[styles.continueButton, styles.continueButtonDisabled]}>
+            <Text style={styles.continueButtonText}>
+              Select items to continue
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -727,5 +869,67 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.surface,
     letterSpacing: 0.5,
+  },
+  alreadyClaimedCard: {
+    backgroundColor: colors.successLight,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.success + '30',
+  },
+  alreadyClaimedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  alreadyClaimedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.success,
+  },
+  alreadyClaimedText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 32,
+  },
+  doneButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  qtyButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    minWidth: 50,
+    textAlign: 'center',
   },
 });

@@ -11,6 +11,8 @@ interface RecentSplitCardProps {
   totalCount: number;
   amount: number;
   date: string;
+  totalPaid?: number; // Amount paid via web/participants
+  amountOwedByOthers?: number; // Amount excluding creator's items
   onPress?: () => void;
 }
 
@@ -20,11 +22,21 @@ export default function RecentSplitCard({
   totalCount,
   amount,
   date,
+  totalPaid = 0,
+  amountOwedByOthers,
   onPress,
 }: RecentSplitCardProps) {
   const { colors } = useTheme();
-  const progressPercentage = (paidCount / totalCount) * 100;
-  const isComplete = paidCount === totalCount;
+
+  // Use amountOwedByOthers if available (excludes creator's items)
+  const targetAmount = amountOwedByOthers ?? amount;
+
+  // Use monetary progress if available, otherwise fall back to participant count
+  const hasPaymentData = totalPaid > 0 || targetAmount > 0;
+  const progressPercentage = hasPaymentData && targetAmount > 0
+    ? Math.min((totalPaid / targetAmount) * 100, 100)
+    : totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
+  const isComplete = hasPaymentData ? totalPaid >= targetAmount : paidCount === totalCount;
 
   return (
     <TouchableOpacity
@@ -47,7 +59,9 @@ export default function RecentSplitCard({
         <View style={styles.info}>
           <Text style={[styles.title, { color: colors.gray900 }]}>{title}</Text>
           <Text style={[styles.subtitle, { color: colors.gray600 }]}>
-            {date} • {paidCount}/{totalCount} paid
+            {date} • {hasPaymentData && targetAmount > 0
+              ? `$${totalPaid.toFixed(2)} of $${targetAmount.toFixed(2)}`
+              : `${paidCount}/${totalCount} paid`}
           </Text>
 
           {/* Progress Bar */}

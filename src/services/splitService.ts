@@ -229,6 +229,8 @@ export interface SplitWithParticipants extends Split {
   web_payments?: WebPayment[];
   total_paid?: number;
   amount_remaining?: number;
+  creator_claimed_amount?: number;
+  amount_owed_by_others?: number;
 }
 
 /**
@@ -279,7 +281,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
     new Map(allSplits.map(split => [split.id, split])).values()
   );
 
-  // Fetch participants for each split
+  // Fetch participants and web payments for each split
   const splitsWithParticipants = await Promise.all(
     uniqueSplits.map(async (split) => {
       const { data: participants, error } = await supabase
@@ -289,13 +291,45 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
 
       if (error) throw error;
 
+      // Also get web payments
+      const { data: webPayments } = await supabase
+        .from('web_payments')
+        .select('id, amount, status')
+        .eq('split_id', split.id)
+        .eq('status', 'settled');
+
+      // Get creator's claims (they don't pay themselves)
+      const { data: creatorClaims } = await supabase
+        .from('item_claims')
+        .select('item_amount, share_count')
+        .eq('split_id', split.id)
+        .eq('claimed_by_user_id', split.creator_id);
+
       const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+
+      // Calculate creator's claimed total
+      const creatorClaimedAmount = creatorClaims?.reduce((sum, claim) => {
+        const shareCount = claim.share_count || 1;
+        return sum + (Number(claim.item_amount) / shareCount);
+      }, 0) || 0;
+
+      // Calculate total paid from both sources
+      const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
+      const webPaymentsPaid = webPayments?.reduce((sum, wp) => sum + (Number(wp.amount) || 0), 0) || 0;
+      const totalPaid = participantsPaid + webPaymentsPaid;
+
+      // Amount owed by others = total - creator's items
+      const amountOwedByOthers = split.total_amount - creatorClaimedAmount;
 
       return {
         ...split,
         participants: participants || [],
         participant_count: participants?.length || 0,
         paid_count: paidCount,
+        total_paid: totalPaid,
+        creator_claimed_amount: creatorClaimedAmount,
+        amount_owed_by_others: amountOwedByOthers,
+        amount_remaining: Math.max(0, amountOwedByOthers - totalPaid),
       };
     })
   );
@@ -446,13 +480,29 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     .eq('status', 'settled')
     .order('created_at', { ascending: false });
 
+  // Get creator's claims (creator doesn't pay themselves)
+  const { data: creatorClaims } = await supabase
+    .from('item_claims')
+    .select('item_amount, share_count')
+    .eq('split_id', splitId)
+    .eq('claimed_by_user_id', split.creator_id);
+
   const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+
+  // Calculate creator's claimed total (they don't need to pay themselves)
+  const creatorClaimedAmount = creatorClaims?.reduce((sum, claim) => {
+    const shareCount = claim.share_count || 1;
+    return sum + (Number(claim.item_amount) / shareCount);
+  }, 0) || 0;
 
   // Calculate total paid from both participants and web payments
   const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
   const webPaymentsPaid = webPayments?.reduce((sum, wp) => sum + (Number(wp.amount) || 0), 0) || 0;
   const totalPaid = participantsPaid + webPaymentsPaid;
-  const amountRemaining = Math.max(0, split.total_amount - totalPaid);
+
+  // Amount remaining = total - creator's items - payments received
+  const amountOwedByOthers = split.total_amount - creatorClaimedAmount;
+  const amountRemaining = Math.max(0, amountOwedByOthers - totalPaid);
 
   return {
     ...split,
@@ -462,6 +512,8 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     web_payments: webPayments || [],
     total_paid: totalPaid,
     amount_remaining: amountRemaining,
+    creator_claimed_amount: creatorClaimedAmount,
+    amount_owed_by_others: amountOwedByOthers,
   };
 }
 

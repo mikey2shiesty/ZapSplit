@@ -269,8 +269,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const userOwesMoney = userParticipant && userParticipant.amount_owed > 0 && userParticipant.status !== 'paid';
   const amountOwed = userParticipant?.amount_owed || 0;
 
-  // Check if user can claim items (receipt split and hasn't paid yet)
-  const canClaimItems = isReceiptSplit && userParticipant && userParticipant.status !== 'paid' && !isCreator;
+  // Check if user can claim items (receipt split - creators can also claim their own items)
+  const canClaimItems = isReceiptSplit;
 
   const handleClaimItems = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -329,10 +329,31 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
           {/* Payment Progress */}
           <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+          {/* Show creator's claimed items if any */}
+          {isCreator && (split.creator_claimed_amount || 0) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Your Items</Text>
+              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
+                ${(split.creator_claimed_amount || 0).toFixed(2)}
+              </Text>
+            </View>
+          )}
+
+          {/* Show what others owe */}
+          {isCreator && (split.creator_claimed_amount || 0) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Others Owe</Text>
+              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
+                ${(split.amount_owed_by_others || split.total_amount).toFixed(2)}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
             <Text style={[styles.summaryValue, { color: colors.success }]}>
-              ${(split.total_paid || 0).toFixed(2)} of ${split.total_amount.toFixed(2)}
+              ${(split.total_paid || 0).toFixed(2)} of ${(split.amount_owed_by_others || split.total_amount).toFixed(2)}
             </Text>
           </View>
           {(split.amount_remaining || 0) > 0 && (
@@ -350,7 +371,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                 styles.progressBar,
                 {
                   backgroundColor: (split.amount_remaining || 0) === 0 ? colors.success : colors.primary,
-                  width: `${Math.min(100, ((split.total_paid || 0) / split.total_amount) * 100)}%`,
+                  width: `${Math.min(100, ((split.total_paid || 0) / (split.amount_owed_by_others || split.total_amount)) * 100)}%`,
                 },
               ]}
             />
@@ -396,7 +417,17 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
             <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
-              {split.paid_count} of {split.participant_count} paid
+              {(() => {
+                // Count participants who paid (directly OR via web payment)
+                const webPaymentEmails = new Set(
+                  (split.web_payments || []).map((wp: any) => wp.payer_email?.toLowerCase())
+                );
+                const paidCount = split.participants.filter(
+                  (p: any) => p.status === 'paid' ||
+                    (p.user?.email && webPaymentEmails.has(p.user.email.toLowerCase()))
+                ).length;
+                return `${paidCount} of ${split.participant_count} paid`;
+              })()}
             </Text>
           </View>
 
@@ -407,6 +438,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               isCreator={isCreator}
               onMarkAsPaid={() => handleMarkAsPaid(participant)}
               colors={colors}
+              webPayments={split.web_payments || []}
             />
           ))}
         </View>
@@ -470,13 +502,22 @@ function ParticipantCard({
   isCreator,
   onMarkAsPaid,
   colors,
+  webPayments,
 }: {
   participant: any;
   isCreator: boolean;
   onMarkAsPaid: () => void;
   colors: ThemeColors;
+  webPayments: any[];
 }) {
-  const isPaid = participant.status === 'paid';
+  // Check if paid via split_participants OR via web payment (matching email)
+  const participantEmail = participant.user?.email?.toLowerCase();
+  const webPayment = webPayments.find(
+    (wp) => wp.payer_email?.toLowerCase() === participantEmail
+  );
+  const isPaidViaWeb = !!webPayment;
+  const isPaid = participant.status === 'paid' || isPaidViaWeb;
+  const paidAmount = isPaidViaWeb ? Number(webPayment.amount) : participant.amount_paid;
 
   return (
     <View style={[styles.participantCard, { backgroundColor: colors.surface }]}>
@@ -497,14 +538,18 @@ function ParticipantCard({
         {/* Name and Amount */}
         <View style={styles.participantDetails}>
           <Text style={[styles.participantName, { color: colors.gray900 }]}>{participant.user?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.participantAmount, { color: colors.gray500 }]}>${participant.amount_owed.toFixed(2)}</Text>
+          <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
+            ${isPaidViaWeb ? paidAmount.toFixed(2) : participant.amount_owed.toFixed(2)}
+          </Text>
         </View>
 
         {/* Status or Button */}
         {isPaid ? (
           <View style={[styles.paidBadge, { backgroundColor: colors.successLight }]}>
             <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-            <Text style={[styles.paidBadgeText, { color: colors.success }]}>Paid</Text>
+            <Text style={[styles.paidBadgeText, { color: colors.success }]}>
+              {isPaidViaWeb ? `Paid $${paidAmount.toFixed(2)}` : 'Paid'}
+            </Text>
           </View>
         ) : (
           <>

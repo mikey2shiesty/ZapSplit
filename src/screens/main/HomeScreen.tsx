@@ -371,6 +371,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       paidCount={split.paid_count}
                       totalCount={split.participant_count}
                       amount={split.total_amount}
+                      totalPaid={split.total_paid || 0}
+                      amountOwedByOthers={split.amount_owed_by_others}
                       date={format(new Date(split.created_at), 'MMM d')}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

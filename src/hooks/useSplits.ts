@@ -51,15 +51,11 @@ export function useSplits() {
 
       // If user is the creator, calculate what's owed to them
       if (split.creator_id === user.id) {
-        split.participants.forEach(participant => {
-          // Skip the creator themselves
-          if (participant.user_id === user.id) return;
-
-          const participantOwes = participant.amount_owed - participant.amount_paid;
-          if (participantOwes > 0) {
-            owedToYou += participantOwes;
-          }
-        });
+        // Use amount_remaining which accounts for both participant payments AND web payments
+        const remaining = split.amount_remaining ?? (split.total_amount - (split.total_paid || 0));
+        if (remaining > 0) {
+          owedToYou += remaining;
+        }
       }
     });
 
