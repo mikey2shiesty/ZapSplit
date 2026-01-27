@@ -41,6 +41,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [itemClaims, setItemClaims] = useState<Map<string, any[]>>(new Map()); // userId -> claims
 
   // Load split details
   useEffect(() => {
@@ -60,6 +61,26 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
       setLoading(true);
       const splitData = await getSplitById(splitId);
       setSplit(splitData);
+
+      // Fetch item claims for this split
+      const { data: claims } = await supabase
+        .from('item_claims')
+        .select('*')
+        .eq('split_id', splitId);
+
+      if (claims) {
+        // Group claims by user_id
+        const claimsByUser = new Map<string, any[]>();
+        claims.forEach(claim => {
+          const key = claim.claimed_by_user_id || claim.claimed_by_email;
+          if (key) {
+            const existing = claimsByUser.get(key) || [];
+            existing.push(claim);
+            claimsByUser.set(key, existing);
+          }
+        });
+        setItemClaims(claimsByUser);
+      }
     } catch (error) {
       console.error('Error loading split:', error);
       Alert.alert('Error', 'Failed to load split details');
@@ -439,6 +460,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               onMarkAsPaid={() => handleMarkAsPaid(participant)}
               colors={colors}
               webPayments={split.web_payments || []}
+              claimedItems={itemClaims.get(participant.user_id) || itemClaims.get(participant.user?.email?.toLowerCase()) || []}
             />
           ))}
         </View>
@@ -503,12 +525,14 @@ function ParticipantCard({
   onMarkAsPaid,
   colors,
   webPayments,
+  claimedItems,
 }: {
   participant: any;
   isCreator: boolean;
   onMarkAsPaid: () => void;
   colors: ThemeColors;
   webPayments: any[];
+  claimedItems: any[];
 }) {
   // Check if paid via split_participants OR via web payment (matching email)
   const participantEmail = participant.user?.email?.toLowerCase();
@@ -561,6 +585,28 @@ function ParticipantCard({
           </>
         )}
       </View>
+
+      {/* Show claimed items */}
+      {claimedItems.length > 0 && (
+        <View style={styles.claimedItemsContainer}>
+          <View style={[styles.claimedItemsDivider, { backgroundColor: colors.border }]} />
+          <Text style={[styles.claimedItemsLabel, { color: colors.gray500 }]}>
+            Items claimed:
+          </Text>
+          {claimedItems.map((item, index) => (
+            <View key={index} style={styles.claimedItemRow}>
+              <Text style={[styles.claimedItemName, { color: colors.gray700 }]}>
+                {item.quantity_claimed && item.quantity_claimed > 1
+                  ? `${item.quantity_claimed}x `
+                  : ''}{item.item_name}
+              </Text>
+              <Text style={[styles.claimedItemPrice, { color: colors.gray600 }]}>
+                ${(Number(item.item_amount) / (item.share_count || 1)).toFixed(2)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -860,5 +906,29 @@ const styles = StyleSheet.create({
   paymentAmount: {
     ...typography.h4,
     fontWeight: '700',
+  },
+  claimedItemsContainer: {
+    marginTop: spacing.sm,
+  },
+  claimedItemsDivider: {
+    height: 1,
+    marginBottom: spacing.sm,
+  },
+  claimedItemsLabel: {
+    ...typography.caption,
+    marginBottom: spacing.xs,
+  },
+  claimedItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  claimedItemName: {
+    ...typography.caption,
+    flex: 1,
+  },
+  claimedItemPrice: {
+    ...typography.caption,
+    fontWeight: '500',
   },
 });
