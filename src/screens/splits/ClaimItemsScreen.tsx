@@ -26,6 +26,7 @@ interface ItemClaim {
   claimed_by_name: string;
   claimed_by_user_id: string | null;
   share_count: number;
+  quantity_claimed?: number;
 }
 
 export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreenProps) {
@@ -226,14 +227,19 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
         });
       } else {
         next.add(index);
-        // Set default quantity to 1 for items with qty > 1
+        // Set default quantity to 1 for items with remaining qty
         const item = items[index];
-        if (item && item.quantity > 1) {
-          setSelectedQuantities(prevQty => {
-            const nextQty = new Map(prevQty);
-            nextQty.set(index, 1); // Default to claiming 1
-            return nextQty;
-          });
+        if (item) {
+          const itemClaims = claimsByItemIndex.get(index) || [];
+          const totalQtyClaimed = itemClaims.reduce((sum, c) => sum + (c.quantity_claimed || 1), 0);
+          const qtyRemaining = Math.max(0, item.quantity - totalQtyClaimed);
+          if (qtyRemaining > 0) {
+            setSelectedQuantities(prevQty => {
+              const nextQty = new Map(prevQty);
+              nextQty.set(index, 1); // Default to claiming 1
+              return nextQty;
+            });
+          }
         }
       }
       return next;
@@ -245,11 +251,16 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     const item = items[index];
     if (!item) return;
 
+    // Calculate remaining quantity available
+    const itemClaims = claimsByItemIndex.get(index) || [];
+    const totalQtyClaimed = itemClaims.reduce((sum, c) => sum + (c.quantity_claimed || 1), 0);
+    const qtyRemaining = Math.max(0, item.quantity - totalQtyClaimed);
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedQuantities(prev => {
       const next = new Map(prev);
       const currentQty = prev.get(index) || 1;
-      const newQty = Math.max(1, Math.min(item.quantity, currentQty + delta));
+      const newQty = Math.max(1, Math.min(qtyRemaining, currentQty + delta));
       next.set(index, newQty);
       return next;
     });
@@ -401,11 +412,21 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
             const itemClaims = claimsByItemIndex.get(index) || [];
             const alreadyClaimedByMe = isClaimedByMe(index);
             const hasMultipleQty = item.quantity > 1;
-            const selectedQty = selectedQuantities.get(index) || item.quantity;
             const unitPrice = item.total_price / item.quantity;
+
+            // Calculate total quantity already claimed by everyone
+            const totalQtyClaimed = itemClaims.reduce((sum, c) => sum + (c.quantity_claimed || 1), 0);
+            const qtyRemaining = Math.max(0, item.quantity - totalQtyClaimed);
+            const isFullyClaimed = qtyRemaining === 0;
+
+            // Selected quantity should default to remaining (not full quantity)
+            const selectedQty = selectedQuantities.get(index) || Math.min(qtyRemaining, 1);
             const displayPrice = isShared
               ? (unitPrice * selectedQty) / shareCount
               : unitPrice * selectedQty;
+
+            // Can select if: not fully claimed AND (not claimed by me OR has remaining qty)
+            const canSelect = !isFullyClaimed && !alreadyClaimedByMe;
 
             return (
               <TouchableOpacity
@@ -413,20 +434,20 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                 style={[
                   styles.itemCard,
                   isSelected && styles.itemCardSelected,
-                  alreadyClaimedByMe && styles.itemCardDisabled,
+                  (isFullyClaimed || alreadyClaimedByMe) && styles.itemCardDisabled,
                 ]}
-                onPress={() => handleToggleItem(index)}
+                onPress={() => canSelect && handleToggleItem(index)}
                 activeOpacity={0.7}
-                disabled={alreadyClaimedByMe}
+                disabled={!canSelect}
               >
                 {/* Checkbox */}
                 <View style={[
                   styles.checkbox,
                   isSelected && styles.checkboxSelected,
-                  alreadyClaimedByMe && styles.checkboxDisabled,
+                  (isFullyClaimed || alreadyClaimedByMe) && styles.checkboxDisabled,
                 ]}>
-                  {(isSelected || alreadyClaimedByMe) && (
-                    <Ionicons name="checkmark" size={16} color={colors.surface} />
+                  {(isSelected || isFullyClaimed || alreadyClaimedByMe) && (
+                    <Ionicons name={isFullyClaimed ? "lock-closed" : "checkmark"} size={16} color={colors.surface} />
                   )}
                 </View>
 
@@ -443,8 +464,8 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                     <Text style={styles.itemQuantity}>x{item.quantity} (${unitPrice.toFixed(2)} each)</Text>
                   )}
 
-                  {/* Quantity Selector - show when selected and has multiple qty */}
-                  {isSelected && hasMultipleQty && !alreadyClaimedByMe && (
+                  {/* Quantity Selector - show when selected and has remaining qty > 1 */}
+                  {isSelected && qtyRemaining > 1 && !alreadyClaimedByMe && (
                     <View style={styles.quantitySelector}>
                       <TouchableOpacity
                         style={styles.qtyButton}
@@ -460,19 +481,19 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                           color={selectedQty <= 1 ? colors.gray300 : colors.primary}
                         />
                       </TouchableOpacity>
-                      <Text style={styles.qtyText}>{selectedQty} of {item.quantity}</Text>
+                      <Text style={styles.qtyText}>{selectedQty} of {qtyRemaining} available</Text>
                       <TouchableOpacity
                         style={styles.qtyButton}
                         onPress={(e) => {
                           e.stopPropagation();
                           handleQuantityChange(index, 1);
                         }}
-                        disabled={selectedQty >= item.quantity}
+                        disabled={selectedQty >= qtyRemaining}
                       >
                         <Ionicons
                           name="add"
                           size={18}
-                          color={selectedQty >= item.quantity ? colors.gray300 : colors.primary}
+                          color={selectedQty >= qtyRemaining ? colors.gray300 : colors.primary}
                         />
                       </TouchableOpacity>
                     </View>
@@ -484,12 +505,20 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                       <Ionicons name="people" size={12} color={colors.success} />
                       <Text style={styles.claimersText}>
                         {alreadyClaimedByMe
-                          ? 'You claimed this'
+                          ? `You claimed${hasMultipleQty ? ` (${totalQtyClaimed}/${item.quantity})` : ''}`
+                          : hasMultipleQty
+                          ? `${totalQtyClaimed} of ${item.quantity} claimed`
                           : itemClaims.length === 1
                           ? `${itemClaims[0].claimed_by_name} claimed`
                           : `${itemClaims.length} people claimed`}
                       </Text>
                     </View>
+                  )}
+                  {/* Show remaining quantity available */}
+                  {qtyRemaining > 0 && !alreadyClaimedByMe && itemClaims.length > 0 && (
+                    <Text style={[styles.itemQuantity, { color: colors.primary }]}>
+                      {qtyRemaining} still available (${(unitPrice * qtyRemaining).toFixed(2)})
+                    </Text>
                   )}
                 </View>
 
