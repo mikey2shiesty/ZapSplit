@@ -123,10 +123,14 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     }
   };
 
+  // Service fee constants (3.5% + $0.50)
+  const SERVICE_FEE_PERCENT = 0.035;
+  const SERVICE_FEE_FIXED = 0.50;
+
   // Calculate totals
-  const { itemsTotal, taxShare, tipShare, total } = useMemo(() => {
+  const { itemsTotal, serviceFee, total } = useMemo(() => {
     if (!split || items.length === 0) {
-      return { itemsTotal: 0, taxShare: 0, tipShare: 0, total: 0 };
+      return { itemsTotal: 0, serviceFee: 0, total: 0 };
     }
 
     const selectedItemsTotal = Array.from(selectedItems).reduce((sum, index) => {
@@ -140,25 +144,19 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       return sum + (itemTotal / shareCount);
     }, 0);
 
-    const billSubtotal = items.reduce((sum, item) => sum + item.total_price, 0);
-    const proportion = billSubtotal > 0 ? selectedItemsTotal / billSubtotal : 0;
+    // Service fee: 3.5% + $0.50 (only for non-creators and if items selected)
+    const calcServiceFee = (!isCreator && selectedItemsTotal > 0)
+      ? (selectedItemsTotal * SERVICE_FEE_PERCENT) + SERVICE_FEE_FIXED
+      : 0;
 
-    // Get tax and tip from receipt_data if available
-    const receiptData = split.receipt_parsed_data || {};
-    const totalTax = receiptData.tax || split.tax_amount || 0;
-    const totalTip = receiptData.tip || split.tip_amount || 0;
-
-    const calcTaxShare = totalTax * proportion;
-    const calcTipShare = totalTip * proportion;
-    const calcTotal = selectedItemsTotal + calcTaxShare + calcTipShare;
+    const calcTotal = selectedItemsTotal + calcServiceFee;
 
     return {
       itemsTotal: Math.round(selectedItemsTotal * 100) / 100,
-      taxShare: Math.round(calcTaxShare * 100) / 100,
-      tipShare: Math.round(calcTipShare * 100) / 100,
+      serviceFee: Math.round(calcServiceFee * 100) / 100,
       total: Math.round(calcTotal * 100) / 100,
     };
-  }, [split, items, selectedItems, sharedItems, selectedQuantities]);
+  }, [split, items, selectedItems, sharedItems, selectedQuantities, isCreator]);
 
   // Get claims by item index
   const claimsByItemIndex = useMemo(() => {
@@ -177,7 +175,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     return itemClaims.some(c => c.claimed_by_user_id === currentUser?.id);
   };
 
-  // Calculate what user has already claimed
+  // Calculate what user has already claimed (items only - service fee was added at payment)
   const alreadyClaimedTotal = useMemo(() => {
     if (!currentUser || !split || items.length === 0) return 0;
 
@@ -188,18 +186,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       }
     });
 
-    // Calculate proportional tax/tip for claimed items
-    const billSubtotal = items.reduce((sum, item) => sum + item.total_price, 0);
-    const proportion = billSubtotal > 0 ? claimedItemsTotal / billSubtotal : 0;
-
-    const receiptData = split.receipt_parsed_data || {};
-    const totalTax = receiptData.tax || split.tax_amount || 0;
-    const totalTip = receiptData.tip || split.tip_amount || 0;
-
-    const taxShare = totalTax * proportion;
-    const tipShare = totalTip * proportion;
-
-    return Math.round((claimedItemsTotal + taxShare + tipShare) * 100) / 100;
+    return Math.round(claimedItemsTotal * 100) / 100;
   }, [currentUser, split, items, claims]);
 
   // Count items already claimed by current user
@@ -593,16 +580,10 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
               <Text style={styles.summaryLabel}>Items</Text>
               <Text style={styles.summaryValue}>${itemsTotal.toFixed(2)}</Text>
             </View>
-            {taxShare > 0 && (
+            {serviceFee > 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tax (proportional)</Text>
-                <Text style={styles.summaryValue}>${taxShare.toFixed(2)}</Text>
-              </View>
-            )}
-            {tipShare > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tip (proportional)</Text>
-                <Text style={styles.summaryValue}>${tipShare.toFixed(2)}</Text>
+                <Text style={styles.summaryLabel}>Service Fee</Text>
+                <Text style={styles.summaryValue}>${serviceFee.toFixed(2)}</Text>
               </View>
             )}
             <View style={styles.summaryDivider} />
