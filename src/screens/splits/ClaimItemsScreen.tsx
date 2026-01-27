@@ -43,6 +43,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
   const [sharedItems, setSharedItems] = useState<Map<number, number>>(new Map());
   const [selectedQuantities, setSelectedQuantities] = useState<Map<number, number>>(new Map()); // Track qty claimed per item
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; full_name: string } | null>(null);
+  const [isCreator, setIsCreator] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -94,6 +95,11 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       // Load split details
       const splitData = await getSplitById(resolvedSplitId);
       setSplit(splitData);
+
+      // Check if current user is the creator
+      if (user && splitData) {
+        setIsCreator(user.id === splitData.creator_id);
+      }
 
       // Load items
       const itemsData = await getSplitItems(resolvedSplitId);
@@ -337,8 +343,10 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Navigate to payment screen
-      if (split && splitId) {
+      // Creator just saves and goes back, others go to payment
+      if (isCreator) {
+        navigation.goBack();
+      } else if (split && splitId) {
         navigation.navigate('PayScreen', {
           splitId: splitId,
           participantId: '', // Will be found in PayScreen
@@ -620,9 +628,9 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
             ) : (
               <>
                 <Text style={styles.continueButtonText}>
-                  Continue to Pay ${total.toFixed(2)}
+                  {isCreator ? 'Save My Items' : `Continue to Pay $${total.toFixed(2)}`}
                 </Text>
-                <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+                <Ionicons name={isCreator ? "checkmark" : "arrow-forward"} size={20} color={colors.surface} />
               </>
             )}
           </TouchableOpacity>
