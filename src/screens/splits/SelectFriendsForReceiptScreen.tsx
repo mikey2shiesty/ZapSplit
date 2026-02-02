@@ -12,7 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { SelectFriendsForReceiptScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
 import { supabase } from '../../services/supabase';
@@ -25,6 +26,7 @@ export default function SelectFriendsForReceiptScreen({
 }: SelectFriendsForReceiptScreenProps) {
   const { receipt, imageUri } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   // Load real friends from Supabase
   const { friends, loading, error } = useFriends();
@@ -158,11 +160,11 @@ export default function SelectFriendsForReceiptScreen({
   const isValid = selectedFriendIds.length > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -170,8 +172,8 @@ export default function SelectFriendsForReceiptScreen({
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Who's Splitting?</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Who's Splitting?</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Select friends to split this receipt with
           </Text>
         </View>
@@ -179,19 +181,19 @@ export default function SelectFriendsForReceiptScreen({
 
       <View style={styles.content}>
         {/* Receipt Badge */}
-        <View style={styles.receiptBadge}>
+        <View style={[styles.receiptBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.receiptBadgeLeft}>
             <Ionicons name="receipt-outline" size={24} color={colors.primary} />
             <View style={styles.receiptBadgeInfo}>
-              <Text style={styles.receiptBadgeMerchant}>
+              <Text style={[styles.receiptBadgeMerchant, { color: colors.text }]}>
                 {receipt.merchant || 'Receipt'}
               </Text>
-              <Text style={styles.receiptBadgeItems}>
+              <Text style={[styles.receiptBadgeItems, { color: colors.textSecondary }]}>
                 {receipt.items.length} items
               </Text>
             </View>
           </View>
-          <Text style={styles.receiptBadgeAmount}>
+          <Text style={[styles.receiptBadgeAmount, { color: colors.primary }]}>
             ${receipt.total.toFixed(2)}
           </Text>
         </View>
@@ -200,15 +202,15 @@ export default function SelectFriendsForReceiptScreen({
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading friends...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading friends...</Text>
           </View>
         )}
 
         {/* Error State */}
         {error && !loading && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Text style={styles.errorHint}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+            <Text style={[styles.errorHint, { color: colors.textSecondary }]}>
               Try adding friends from your profile first
             </Text>
           </View>
@@ -228,9 +230,9 @@ export default function SelectFriendsForReceiptScreen({
         {/* Empty State - Only show when no friends */}
         {!loading && !error && friends.length === 0 && (
           <View style={styles.emptyContainer}>
-            <Ionicons name="people-outline" size={64} color={colors.gray300} />
-            <Text style={styles.emptyText}>No friends yet</Text>
-            <Text style={styles.emptyHint}>
+            <Ionicons name="people-outline" size={64} color={colors.textTertiary} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>No friends yet</Text>
+            <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
               Add friends from your profile to split bills with them
             </Text>
           </View>
@@ -238,15 +240,18 @@ export default function SelectFriendsForReceiptScreen({
       </View>
 
       {/* Footer Buttons */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         {selectedFriendIds.length > 0 && !saving && (
-          <Text style={styles.selectedCount}>
+          <Text style={[styles.selectedCount, { color: colors.primary }]}>
             {selectedFriendIds.length} friend{selectedFriendIds.length > 1 ? 's' : ''} selected
           </Text>
         )}
 
         <TouchableOpacity
-          style={[styles.continueButton, (!isValid || saving) && styles.continueButtonDisabled]}
+          style={[
+            styles.continueButton,
+            { backgroundColor: isValid && !saving ? colors.primary : colors.gray200 }
+          ]}
           onPress={handleContinue}
           disabled={!isValid || saving}
           activeOpacity={0.7}
@@ -255,13 +260,13 @@ export default function SelectFriendsForReceiptScreen({
             <ActivityIndicator size="small" color={colors.surface} />
           ) : (
             <>
-              <Text style={[styles.continueButtonText, !isValid && styles.continueButtonTextDisabled]}>
+              <Text style={[styles.continueButtonText, { color: isValid ? colors.surface : colors.textTertiary }]}>
                 Create & Share Split
               </Text>
               <Ionicons
                 name="share-outline"
                 size={20}
-                color={isValid ? colors.surface : colors.gray400}
+                color={isValid ? colors.surface : colors.textTertiary}
               />
             </>
           )}
@@ -273,7 +278,7 @@ export default function SelectFriendsForReceiptScreen({
           disabled={saving}
           activeOpacity={0.7}
         >
-          <Text style={styles.skipButtonText}>
+          <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>
             Skip - Just track my items
           </Text>
         </TouchableOpacity>
@@ -285,16 +290,13 @@ export default function SelectFriendsForReceiptScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     gap: spacing.md,
   },
   backButton: {
@@ -305,11 +307,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h5,
-    color: colors.text,
   },
   headerSubtitle: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
   content: {
@@ -317,7 +317,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   receiptBadge: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.lg,
@@ -325,7 +324,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
   },
   receiptBadgeLeft: {
     flexDirection: 'row',
@@ -338,35 +336,28 @@ const styles = StyleSheet.create({
   receiptBadgeMerchant: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   receiptBadgeItems: {
     fontSize: 13,
-    color: colors.textSecondary,
   },
   receiptBadgeAmount: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.primary,
   },
   friendSelectorContainer: {
     flex: 1,
   },
   buttonContainer: {
     padding: spacing.lg,
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   selectedCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   continueButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     flexDirection: 'row',
@@ -374,17 +365,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
-  continueButtonDisabled: {
-    backgroundColor: colors.gray200,
-  },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.surface,
     letterSpacing: 0.5,
-  },
-  continueButtonTextDisabled: {
-    color: colors.gray400,
   },
   skipButton: {
     paddingVertical: spacing.md,
@@ -393,7 +377,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   loadingContainer: {
@@ -404,7 +387,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -415,13 +397,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   errorHint: {
     fontSize: 14,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   emptyContainer: {
@@ -434,11 +414,9 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
   },
   emptyHint: {
     fontSize: 14,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });
