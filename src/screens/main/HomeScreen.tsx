@@ -407,9 +407,16 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             ) : (
               <View style={styles.activityList}>
                 {splits.slice(0, 10).map((split) => {
+                  const isCreator = split.creator_id === user?.id;
                   const userParticipant = split.participants.find(p => p.user_id === user?.id);
-                  const amountOwed = userParticipant ? userParticipant.amount_owed : 0;
+
+                  // For creator: show total collected (what others have paid)
+                  // For participant: show what they owe
+                  const displayAmount = isCreator
+                    ? (split.total_paid || 0)
+                    : (userParticipant?.amount_owed || 0);
                   const isPaid = userParticipant?.status === 'paid';
+                  const isFullyCollected = isCreator && (split.amount_remaining || 0) === 0 && displayAmount > 0;
 
                   return (
                     <View key={split.id} style={[styles.activityRow, { backgroundColor: colors.surface }]}>
@@ -425,11 +432,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       <View style={styles.activityRight}>
                         <Text style={[
                           styles.activityAmount,
-                          { color: split.creator_id === user?.id ? colors.success : colors.error }
+                          { color: isCreator ? colors.success : colors.error }
                         ]}>
-                          {split.creator_id === user?.id ? '+' : '-'}${amountOwed.toFixed(2)}
+                          {isCreator ? '+' : '-'}${displayAmount.toFixed(2)}
                         </Text>
-                        {isPaid && (
+                        {(isPaid || isFullyCollected) && (
                           <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                         )}
                       </View>

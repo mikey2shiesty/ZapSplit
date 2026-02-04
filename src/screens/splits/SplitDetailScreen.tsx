@@ -439,14 +439,24 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
             <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
               {(() => {
-                // Count participants who paid (directly OR via web payment)
-                const webPaymentEmails = new Set(
-                  (split.web_payments || []).map((wp: any) => wp.payer_email?.toLowerCase())
-                );
-                const paidCount = split.participants.filter(
-                  (p: any) => p.status === 'paid' ||
-                    (p.user?.email && webPaymentEmails.has(p.user.email.toLowerCase()))
-                ).length;
+                // Count participants who paid (directly OR via web payment - by email or name)
+                const webPayments = split.web_payments || [];
+                const paidCount = split.participants.filter((p: any) => {
+                  if (p.status === 'paid') return true;
+                  // Check if any web payment matches this participant
+                  const participantEmail = p.user?.email?.toLowerCase();
+                  const participantName = p.user?.full_name?.toLowerCase();
+                  return webPayments.some((wp: any) => {
+                    const payerEmail = wp.payer_email?.toLowerCase();
+                    const payerName = wp.payer_name?.toLowerCase();
+                    if (participantEmail && payerEmail === participantEmail) return true;
+                    if (participantName && payerName) {
+                      if (payerName === participantName) return true;
+                      if (participantName.includes(payerName) || payerName.includes(participantName)) return true;
+                    }
+                    return false;
+                  });
+                }).length;
                 return `${paidCount} of ${split.participant_count} paid`;
               })()}
             </Text>
@@ -534,11 +544,24 @@ function ParticipantCard({
   webPayments: any[];
   claimedItems: any[];
 }) {
-  // Check if paid via split_participants OR via web payment (matching email)
+  // Check if paid via split_participants OR via web payment (matching email OR name)
   const participantEmail = participant.user?.email?.toLowerCase();
-  const webPayment = webPayments.find(
-    (wp) => wp.payer_email?.toLowerCase() === participantEmail
-  );
+  const participantName = participant.user?.full_name?.toLowerCase();
+
+  // Try to match web payment by email first, then by name as fallback
+  const webPayment = webPayments.find((wp) => {
+    const payerEmail = wp.payer_email?.toLowerCase();
+    const payerName = wp.payer_name?.toLowerCase();
+    // Match by email
+    if (participantEmail && payerEmail === participantEmail) return true;
+    // Match by name (if email doesn't match, check if names are similar)
+    if (participantName && payerName) {
+      // Exact match or contains match (e.g., "John" matches "John Doe")
+      if (payerName === participantName) return true;
+      if (participantName.includes(payerName) || payerName.includes(participantName)) return true;
+    }
+    return false;
+  });
   const isPaidViaWeb = !!webPayment;
   const isPaid = participant.status === 'paid' || isPaidViaWeb;
   const paidAmount = isPaidViaWeb ? Number(webPayment.amount) : participant.amount_paid;
