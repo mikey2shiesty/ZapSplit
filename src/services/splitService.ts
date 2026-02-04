@@ -291,10 +291,10 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
 
       if (error) throw error;
 
-      // Also get web payments
+      // Also get web payments (to know who has paid)
       const { data: webPayments } = await supabase
         .from('web_payments')
-        .select('id, amount, status')
+        .select('id, amount, status, payer_email')
         .eq('split_id', split.id)
         .eq('status', 'settled');
 
@@ -308,7 +308,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
       // Get all claims for this split to calculate totals
       const { data: allClaims } = await supabase
         .from('item_claims')
-        .select('item_amount, share_count')
+        .select('item_amount, share_count, claimed_by_email, claimed_by_user_id')
         .eq('split_id', split.id);
 
       const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
@@ -332,10 +332,24 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         : 0;
       const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
-      // Calculate total paid from both sources
+      // Calculate total paid - use ITEM amounts from claims (not web_payments which include service fees)
+      const paidEmails = new Set(
+        (webPayments || []).map((wp: any) => wp.payer_email?.toLowerCase())
+      );
       const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
-      const webPaymentsPaid = webPayments?.reduce((sum, wp) => sum + (Number(wp.amount) || 0), 0) || 0;
-      const totalPaid = participantsPaid + webPaymentsPaid;
+
+      // Sum item amounts for users who have paid (excluding creator)
+      const paidClaimsTotal = (allClaims || []).reduce((sum, claim) => {
+        if (claim.claimed_by_user_id === split.creator_id) return sum;
+        const email = claim.claimed_by_email?.toLowerCase();
+        if (email && paidEmails.has(email)) {
+          const shareCount = claim.share_count || 1;
+          return sum + (Number(claim.item_amount) / shareCount);
+        }
+        return sum;
+      }, 0);
+
+      const totalPaid = participantsPaid + paidClaimsTotal;
 
       // Amount owed by others = total - creator's share (items + tax/tip)
       const amountOwedByOthers = split.total_amount - creatorClaimedAmount;
@@ -517,7 +531,7 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
   // Get all item claims to calculate total claimed items value
   const { data: allClaims } = await supabase
     .from('item_claims')
-    .select('item_amount, share_count')
+    .select('item_amount, share_count, claimed_by_email, claimed_by_user_id')
     .eq('split_id', splitId);
 
   const totalClaimedItems = allClaims?.reduce((sum, claim) => {
@@ -533,10 +547,27 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     : 0;
   const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
-  // Calculate total paid from both participants and web payments
+  // Calculate total paid - use ITEM amounts from claims (not web_payments which include service fees)
+  // This represents what the creator will actually receive
+  const paidEmails = new Set(
+    (webPayments || []).map((wp: any) => wp.payer_email?.toLowerCase())
+  );
   const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
-  const webPaymentsPaid = webPayments?.reduce((sum, wp) => sum + (Number(wp.amount) || 0), 0) || 0;
-  const totalPaid = participantsPaid + webPaymentsPaid;
+
+  // Sum item amounts for users who have paid (excluding creator)
+  const paidClaimsTotal = (allClaims || []).reduce((sum, claim) => {
+    // Skip creator's claims
+    if (claim.claimed_by_user_id === split.creator_id) return sum;
+    // Check if this user has paid via web payment
+    const email = claim.claimed_by_email?.toLowerCase();
+    if (email && paidEmails.has(email)) {
+      const shareCount = claim.share_count || 1;
+      return sum + (Number(claim.item_amount) / shareCount);
+    }
+    return sum;
+  }, 0);
+
+  const totalPaid = participantsPaid + paidClaimsTotal;
 
   // Amount remaining = total - creator's share (items + tax/tip) - payments received
   const amountOwedByOthers = split.total_amount - creatorClaimedAmount;

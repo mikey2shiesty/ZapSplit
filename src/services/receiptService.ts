@@ -109,15 +109,23 @@ export async function parseReceiptWithAI(
   "confidence": <calculated>
 }
 
+CRITICAL - PRICE INTERPRETATION:
+The "price" field must be the PER-UNIT price, NOT the line total.
+- If a line shows "2 Burger $20.00", the $20 is the LINE TOTAL for 2 burgers
+  - price should be: 10.00 (20 ÷ 2 = 10 per burger)
+  - quantity should be: 2
+- If a line shows "Burger $10.00", then price: 10.00, quantity: 1
+
 IMPORTANT RULES:
-1. Extract ALL food/drink items with their exact prices
-2. Generate a unique ID for each item (use simple incrementing numbers like "1", "2", "3")
-3. If quantity is not shown, assume quantity = 1
-4. Set subtotal to the sum of all items BEFORE tax and tip
-5. Extract tax amount (if shown)
-6. Extract tip amount (if shown, otherwise set to 0)
-7. Set total to the final amount on the receipt
-8. CONFIDENCE SCORING - Set based on how well you could read the receipt:
+1. Extract ALL food/drink items
+2. ALWAYS calculate per-unit price by dividing the line total by quantity
+3. Generate a unique ID for each item (use simple incrementing numbers like "1", "2", "3")
+4. If quantity is not shown, assume quantity = 1
+5. Set subtotal to the sum of all items BEFORE tax and tip
+6. Extract tax amount (if shown)
+7. Extract tip amount (if shown, otherwise set to 0)
+8. Set total to the final amount on the receipt
+9. CONFIDENCE SCORING - Set based on how well you could read the receipt:
    - 0.98-1.0: Perfect quality, all text crystal clear
    - 0.90-0.97: Good quality, most text readable
    - 0.80-0.89: Moderate quality, some items may be unclear

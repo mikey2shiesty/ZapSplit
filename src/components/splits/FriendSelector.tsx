@@ -111,7 +111,7 @@ export default function FriendSelector({
   return (
     <View style={styles.container}>
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground }]}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.gray100 }]}>
         <Ionicons name="search" size={20} color={colors.textTertiary} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
