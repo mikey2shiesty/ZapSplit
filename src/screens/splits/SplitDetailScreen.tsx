@@ -361,42 +361,62 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             </View>
           )}
 
-          {/* Show what others owe */}
-          {isCreator && (split.creator_claimed_amount || 0) > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Others Owe</Text>
-              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
-                ${(split.amount_owed_by_others || split.total_amount).toFixed(2)}
-              </Text>
-            </View>
-          )}
+          {/* Show collection info only if others actually owe something */}
+          {(() => {
+            const othersOwe = split.amount_owed_by_others ?? split.total_amount;
+            const hasOthersOwing = othersOwe > 0.01; // Use small threshold to handle floating point
 
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
-            <Text style={[styles.summaryValue, { color: colors.success }]}>
-              ${(split.total_paid || 0).toFixed(2)} of ${(split.amount_owed_by_others || split.total_amount).toFixed(2)}
-            </Text>
-          </View>
-          {(split.amount_remaining || 0) > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Remaining</Text>
-              <Text style={[styles.summaryValue, { color: colors.warning }]}>
-                ${(split.amount_remaining || 0).toFixed(2)}
-              </Text>
-            </View>
-          )}
-          {/* Progress Bar */}
-          <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
-            <View
-              style={[
-                styles.progressBar,
-                {
-                  backgroundColor: (split.amount_remaining || 0) === 0 ? colors.success : colors.primary,
-                  width: `${Math.min(100, ((split.total_paid || 0) / (split.amount_owed_by_others || split.total_amount)) * 100)}%`,
-                },
-              ]}
-            />
-          </View>
+            if (!hasOthersOwing) {
+              // Solo split where creator claimed everything - show simple "All yours" message
+              return isCreator && (split.creator_claimed_amount || 0) > 0 ? (
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
+                  <Text style={[styles.summaryValue, { color: colors.success }]}>All claimed by you</Text>
+                </View>
+              ) : null;
+            }
+
+            // Others owe money - show full collection tracking
+            return (
+              <>
+                {isCreator && (split.creator_claimed_amount || 0) > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Others Owe</Text>
+                    <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
+                      ${othersOwe.toFixed(2)}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
+                  <Text style={[styles.summaryValue, { color: colors.success }]}>
+                    ${(split.total_paid || 0).toFixed(2)} of ${othersOwe.toFixed(2)}
+                  </Text>
+                </View>
+                {(split.amount_remaining || 0) > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Remaining</Text>
+                    <Text style={[styles.summaryValue, { color: colors.warning }]}>
+                      ${(split.amount_remaining || 0).toFixed(2)}
+                    </Text>
+                  </View>
+                )}
+                {/* Progress Bar */}
+                <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
+                  <View
+                    style={[
+                      styles.progressBar,
+                      {
+                        backgroundColor: (split.amount_remaining || 0) === 0 ? colors.success : colors.primary,
+                        width: `${Math.min(100, ((split.total_paid || 0) / othersOwe) * 100)}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </>
+            );
+          })()}
         </View>
 
         {/* Web Payments Section */}

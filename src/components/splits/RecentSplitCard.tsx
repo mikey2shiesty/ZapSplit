@@ -31,12 +31,17 @@ export default function RecentSplitCard({
   // Use amountOwedByOthers if available (excludes creator's items)
   const targetAmount = amountOwedByOthers ?? amount;
 
+  // Check if this is a solo split (creator claimed everything, no one else owes)
+  const isSoloSplit = targetAmount !== undefined && targetAmount < 0.01;
+
   // Use monetary progress if available, otherwise fall back to participant count
   const hasPaymentData = totalPaid > 0 || targetAmount > 0;
-  const progressPercentage = hasPaymentData && targetAmount > 0
-    ? Math.min((totalPaid / targetAmount) * 100, 100)
-    : totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
-  const isComplete = hasPaymentData ? totalPaid >= targetAmount : paidCount === totalCount;
+  const progressPercentage = isSoloSplit
+    ? 100 // Solo split is always complete
+    : hasPaymentData && targetAmount > 0
+      ? Math.min((totalPaid / targetAmount) * 100, 100)
+      : totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
+  const isComplete = isSoloSplit || (hasPaymentData ? totalPaid >= targetAmount : paidCount === totalCount);
 
   return (
     <TouchableOpacity
@@ -59,9 +64,11 @@ export default function RecentSplitCard({
         <View style={styles.info}>
           <Text style={[styles.title, { color: colors.gray900 }]}>{title}</Text>
           <Text style={[styles.subtitle, { color: colors.gray600 }]}>
-            {date} • {hasPaymentData && targetAmount > 0
-              ? `$${totalPaid.toFixed(2)} of $${targetAmount.toFixed(2)}`
-              : `${paidCount}/${totalCount} paid`}
+            {date} • {isSoloSplit
+              ? 'Personal'
+              : hasPaymentData && targetAmount > 0
+                ? `$${totalPaid.toFixed(2)} of $${targetAmount.toFixed(2)}`
+                : `${paidCount}/${totalCount} paid`}
           </Text>
 
           {/* Progress Bar */}
