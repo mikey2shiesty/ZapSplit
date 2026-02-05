@@ -311,6 +311,14 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         .select('item_amount, share_count, claimed_by_email, claimed_by_user_id')
         .eq('split_id', split.id);
 
+      // Get ACTUAL total items value from split_items (not from claims)
+      const { data: splitItems } = await supabase
+        .from('split_items')
+        .select('total_price')
+        .eq('split_id', split.id);
+
+      const totalItemsValue = splitItems?.reduce((sum, item) => sum + Number(item.total_price), 0) || 0;
+
       const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
 
       // Calculate creator's claimed items
@@ -319,16 +327,12 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         return sum + (Number(claim.item_amount) / shareCount);
       }, 0) || 0;
 
-      // Calculate total claimed items
-      const totalClaimedItems = allClaims?.reduce((sum, claim) => {
-        const shareCount = claim.share_count || 1;
-        return sum + (Number(claim.item_amount) / shareCount);
-      }, 0) || 0;
+      // Calculate tax/tip using actual items value (not just claimed items)
+      const taxTipAmount = Math.max(0, split.total_amount - totalItemsValue);
 
       // Calculate proportional tax/tip for creator
-      const taxTipAmount = Math.max(0, split.total_amount - totalClaimedItems);
-      const creatorTaxTipShare = totalClaimedItems > 0
-        ? (creatorClaimedItems / totalClaimedItems) * taxTipAmount
+      const creatorTaxTipShare = totalItemsValue > 0
+        ? (creatorClaimedItems / totalItemsValue) * taxTipAmount
         : 0;
       const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
@@ -349,9 +353,9 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         return sum;
       }, 0);
 
-      // Add proportional tax/tip to paid claims (so Collected matches what Others Owe)
-      const paidTaxTipShare = totalClaimedItems > 0
-        ? (paidClaimsItems / totalClaimedItems) * taxTipAmount
+      // Add proportional tax/tip to paid claims based on total items value
+      const paidTaxTipShare = totalItemsValue > 0
+        ? (paidClaimsItems / totalItemsValue) * taxTipAmount
         : 0;
       const paidClaimsTotal = paidClaimsItems + paidTaxTipShare;
 
@@ -545,11 +549,22 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     return sum + (Number(claim.item_amount) / shareCount);
   }, 0) || 0;
 
+  // Get ACTUAL total items value from split_items (not from claims)
+  // This is needed for accurate tax/tip calculation when not all items are claimed
+  const { data: splitItems } = await supabase
+    .from('split_items')
+    .select('total_price')
+    .eq('split_id', splitId);
+
+  const totalItemsValue = splitItems?.reduce((sum, item) => sum + Number(item.total_price), 0) || 0;
+
+  // Calculate tax/tip as difference between total and actual items subtotal
+  // Use totalItemsValue (from receipt), NOT totalClaimedItems (only what's been claimed)
+  const taxTipAmount = Math.max(0, split.total_amount - totalItemsValue);
+
   // Calculate proportional tax/tip for creator's items
-  // Items subtotal from claims, tax/tip is the difference from total
-  const taxTipAmount = Math.max(0, split.total_amount - totalClaimedItems);
-  const creatorTaxTipShare = totalClaimedItems > 0
-    ? (creatorClaimedItems / totalClaimedItems) * taxTipAmount
+  const creatorTaxTipShare = totalItemsValue > 0
+    ? (creatorClaimedItems / totalItemsValue) * taxTipAmount
     : 0;
   const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
@@ -573,9 +588,9 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     return sum;
   }, 0);
 
-  // Add proportional tax/tip to paid claims (so Collected matches what Others Owe)
-  const paidTaxTipShare = totalClaimedItems > 0
-    ? (paidClaimsItems / totalClaimedItems) * taxTipAmount
+  // Add proportional tax/tip to paid claims based on total items value (not just claimed)
+  const paidTaxTipShare = totalItemsValue > 0
+    ? (paidClaimsItems / totalItemsValue) * taxTipAmount
     : 0;
   const paidClaimsTotal = paidClaimsItems + paidTaxTipShare;
 
