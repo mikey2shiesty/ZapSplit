@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 import ParticipantRow, { Participant } from './ParticipantRow';
 
 interface SplitSummaryProps {
@@ -23,6 +24,7 @@ export default function SplitSummary({
   splitMethod = 'equal',
   showProgress = false,
 }: SplitSummaryProps) {
+  const { colors } = useTheme();
   // Calculate progress
   const paidCount = participants.filter(p => p.status === 'paid').length;
   const totalCount = participants.length;
@@ -69,51 +71,51 @@ export default function SplitSummary({
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header Card */}
-      <View style={styles.headerCard}>
+      <View style={[styles.headerCard, { backgroundColor: colors.surface }]}>
         {/* Title */}
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: colors.gray900 }]}>{title}</Text>
 
         {/* Description */}
         {description && (
-          <Text style={styles.description}>{description}</Text>
+          <Text style={[styles.description, { color: colors.gray500 }]}>{description}</Text>
         )}
 
         {/* Total Amount */}
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
+        <View style={[styles.totalContainer, { borderColor: colors.gray200 }]}>
+          <Text style={[styles.totalLabel, { color: colors.gray500 }]}>TOTAL AMOUNT</Text>
+          <Text style={[styles.totalAmount, { color: colors.primary }]}>${totalAmount.toFixed(2)}</Text>
         </View>
 
         {/* Split Method Badge */}
-        <View style={styles.methodBadge}>
+        <View style={[styles.methodBadge, { backgroundColor: colors.primaryLight }]}>
           <Ionicons
             name={getMethodIcon()}
             size={16}
             color={colors.primary}
           />
-          <Text style={styles.methodText}>{getMethodName()}</Text>
+          <Text style={[styles.methodText, { color: colors.primary }]}>{getMethodName()}</Text>
         </View>
       </View>
 
       {/* Progress Card (if showing progress) */}
       {showProgress && (
-        <View style={styles.progressCard}>
+        <View style={[styles.progressCard, { backgroundColor: colors.surface }]}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Payment Progress</Text>
-            <Text style={styles.progressCount}>
+            <Text style={[styles.progressTitle, { color: colors.gray900 }]}>Payment Progress</Text>
+            <Text style={[styles.progressCount, { color: colors.primary }]}>
               {paidCount}/{totalCount} paid
             </Text>
           </View>
 
           {/* Progress Bar */}
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
+            <View style={[styles.progressBarFill, { width: `${progressPercentage}%`, backgroundColor: colors.success }]} />
           </View>
 
           {/* Amount Collected */}
           <View style={styles.collectedContainer}>
-            <Text style={styles.collectedLabel}>Collected</Text>
-            <Text style={styles.collectedAmount}>
+            <Text style={[styles.collectedLabel, { color: colors.gray500 }]}>Collected</Text>
+            <Text style={[styles.collectedAmount, { color: colors.gray900 }]}>
               ${totalCollected.toFixed(2)} / ${totalAmount.toFixed(2)}
             </Text>
           </View>
@@ -122,7 +124,7 @@ export default function SplitSummary({
 
       {/* Participants Section */}
       <View style={styles.participantsSection}>
-        <Text style={styles.sectionTitle}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
           Participants ({participants.length})
         </Text>
 
@@ -138,20 +140,20 @@ export default function SplitSummary({
       </View>
 
       {/* Summary Stats */}
-      <View style={styles.statsCard}>
+      <View style={[styles.statsCard, { backgroundColor: colors.surface }]}>
         <View style={styles.statRow}>
-          <Text style={styles.statLabel}>Per Person Average</Text>
-          <Text style={styles.statValue}>
-            ${(totalAmount / participants.length).toFixed(2)}
+          <Text style={[styles.statLabel, { color: colors.gray500 }]}>Per Person Average</Text>
+          <Text style={[styles.statValue, { color: colors.gray900 }]}>
+            ${(participants.reduce((sum, p) => sum + p.amount_owed, 0) / participants.length).toFixed(2)}
           </Text>
         </View>
 
         {showProgress && (
           <>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Remaining</Text>
-              <Text style={[styles.statValue, styles.statValuePending]}>
+              <Text style={[styles.statLabel, { color: colors.gray500 }]}>Remaining</Text>
+              <Text style={[styles.statValue, { color: colors.warning }]}>
                 ${(totalAmount - totalCollected).toFixed(2)}
               </Text>
             </View>
@@ -161,14 +163,14 @@ export default function SplitSummary({
 
       {/* Legend (if showing status) */}
       {showProgress && (
-        <View style={styles.legendCard}>
+        <View style={[styles.legendCard, { backgroundColor: colors.gray100 }]}>
           <View style={styles.legendItem}>
             <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-            <Text style={styles.legendText}>Paid</Text>
+            <Text style={[styles.legendText, { color: colors.gray500 }]}>Paid</Text>
           </View>
           <View style={styles.legendItem}>
             <Ionicons name="time" size={20} color={colors.warning} />
-            <Text style={styles.legendText}>Pending</Text>
+            <Text style={[styles.legendText, { color: colors.gray500 }]}>Pending</Text>
           </View>
         </View>
       )}
@@ -181,34 +183,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   totalContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.gray200,
-    marginVertical: 12,
+    marginVertical: spacing.sm,
   },
   totalLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -216,56 +215,48 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 36,
     fontWeight: '700',
-    color: colors.primary,
     letterSpacing: -1,
   },
   methodBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    alignSelf: 'center',
   },
   methodText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
-    marginLeft: 6,
+    marginLeft: spacing.xs,
   },
   progressCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   progressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   progressCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: colors.gray200,
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: colors.success,
     borderRadius: 4,
   },
   collectedContainer: {
@@ -275,27 +266,23 @@ const styles = StyleSheet.create({
   },
   collectedLabel: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
   collectedAmount: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
   },
   participantsSection: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   statsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   statRow: {
     flexDirection: 'row',
@@ -304,37 +291,29 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
-  },
-  statValuePending: {
-    color: colors.warning,
   },
   statDivider: {
     height: 1,
-    backgroundColor: colors.gray200,
-    marginVertical: 12,
+    marginVertical: spacing.sm,
   },
   legendCard: {
     flexDirection: 'row',
     justifyContent: 'center',
-    backgroundColor: colors.gray50,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
+    marginHorizontal: spacing.md,
   },
   legendText: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginLeft: 6,
+    marginLeft: spacing.xs,
   },
 });

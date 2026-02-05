@@ -54,7 +54,7 @@ export default function SplitMethodCard({
       case 'custom':
         return 'You decide who pays what';
       case 'percentage':
-        return `${(100 / participantCount).toFixed(0)}% each person`;
+        return 'You decide the percentages';
       default:
         return '';
     }

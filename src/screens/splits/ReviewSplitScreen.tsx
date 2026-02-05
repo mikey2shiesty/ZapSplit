@@ -53,8 +53,33 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     return equalAmounts[participantId] || 0;
   };
 
-  // Only friends are participants - creator is NOT included
-  // The creator receives the money, participants owe the money
+  // Calculate creator's share (their portion of the split)
+  const creatorShare = isEqualSplit
+    ? equalAmounts[user?.id || 'creator'] || 0
+    : amount - Object.values(customAmounts || {}).reduce((sum, val) => sum + val, 0);
+
+  // Build display participants list (including creator for UI)
+  // Creator is shown first with highlight
+  const displayParticipants: Participant[] = [
+    {
+      id: user?.id || 'creator',
+      name: 'You',
+      email: user?.email || undefined,
+      amount_owed: creatorShare,
+      amount_paid: creatorShare, // Creator's share is "paid" by them
+      status: 'paid' as const,
+    },
+    ...selectedFriendsData.map(friend => ({
+      id: friend!.id,
+      name: friend!.full_name || 'Unknown',
+      email: friend!.email,
+      amount_owed: calculateAmount(friend!.id),
+      amount_paid: 0,
+      status: 'pending' as const,
+    })),
+  ];
+
+  // Friends-only list for database (they are the ones who owe money)
   const participants: Participant[] = selectedFriendsData.map(friend => ({
     id: friend!.id,
     name: friend!.full_name || 'Unknown',
@@ -146,8 +171,8 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
           <SplitSummary
             title={title}
             totalAmount={amount}
-            participants={participants}
-            currentUserId={user?.id || 'current-user'}
+            participants={displayParticipants}
+            currentUserId={user?.id || 'creator'}
             description={description}
             splitMethod={splitMethod}
             showProgress={false}
