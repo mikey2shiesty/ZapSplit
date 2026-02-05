@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export interface Participant {
   id: string;
@@ -38,6 +39,7 @@ export default function ParticipantRow({
   showStatus = false,
   isHighlighted = false,
 }: ParticipantRowProps) {
+  const { colors } = useTheme();
   const [editingAmount, setEditingAmount] = useState(participant.amount_owed.toString());
 
   const handleAmountChange = (text: string) => {
@@ -66,14 +68,21 @@ export default function ParticipantRow({
   };
 
   return (
-    <View style={[styles.container, isHighlighted && styles.containerHighlighted]}>
+    <View style={[
+      styles.container,
+      {
+        backgroundColor: isHighlighted ? colors.primaryLight : colors.surface,
+        borderColor: isHighlighted ? colors.primary : colors.gray200,
+        borderWidth: isHighlighted ? 2 : 1,
+      }
+    ]}>
       {/* Avatar */}
       <View style={styles.avatarContainer}>
         {participant.avatar_url ? (
           <Image source={{ uri: participant.avatar_url }} style={styles.avatar} />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.avatarText, { color: colors.primary }]}>
               {participant.name.charAt(0).toUpperCase()}
             </Text>
           </View>
@@ -82,18 +91,21 @@ export default function ParticipantRow({
 
       {/* Info */}
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{participant.name}</Text>
+        <Text style={[styles.name, { color: colors.gray900 }]}>{participant.name}</Text>
         {participant.email && (
-          <Text style={styles.email}>{participant.email}</Text>
+          <Text style={[styles.email, { color: colors.gray500 }]}>{participant.email}</Text>
         )}
       </View>
 
       {/* Amount */}
       {isEditable ? (
-        <View style={styles.amountEditContainer}>
-          <Text style={styles.currencySymbol}>$</Text>
+        <View style={[
+          styles.amountEditContainer,
+          { backgroundColor: colors.gray100, borderColor: colors.gray300 }
+        ]}>
+          <Text style={[styles.currencySymbol, { color: colors.gray500 }]}>$</Text>
           <TextInput
-            style={styles.amountInput}
+            style={[styles.amountInput, { color: colors.gray900 }]}
             value={editingAmount}
             onChangeText={handleAmountChange}
             keyboardType="decimal-pad"
@@ -103,7 +115,10 @@ export default function ParticipantRow({
         </View>
       ) : (
         <View style={styles.amountDisplayContainer}>
-          <Text style={[styles.amountDisplay, isHighlighted && styles.amountHighlighted]}>
+          <Text style={[
+            styles.amountDisplay,
+            { color: isHighlighted ? colors.primary : colors.gray900 }
+          ]}>
             ${participant.amount_owed.toFixed(2)}
           </Text>
         </View>
@@ -138,20 +153,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.gray200,
-  },
-  containerHighlighted: {
-    backgroundColor: colors.infoLight,
-    borderColor: colors.primary,
-    borderWidth: 2,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
   },
   avatarContainer: {
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   avatar: {
     width: 40,
@@ -159,14 +166,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   avatarPlaceholder: {
-    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.primary,
   },
   infoContainer: {
     flex: 1,
@@ -174,53 +179,43 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: 2,
   },
   email: {
     fontSize: 12,
-    color: colors.textSecondary,
   },
   amountEditContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.gray300,
-    marginRight: 8,
+    marginRight: spacing.xs,
   },
   currencySymbol: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.textSecondary,
     marginRight: 4,
   },
   amountInput: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
     minWidth: 60,
     padding: 0,
   },
   amountDisplayContainer: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm,
   },
   amountDisplay: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
-  },
-  amountHighlighted: {
-    color: colors.primary,
   },
   statusContainer: {
-    marginLeft: 8,
+    marginLeft: spacing.xs,
   },
   removeButton: {
-    marginLeft: 8,
+    marginLeft: spacing.xs,
     padding: 4,
   },
 });

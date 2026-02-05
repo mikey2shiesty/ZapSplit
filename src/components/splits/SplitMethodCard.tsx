@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, radius } from '../../constants/theme';
 
 export type SplitMethod = 'equal' | 'custom' | 'percentage';
 
@@ -39,6 +40,7 @@ export default function SplitMethodCard({
   totalAmount,
   participantCount,
 }: SplitMethodCardProps) {
+  const { colors } = useTheme();
   const config = METHOD_CONFIG[method];
 
   // Calculate preview amount based on method
@@ -67,17 +69,23 @@ export default function SplitMethodCard({
     <TouchableOpacity
       style={[
         styles.card,
-        isSelected && styles.cardSelected,
+        {
+          backgroundColor: isSelected ? colors.primaryLight : colors.surface,
+          borderColor: isSelected ? colors.primary : colors.gray200,
+        },
       ]}
       onPress={handlePress}
       activeOpacity={0.7}
     >
       {/* Icon */}
-      <View style={[styles.iconContainer, isSelected && styles.iconContainerSelected]}>
+      <View style={[
+        styles.iconContainer,
+        { backgroundColor: isSelected ? colors.primaryLight : colors.gray100 }
+      ]}>
         <Ionicons
           name={config.icon}
           size={32}
-          color={isSelected ? colors.primary : colors.textSecondary}
+          color={isSelected ? colors.primary : colors.gray500}
         />
       </View>
 
@@ -85,7 +93,7 @@ export default function SplitMethodCard({
       <View style={styles.content}>
         {/* Title */}
         <View style={styles.titleRow}>
-          <Text style={styles.title}>{config.title}</Text>
+          <Text style={[styles.title, { color: colors.gray900 }]}>{config.title}</Text>
           {isSelected && (
             <View style={styles.checkmark}>
               <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -94,14 +102,14 @@ export default function SplitMethodCard({
         </View>
 
         {/* Description */}
-        <Text style={styles.description}>{config.description}</Text>
+        <Text style={[styles.description, { color: colors.gray500 }]}>{config.description}</Text>
 
         {/* Preview Amount */}
         {totalAmount > 0 && participantCount > 0 && (
-          <View style={styles.previewContainer}>
+          <View style={[styles.previewContainer, { backgroundColor: colors.gray100 }]}>
             <Text style={[
               styles.previewText,
-              isSelected && styles.previewTextSelected,
+              { color: isSelected ? colors.primary : colors.gray600 },
             ]}>
               {getPreviewText()}
             </Text>
@@ -115,29 +123,19 @@ export default function SplitMethodCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     borderWidth: 2,
-    borderColor: colors.gray200,
     alignItems: 'flex-start',
-  },
-  cardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.infoLight,
   },
   iconContainer: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-  },
-  iconContainerSelected: {
-    backgroundColor: colors.primaryLight,
+    marginRight: spacing.md,
   },
   content: {
     flex: 1,
@@ -146,35 +144,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
     flex: 1,
   },
   checkmark: {
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   description: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   previewContainer: {
-    backgroundColor: colors.gray50,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
     alignSelf: 'flex-start',
   },
   previewText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  previewTextSelected: {
-    color: colors.primary,
   },
 });

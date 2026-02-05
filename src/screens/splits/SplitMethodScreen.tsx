@@ -21,8 +21,10 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
 
   const [selectedMethod, setSelectedMethod] = useState<SplitMethod>('equal');
 
-  // Total participants = only the friends who owe money (creator is NOT a participant)
-  const participantCount = selectedFriends.length;
+  // For display purposes, count includes everyone (creator + friends)
+  // Friends count is used for calculating how much they owe the creator
+  const friendsCount = selectedFriends.length;
+  const totalPeopleCount = friendsCount + 1; // +1 for creator
 
   const handleMethodSelect = (method: SplitMethod) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -48,6 +50,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
         title,
         description,
         selectedFriends,
+        splitMethod: selectedMethod,
       });
     }
   };
@@ -68,7 +71,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
             How should we split ${amount.toFixed(2)}?
           </Text>
           <Text style={[styles.participantCount, { color: colors.primary }]}>
-            {participantCount} people total
+            {totalPeopleCount} people total
           </Text>
         </View>
 
@@ -79,7 +82,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
             isSelected={selectedMethod === 'equal'}
             onSelect={() => handleMethodSelect('equal')}
             totalAmount={amount}
-            participantCount={participantCount}
+            participantCount={totalPeopleCount}
           />
 
           <SplitMethodCard
@@ -87,7 +90,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
             isSelected={selectedMethod === 'custom'}
             onSelect={() => handleMethodSelect('custom')}
             totalAmount={amount}
-            participantCount={participantCount}
+            participantCount={friendsCount}
           />
 
           <SplitMethodCard
@@ -95,7 +98,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
             isSelected={selectedMethod === 'percentage'}
             onSelect={() => handleMethodSelect('percentage')}
             totalAmount={amount}
-            participantCount={participantCount}
+            participantCount={totalPeopleCount}
           />
         </View>
 

@@ -76,6 +76,7 @@ export type SplitFlowParamList = {
     title: string;
     description?: string;
     selectedFriends: string[];
+    splitMethod?: 'custom' | 'percentage';
   };
   ReviewSplit: {
     amount: number;

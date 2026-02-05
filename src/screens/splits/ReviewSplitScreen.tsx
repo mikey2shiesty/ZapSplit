@@ -32,10 +32,17 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     .map(id => allFriends.find(f => f.id === id))
     .filter(f => f !== undefined);
 
-  // For requesting money: only friends are participants (they owe you)
-  // Creator is NOT a participant - they are the one receiving money
-  const participantIds = selectedFriends;
-  const equalAmounts = calculateEqualSplitAmounts(amount, participantIds);
+  // For equal split: divide total among ALL people (friends + creator)
+  // Each friend owes their share to the creator
+  // For custom split: amounts are already set by user, divide only among friends
+  const isEqualSplit = splitMethod === 'equal' || !splitMethod;
+
+  // For equal split, include creator in the count for fair division
+  // e.g., $78.44 with 2 people = $39.22 each, friend owes $39.22
+  const equalSplitIds = isEqualSplit
+    ? [...selectedFriends, user?.id || 'creator'] // Include creator for equal division
+    : selectedFriends;
+  const equalAmounts = calculateEqualSplitAmounts(amount, equalSplitIds);
 
   // Calculate amounts based on split method
   const calculateAmount = (participantId: string): number => {
