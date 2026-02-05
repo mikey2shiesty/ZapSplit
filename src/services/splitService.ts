@@ -332,14 +332,14 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         : 0;
       const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
-      // Calculate total paid - use ITEM amounts from claims (not web_payments which include service fees)
+      // Calculate total paid - use ITEM amounts from claims plus proportional tax/tip
       const paidEmails = new Set(
         (webPayments || []).map((wp: any) => wp.payer_email?.toLowerCase())
       );
       const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
 
       // Sum item amounts for users who have paid (excluding creator)
-      const paidClaimsTotal = (allClaims || []).reduce((sum, claim) => {
+      const paidClaimsItems = (allClaims || []).reduce((sum, claim) => {
         if (claim.claimed_by_user_id === split.creator_id) return sum;
         const email = claim.claimed_by_email?.toLowerCase();
         if (email && paidEmails.has(email)) {
@@ -348,6 +348,12 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         }
         return sum;
       }, 0);
+
+      // Add proportional tax/tip to paid claims (so Collected matches what Others Owe)
+      const paidTaxTipShare = totalClaimedItems > 0
+        ? (paidClaimsItems / totalClaimedItems) * taxTipAmount
+        : 0;
+      const paidClaimsTotal = paidClaimsItems + paidTaxTipShare;
 
       const totalPaid = participantsPaid + paidClaimsTotal;
 
@@ -547,15 +553,15 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     : 0;
   const creatorClaimedAmount = creatorClaimedItems + creatorTaxTipShare;
 
-  // Calculate total paid - use ITEM amounts from claims (not web_payments which include service fees)
-  // This represents what the creator will actually receive
+  // Calculate total paid - use ITEM amounts from claims plus proportional tax/tip
+  // This represents what the creator will actually receive (excluding service fees which go to platform)
   const paidEmails = new Set(
     (webPayments || []).map((wp: any) => wp.payer_email?.toLowerCase())
   );
   const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
 
   // Sum item amounts for users who have paid (excluding creator)
-  const paidClaimsTotal = (allClaims || []).reduce((sum, claim) => {
+  const paidClaimsItems = (allClaims || []).reduce((sum, claim) => {
     // Skip creator's claims
     if (claim.claimed_by_user_id === split.creator_id) return sum;
     // Check if this user has paid via web payment
@@ -566,6 +572,12 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     }
     return sum;
   }, 0);
+
+  // Add proportional tax/tip to paid claims (so Collected matches what Others Owe)
+  const paidTaxTipShare = totalClaimedItems > 0
+    ? (paidClaimsItems / totalClaimedItems) * taxTipAmount
+    : 0;
+  const paidClaimsTotal = paidClaimsItems + paidTaxTipShare;
 
   const totalPaid = participantsPaid + paidClaimsTotal;
 
