@@ -67,6 +67,34 @@ serve(async (req) => {
           console.error('Failed to update payment:', updateError);
         }
 
+        // Trigger instant payout to the split creator
+        const instantPayoutAmount = paymentIntent.metadata?.instantPayoutAmount;
+        const connectedAccountId = paymentIntent.metadata?.connectedAccountId;
+
+        if (instantPayoutAmount && connectedAccountId) {
+          try {
+            // Create instant payout to connected account's bank
+            const payout = await stripe.payouts.create(
+              {
+                amount: parseInt(instantPayoutAmount),
+                currency: 'aud',
+                method: 'instant',
+                description: `ZapSplit payment - ${paymentIntent.metadata?.splitId?.substring(0, 8)}`,
+              },
+              {
+                stripeAccount: connectedAccountId,
+              }
+            );
+            console.log('Instant payout created:', payout.id, 'Amount:', instantPayoutAmount);
+          } catch (payoutError: any) {
+            // If instant payout fails (e.g., bank doesn't support it), fall back to standard
+            console.error('Instant payout failed, falling back to standard:', payoutError.message);
+
+            // Standard payouts happen automatically, so just log the error
+            // The money will still reach the creator within 2 business days
+          }
+        }
+
         // Update split_participant status
         const { data: payment } = await supabase
           .from('payments')

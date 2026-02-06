@@ -116,12 +116,16 @@ serve(async (req) => {
         .eq('id', fromUserId);
     }
 
-    // Calculate fees (2.9% + $0.30, split 50/50)
-    const stripeFee = Math.round(amount * 0.029 + 0.30 * 100); // Stripe fee in cents
-    const halfFee = Math.round(stripeFee / 2);
-    const payerTotal = Math.round(amount * 100) + halfFee; // Amount + half of fee
-    const receiverTotal = Math.round(amount * 100) - halfFee; // Amount - half of fee
-    const applicationFee = halfFee; // ZapSplit keeps half the fee
+    // Calculate fees
+    // 1. Stripe processing fee: 2.9% + $0.30 (split 50/50 between payer and receiver)
+    // 2. Instant payout fee: 1.5% (paid by payer so receiver gets money instantly)
+    const amountCents = Math.round(amount * 100);
+    const stripeFee = Math.round(amount * 0.029 * 100 + 30); // 2.9% + $0.30 in cents
+    const halfStripeFee = Math.round(stripeFee / 2);
+    const instantPayoutFee = Math.round(amountCents * 0.015); // 1.5% for instant payout
+
+    const payerTotal = amountCents + halfStripeFee + instantPayoutFee; // Amount + fees
+    const applicationFee = halfStripeFee; // ZapSplit keeps half the Stripe fee
 
     // Create PaymentIntent with destination charge
     // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
@@ -140,7 +144,9 @@ serve(async (req) => {
         splitId,
         fromUserId,
         toUserId,
-        originalAmount: amount,
+        originalAmount: amount.toString(),
+        instantPayoutAmount: (amountCents - halfStripeFee).toString(), // Amount receiver gets (in cents)
+        connectedAccountId: receiver.stripe_connect_account_id,
       },
       description: `Payment for Split #${splitId.substring(0, 8)}`,
     });
@@ -167,13 +173,15 @@ serve(async (req) => {
     }
 
     // Return client secret for frontend
+    const totalFee = halfStripeFee + instantPayoutFee;
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         paymentId: payment?.id,
         amount: (payerTotal / 100).toFixed(2),
-        fee: (stripeFee / 100).toFixed(2),
+        fee: (totalFee / 100).toFixed(2),
+        instantPayout: true,
       }),
       {
         status: 200,
