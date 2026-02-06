@@ -140,27 +140,14 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     }
   };
 
-  const handleEdit = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.goBack();
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
-        {/* Header with Edit button */}
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Review Split</Text>
-            <TouchableOpacity
-              style={[styles.editButton, { backgroundColor: colors.surface }]}
-              onPress={handleEdit}
-            >
-              <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Review Split</Text>
           <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
             Review the details before creating
           </Text>
@@ -215,27 +202,16 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: spacing.lg,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
   },
   pageTitle: {
     ...typography.h2,
-  },
-  editButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
   pageSubtitle: {
     fontSize: 16,
+    textAlign: 'center',
   },
   summaryContainer: {
     flex: 1,

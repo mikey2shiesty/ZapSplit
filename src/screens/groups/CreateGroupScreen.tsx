@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
@@ -33,6 +34,7 @@ const GROUP_TYPES: { value: GroupType; label: string; icon: string }[] = [
 export default function CreateGroupScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedType, setSelectedType] = useState<GroupType>('custom');
@@ -166,7 +168,7 @@ export default function CreateGroupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.gray50 }]}
+      style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>

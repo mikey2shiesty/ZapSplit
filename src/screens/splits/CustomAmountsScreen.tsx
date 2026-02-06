@@ -236,9 +236,6 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
               <View style={styles.infoContainer}>
                 <Text style={[styles.name, { color: colors.gray900 }]}>
                   {participant.name}
-                  {participant.isCreator && (
-                    <Text style={[styles.creatorBadge, { color: colors.primary }]}> (You)</Text>
-                  )}
                 </Text>
                 {participant.email && (
                   <Text style={[styles.email, { color: colors.gray500 }]}>{participant.email}</Text>
@@ -385,10 +382,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
-  },
-  creatorBadge: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   email: {
     fontSize: 12,
