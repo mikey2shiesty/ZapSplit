@@ -361,8 +361,20 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
 
       const totalPaid = participantsPaid + paidClaimsTotal;
 
-      // Amount owed by others = total - creator's share (items + tax/tip)
-      const amountOwedByOthers = split.total_amount - creatorClaimedAmount;
+      // Amount owed by others depends on split type
+      // For receipt splits: use item claims to determine creator's share
+      // For manual splits: use sum of participant amounts (they are the ones who owe)
+      const isReceiptSplit = split.split_type === 'receipt';
+      const participantAmountsTotal = participants?.reduce((sum, p) => sum + (p.amount_owed || 0), 0) || 0;
+
+      const amountOwedByOthers = isReceiptSplit
+        ? split.total_amount - creatorClaimedAmount
+        : participantAmountsTotal;
+
+      // For manual splits, creator's share is total minus what participants owe
+      const creatorShareAmount = isReceiptSplit
+        ? creatorClaimedAmount
+        : split.total_amount - participantAmountsTotal;
 
       return {
         ...split,
@@ -370,7 +382,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         participant_count: participants?.length || 0,
         paid_count: paidCount,
         total_paid: totalPaid,
-        creator_claimed_amount: creatorClaimedAmount,
+        creator_claimed_amount: creatorShareAmount,
         amount_owed_by_others: amountOwedByOthers,
         amount_remaining: Math.max(0, amountOwedByOthers - totalPaid),
       };
@@ -596,8 +608,21 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
 
   const totalPaid = participantsPaid + paidClaimsTotal;
 
-  // Amount remaining = total - creator's share (items + tax/tip) - payments received
-  const amountOwedByOthers = split.total_amount - creatorClaimedAmount;
+  // Amount owed by others depends on split type
+  // For receipt splits: use item claims to determine creator's share
+  // For manual splits: use sum of participant amounts (they are the ones who owe)
+  const isReceiptSplit = split.split_type === 'receipt';
+  const participantAmountsTotal = participants?.reduce((sum, p) => sum + (p.amount_owed || 0), 0) || 0;
+
+  const amountOwedByOthers = isReceiptSplit
+    ? split.total_amount - creatorClaimedAmount
+    : participantAmountsTotal;
+
+  // For manual splits, creator's share is total minus what participants owe
+  const creatorShareAmount = isReceiptSplit
+    ? creatorClaimedAmount
+    : split.total_amount - participantAmountsTotal;
+
   const amountRemaining = Math.max(0, amountOwedByOthers - totalPaid);
 
   return {
@@ -608,7 +633,7 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     web_payments: webPayments || [],
     total_paid: totalPaid,
     amount_remaining: amountRemaining,
-    creator_claimed_amount: creatorClaimedAmount,
+    creator_claimed_amount: creatorShareAmount,
     amount_owed_by_others: amountOwedByOthers,
   };
 }

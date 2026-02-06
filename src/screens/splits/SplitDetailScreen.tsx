@@ -285,6 +285,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   const isSettled = split.status === 'settled';
   const isReceiptSplit = split.split_type === 'receipt';
 
+  // Calculate what others owe (sum of all participant amounts)
+  const othersOweTotal = split.participants.reduce((sum, p) => sum + (p.amount_owed || 0), 0);
+  // Creator's share is total minus what others owe
+  const creatorShare = split.total_amount - othersOweTotal;
+
   // Check if current user owes money
   const userParticipant = split.participants.find(p => p.user_id === currentUserId);
   const userOwesMoney = userParticipant && userParticipant.amount_owed > 0 && userParticipant.status !== 'paid';
@@ -351,54 +356,46 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           {/* Payment Progress */}
           <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
-          {/* Show creator's claimed items if any */}
-          {isCreator && (split.creator_claimed_amount || 0) > 0 && (
+          {/* Show creator's share for non-receipt splits */}
+          {creatorShare > 0.01 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Your Items</Text>
-              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
-                ${(split.creator_claimed_amount || 0).toFixed(2)}
+              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Your Share</Text>
+              <Text style={[styles.summaryValue, { color: colors.primary }]}>
+                ${creatorShare.toFixed(2)}
               </Text>
             </View>
           )}
 
           {/* Show collection info only if others actually owe something */}
           {(() => {
-            const othersOwe = split.amount_owed_by_others ?? split.total_amount;
-            const hasOthersOwing = othersOwe > 0.01; // Use small threshold to handle floating point
+            const hasOthersOwing = othersOweTotal > 0.01;
+            const totalPaid = split.total_paid || 0;
+            const remaining = othersOweTotal - totalPaid;
 
             if (!hasOthersOwing) {
-              // Solo split where creator claimed everything - show simple "All yours" message
-              return isCreator && (split.creator_claimed_amount || 0) > 0 ? (
+              // Solo split where creator has everything
+              return (
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
-                  <Text style={[styles.summaryValue, { color: colors.success }]}>All claimed by you</Text>
+                  <Text style={[styles.summaryValue, { color: colors.success }]}>All yours</Text>
                 </View>
-              ) : null;
+              );
             }
 
             // Others owe money - show full collection tracking
             return (
               <>
-                {isCreator && (split.creator_claimed_amount || 0) > 0 && (
-                  <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Others Owe</Text>
-                    <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
-                      ${othersOwe.toFixed(2)}
-                    </Text>
-                  </View>
-                )}
-
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
                   <Text style={[styles.summaryValue, { color: colors.success }]}>
-                    ${(split.total_paid || 0).toFixed(2)} of ${othersOwe.toFixed(2)}
+                    ${totalPaid.toFixed(2)} of ${othersOweTotal.toFixed(2)}
                   </Text>
                 </View>
-                {(split.amount_remaining || 0) > 0 && (
+                {remaining > 0.01 && (
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Remaining</Text>
                     <Text style={[styles.summaryValue, { color: colors.warning }]}>
-                      ${(split.amount_remaining || 0).toFixed(2)}
+                      ${remaining.toFixed(2)}
                     </Text>
                   </View>
                 )}
@@ -408,8 +405,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                     style={[
                       styles.progressBar,
                       {
-                        backgroundColor: (split.amount_remaining || 0) === 0 ? colors.success : colors.primary,
-                        width: `${Math.min(100, ((split.total_paid || 0) / othersOwe) * 100)}%`,
+                        backgroundColor: remaining <= 0.01 ? colors.success : colors.primary,
+                        width: `${Math.min(100, (totalPaid / othersOweTotal) * 100)}%`,
                       },
                     ]}
                   />
@@ -477,10 +474,42 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                     return false;
                   });
                 }).length;
-                return `${paidCount} of ${split.participant_count} paid`;
+                // +1 for creator who is always "paid"
+                return `${paidCount + 1} of ${split.participant_count + 1} paid`;
               })()}
             </Text>
           </View>
+
+          {/* Creator's Card - shown first with highlight */}
+          {creatorShare > 0.01 && (
+            <View style={[styles.participantCard, { backgroundColor: colors.primaryLight, borderWidth: 2, borderColor: colors.primary }]}>
+              <View style={styles.participantInfo}>
+                <View style={styles.participantAvatar}>
+                  {split.creator?.avatar_url ? (
+                    <Image source={{ uri: split.creator.avatar_url }} style={styles.avatarImage} />
+                  ) : (
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                      <Text style={[styles.avatarInitials, { color: colors.surface }]}>
+                        {getInitials(split.creator?.full_name || 'You')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.participantDetails}>
+                  <Text style={[styles.participantName, { color: colors.gray900 }]}>
+                    {isCreator ? 'You' : split.creator?.full_name || 'Creator'}
+                  </Text>
+                  <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
+                    ${creatorShare.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={[styles.paidBadge, { backgroundColor: colors.successLight }]}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                  <Text style={[styles.paidBadgeText, { color: colors.success }]}>Paid</Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {split.participants.map((participant) => (
             <ParticipantCard
