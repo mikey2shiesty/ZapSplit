@@ -64,8 +64,24 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-  // Get splits where user is a participant this month
-  const { data: participants } = await supabase
+  // Get splits CREATED by user this month (for totalReceived)
+  // The amount received = sum of what participants owe
+  const { data: createdSplits } = await supabase
+    .from('splits')
+    .select(`
+      id,
+      total_amount,
+      split_participants (
+        amount_owed,
+        status
+      )
+    `)
+    .eq('creator_id', userId)
+    .gte('created_at', startOfMonth)
+    .lte('created_at', endOfMonth);
+
+  // Get splits where user is a PARTICIPANT (not creator) this month (for totalSpent)
+  const { data: participatedSplits } = await supabase
     .from('split_participants')
     .select(`
       amount_owed,
@@ -77,36 +93,50 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
       )
     `)
     .eq('user_id', userId)
+    .neq('splits.creator_id', userId)
     .gte('splits.created_at', startOfMonth)
     .lte('splits.created_at', endOfMonth);
 
   let totalSpent = 0;
   let totalReceived = 0;
-  let totalSplits = 0;
+  let splitsCreatedCount = 0;
+  let splitsParticipatedCount = 0;
 
-  if (participants) {
-    participants.forEach((p: any) => {
-      totalSplits++;
-      if (p.splits.creator_id === userId) {
-        // User created this split, they received money
-        totalReceived += p.amount_owed || 0;
-      } else {
-        // User participated, they spent money
-        totalSpent += p.amount_owed || 0;
-      }
+  // Calculate total received from splits user created
+  if (createdSplits) {
+    createdSplits.forEach((split: any) => {
+      splitsCreatedCount++;
+      // Sum up what all participants owe the creator
+      const participantsOwe = split.split_participants?.reduce(
+        (sum: number, p: any) => sum + (p.amount_owed || 0),
+        0
+      ) || 0;
+      totalReceived += participantsOwe;
     });
   }
+
+  // Calculate total spent from splits user participated in
+  if (participatedSplits) {
+    participatedSplits.forEach((p: any) => {
+      splitsParticipatedCount++;
+      totalSpent += p.amount_owed || 0;
+    });
+  }
+
+  const totalSplits = splitsCreatedCount + splitsParticipatedCount;
+  const totalAmount = totalSpent + totalReceived;
 
   return {
     totalSpent,
     totalReceived,
     totalSplits,
-    averageSplitAmount: totalSplits > 0 ? (totalSpent + totalReceived) / totalSplits : 0,
+    averageSplitAmount: totalSplits > 0 ? totalAmount / totalSplits : 0,
   };
 }
 
 /**
- * Get spending by month for the last 6 months
+ * Get spending/receiving by month for the last 6 months
+ * Shows total split activity (both spending and receiving)
  */
 async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
   const months: SpendingByMonth[] = [];
@@ -117,7 +147,8 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
     const startOfMonth = date.toISOString();
     const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-    const { data: participants } = await supabase
+    // Get splits where user participated (spent money)
+    const { data: participatedSplits } = await supabase
       .from('split_participants')
       .select(`
         amount_owed,
@@ -131,11 +162,30 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
       .gte('splits.created_at', startOfMonth)
       .lte('splits.created_at', endOfMonth);
 
-    const total = participants?.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0) || 0;
+    // Get splits where user is creator (received money)
+    const { data: createdSplits } = await supabase
+      .from('splits')
+      .select(`
+        split_participants (
+          amount_owed
+        )
+      `)
+      .eq('creator_id', userId)
+      .gte('created_at', startOfMonth)
+      .lte('created_at', endOfMonth);
+
+    const spent = participatedSplits?.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0) || 0;
+    const received = createdSplits?.reduce((sum: number, split: any) => {
+      const participantAmounts = split.split_participants?.reduce(
+        (pSum: number, p: any) => pSum + (p.amount_owed || 0),
+        0
+      ) || 0;
+      return sum + participantAmounts;
+    }, 0) || 0;
 
     months.push({
       month: date.toLocaleDateString('en-AU', { month: 'short' }),
-      amount: total,
+      amount: spent + received,
     });
   }
 
@@ -146,20 +196,32 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
  * Get split breakdown by category/title patterns
  */
 async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
-  const { data: participants } = await supabase
+  // Get splits where user participated
+  const { data: participatedSplits } = await supabase
     .from('split_participants')
     .select(`
       amount_owed,
       splits!inner (
         title,
-        description
+        description,
+        creator_id
       )
     `)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .neq('splits.creator_id', userId);
 
-  if (!participants || participants.length === 0) {
-    return [];
-  }
+  // Get splits where user is creator
+  const { data: createdSplits } = await supabase
+    .from('splits')
+    .select(`
+      title,
+      description,
+      total_amount,
+      split_participants (
+        amount_owed
+      )
+    `)
+    .eq('creator_id', userId);
 
   // Categorize based on keywords in title/description
   const categories: Record<string, { amount: number; count: number }> = {
@@ -177,32 +239,50 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
   const shoppingKeywords = ['shopping', 'gift', 'clothes', 'amazon', 'store', 'buy'];
   const billsKeywords = ['rent', 'electricity', 'water', 'internet', 'phone', 'bill', 'utility', 'subscription'];
 
-  participants.forEach((p: any) => {
-    const text = `${p.splits.title || ''} ${p.splits.description || ''}`.toLowerCase();
-    const amount = p.amount_owed || 0;
-
-    if (foodKeywords.some(k => text.includes(k))) {
+  const categorize = (text: string, amount: number) => {
+    const lowerText = text.toLowerCase();
+    if (foodKeywords.some(k => lowerText.includes(k))) {
       categories['Food & Dining'].amount += amount;
       categories['Food & Dining'].count++;
-    } else if (entertainmentKeywords.some(k => text.includes(k))) {
+    } else if (entertainmentKeywords.some(k => lowerText.includes(k))) {
       categories['Entertainment'].amount += amount;
       categories['Entertainment'].count++;
-    } else if (travelKeywords.some(k => text.includes(k))) {
+    } else if (travelKeywords.some(k => lowerText.includes(k))) {
       categories['Travel'].amount += amount;
       categories['Travel'].count++;
-    } else if (shoppingKeywords.some(k => text.includes(k))) {
+    } else if (shoppingKeywords.some(k => lowerText.includes(k))) {
       categories['Shopping'].amount += amount;
       categories['Shopping'].count++;
-    } else if (billsKeywords.some(k => text.includes(k))) {
+    } else if (billsKeywords.some(k => lowerText.includes(k))) {
       categories['Bills & Utilities'].amount += amount;
       categories['Bills & Utilities'].count++;
     } else {
       categories['Other'].amount += amount;
       categories['Other'].count++;
     }
+  };
+
+  // Process participated splits (amount spent)
+  participatedSplits?.forEach((p: any) => {
+    const text = `${p.splits.title || ''} ${p.splits.description || ''}`;
+    categorize(text, p.amount_owed || 0);
+  });
+
+  // Process created splits (amount to receive = sum of participant amounts)
+  createdSplits?.forEach((split: any) => {
+    const text = `${split.title || ''} ${split.description || ''}`;
+    const amountToReceive = split.split_participants?.reduce(
+      (sum: number, p: any) => sum + (p.amount_owed || 0),
+      0
+    ) || 0;
+    categorize(text, amountToReceive);
   });
 
   const totalAmount = Object.values(categories).reduce((sum, c) => sum + c.amount, 0);
+
+  if (totalAmount === 0) {
+    return [];
+  }
 
   return Object.entries(categories)
     .filter(([_, data]) => data.count > 0)
