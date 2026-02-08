@@ -27,7 +27,15 @@ import RecentSplitCard from '../../components/splits/RecentSplitCard';
 import { format } from 'date-fns';
 import { getUnreadCount, registerForPushNotifications } from '../../services/notificationService';
 import { getFriends, Friend } from '../../services/friendService';
-import { createSplit } from '../../services/splitService';
+import { createSplit, SplitWithParticipants } from '../../services/splitService';
+
+/** Show "Request from [creator]" for non-creators viewing a "Request to ..." split */
+function getDisplayTitle(split: SplitWithParticipants, userId?: string): string {
+  if (split.creator_id !== userId && split.title?.startsWith('Request to ')) {
+    return `Request from ${split.creator?.full_name || 'someone'}`;
+  }
+  return split.title;
+}
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
@@ -137,7 +145,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setSendingRequest(true);
     try {
       await createSplit({
-        title: requestNote || `Request from ${user.email?.split('@')[0] || 'User'}`,
+        title: requestNote || `Request to ${selectedFriend.full_name || 'Friend'}`,
         description: requestNote || undefined,
         total_amount: amount,
         currency: 'AUD',
@@ -248,7 +256,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     </View>
                     <View style={styles.searchResultInfo}>
                       <Text style={[styles.searchResultTitle, { color: colors.gray900 }]} numberOfLines={1}>
-                        {split.title}
+                        {getDisplayTitle(split, user?.id)}
                       </Text>
                       <Text style={[styles.searchResultSubtitle, { color: colors.gray500 }]}>
                         ${split.total_amount.toFixed(2)} • {split.participant_count} people
@@ -367,7 +375,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   {splits.slice(0, 5).map((split) => (
                     <RecentSplitCard
                       key={split.id}
-                      title={split.title}
+                      title={getDisplayTitle(split, user?.id)}
                       paidCount={split.paid_count}
                       totalCount={split.participant_count}
                       amount={split.total_amount}
@@ -424,7 +432,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                         <Ionicons name="receipt-outline" size={20} color={colors.primary} />
                       </View>
                       <View style={styles.activityContent}>
-                        <Text style={[styles.activityTitle, { color: colors.gray900 }]}>{split.title}</Text>
+                        <Text style={[styles.activityTitle, { color: colors.gray900 }]}>{getDisplayTitle(split, user?.id)}</Text>
                         <Text style={[styles.activitySubtitle, { color: colors.gray600 }]}>
                           {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
                         </Text>

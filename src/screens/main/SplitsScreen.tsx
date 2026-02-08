@@ -15,8 +15,16 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
+import { SplitWithParticipants } from '../../services/splitService';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+
+function getDisplayTitle(split: SplitWithParticipants, userId?: string): string {
+  if (split.creator_id !== userId && split.title?.startsWith('Request to ')) {
+    return `Request from ${split.creator?.full_name || 'someone'}`;
+  }
+  return split.title;
+}
 
 type FilterType = 'all' | 'pending' | 'paid';
 
@@ -226,7 +234,7 @@ export default function SplitsScreen() {
                   </View>
                   <View style={styles.splitInfo}>
                     <Text style={[styles.splitTitle, { color: colors.gray900 }]} numberOfLines={1}>
-                      {split.title}
+                      {getDisplayTitle(split, user?.id)}
                     </Text>
                     <Text style={[styles.splitMeta, { color: colors.gray500 }]}>
                       {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people

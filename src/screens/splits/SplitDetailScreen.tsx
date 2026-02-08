@@ -325,7 +325,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
         {/* Summary Card */}
         <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
           <View style={styles.summaryHeader}>
-            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>{split.title}</Text>
+            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>
+              {!isCreator && split.title?.startsWith('Request to ')
+                ? `Request from ${split.creator?.full_name || 'someone'}`
+                : split.title}
+            </Text>
             {isSettled && (
               <View style={[styles.settledBadge, { backgroundColor: colors.successLight }]}>
                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
@@ -456,9 +460,10 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
             <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
               {(() => {
-                // Count participants who paid (directly OR via web payment - by email or name)
+                // Only count participants who actually owe money (exclude creator with $0)
+                const owingParticipants = split.participants.filter((p: any) => p.amount_owed > 0);
                 const webPayments = split.web_payments || [];
-                const paidCount = split.participants.filter((p: any) => {
+                const paidCount = owingParticipants.filter((p: any) => {
                   if (p.status === 'paid') return true;
                   // Check if any web payment matches this participant
                   const participantEmail = p.user?.email?.toLowerCase();
@@ -474,8 +479,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                     return false;
                   });
                 }).length;
-                // +1 for creator who is always "paid"
-                return `${paidCount + 1} of ${split.participant_count + 1} paid`;
+                return `${paidCount} of ${owingParticipants.length} paid`;
               })()}
             </Text>
           </View>
@@ -511,7 +515,9 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             </View>
           )}
 
-          {split.participants.map((participant) => (
+          {split.participants
+            .filter((p) => p.amount_owed > 0 || p.user_id !== split.creator_id)
+            .map((participant) => (
             <ParticipantCard
               key={participant.id}
               participant={participant}

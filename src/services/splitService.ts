@@ -231,6 +231,10 @@ export interface SplitWithParticipants extends Split {
   amount_remaining?: number;
   creator_claimed_amount?: number;
   amount_owed_by_others?: number;
+  creator?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
 }
 
 /**
@@ -279,6 +283,16 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
   const allSplits = [...(createdSplits || []), ...participatedSplits];
   const uniqueSplits = Array.from(
     new Map(allSplits.map(split => [split.id, split])).values()
+  );
+
+  // Fetch creator profiles for all splits
+  const creatorIds = [...new Set(uniqueSplits.map(s => s.creator_id))];
+  const { data: creatorProfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url')
+    .in('id', creatorIds);
+  const creatorMap = new Map(
+    (creatorProfiles || []).map(p => [p.id, { full_name: p.full_name, avatar_url: p.avatar_url }])
   );
 
   // Fetch participants and web payments for each split
@@ -385,6 +399,7 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
         creator_claimed_amount: creatorShareAmount,
         amount_owed_by_others: amountOwedByOthers,
         amount_remaining: Math.max(0, amountOwedByOthers - totalPaid),
+        creator: creatorMap.get(split.creator_id),
       };
     })
   );
@@ -535,6 +550,13 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     .eq('status', 'settled')
     .order('created_at', { ascending: false });
 
+  // Get creator's profile
+  const { data: creatorProfile } = await supabase
+    .from('profiles')
+    .select('full_name, avatar_url')
+    .eq('id', split.creator_id)
+    .single();
+
   // Get creator's claims (creator doesn't pay themselves)
   const { data: creatorClaims } = await supabase
     .from('item_claims')
@@ -635,6 +657,7 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     amount_remaining: amountRemaining,
     creator_claimed_amount: creatorShareAmount,
     amount_owed_by_others: amountOwedByOthers,
+    creator: creatorProfile || undefined,
   };
 }
 
