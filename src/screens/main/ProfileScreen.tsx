@@ -157,7 +157,7 @@ export default function ProfileScreen() {
             <MenuItem
               icon="help-circle-outline"
               label="Help & Support"
-              onPress={() => navigation.navigate('Settings')}
+              onPress={() => navigation.navigate('HelpSupport')}
             />
           </View>
         </View>

@@ -32,6 +32,7 @@ export type RootStackParamList = {
   Settings: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
+  HelpSupport: undefined;
   // Analytics
   Analytics: undefined;
 };

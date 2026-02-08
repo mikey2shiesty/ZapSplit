@@ -33,6 +33,7 @@ import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import EditProfileScreen from '../screens/settings/EditProfileScreen';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
+import HelpSupportScreen from '../screens/settings/HelpSupportScreen';
 // Analytics
 import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
@@ -308,6 +309,14 @@ export default function MainNavigator() {
       <Stack.Screen
         name="ChangePassword"
         component={ChangePasswordScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="HelpSupport"
+        component={HelpSupportScreen}
         options={{
           presentation: 'card',
           headerShown: false,
