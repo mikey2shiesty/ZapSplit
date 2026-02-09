@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -22,7 +23,7 @@ interface SignupScreenProps {
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
   const { colors } = useTheme();
-  const { signUp, signInWithApple, isAppleSignInAvailable } = useAuth();
+  const { signUp, signInWithApple, isAppleSignInAvailable, signInWithGoogle } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,6 +31,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const validateForm = () => {
     if (!fullName.trim()) {
@@ -79,9 +81,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     setAppleLoading(true);
     try {
       await signInWithApple();
-      // Navigation will be handled by auth state change
     } catch (error: any) {
-      // Don't show error for user cancellation
       if (error.code !== 'ERR_REQUEST_CANCELED') {
         Alert.alert(
           'Sign In Failed',
@@ -90,6 +90,22 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       }
     } finally {
       setAppleLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code !== 'SIGN_IN_CANCELLED' && error.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert(
+          'Sign In Failed',
+          error.message || 'An error occurred during Google Sign In'
+        );
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -151,7 +167,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
               >
-                <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.gray500} />
               </TouchableOpacity>
             </View>
           </View>
@@ -183,31 +199,40 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             )}
           </TouchableOpacity>
 
-          {/* Apple Sign In - iOS only */}
-          {isAppleSignInAvailable && (
-            <>
-              <View style={styles.dividerContainer}>
-                <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
-                <Text style={[styles.dividerText, { color: colors.gray500 }]}>or</Text>
-                <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
-              </View>
+          {/* Social Sign In */}
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+            <Text style={[styles.dividerText, { color: colors.gray500 }]}>or</Text>
+            <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+          </View>
 
-              <TouchableOpacity
-                style={[styles.appleButton, appleLoading && styles.appleButtonDisabled]}
-                onPress={handleAppleSignIn}
-                disabled={appleLoading}
-              >
-                {appleLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                    <Text style={styles.appleButtonText}>Continue with Apple</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </>
+          {/* Apple Sign In - iOS only (official Apple button) */}
+          {isAppleSignInAvailable && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={styles.appleButton}
+              onPress={handleAppleSignIn}
+            />
           )}
+
+          {/* Google Sign In - All platforms */}
+          <TouchableOpacity
+            style={[styles.googleButton, googleLoading && styles.socialButtonDisabled]}
+            onPress={handleGoogleSignIn}
+            disabled={googleLoading}
+            activeOpacity={0.7}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#4285F4" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={18} color="#4285F4" />
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.loginLink}
@@ -279,9 +304,6 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: spacing.md,
   },
-  eyeText: {
-    fontSize: 20,
-  },
   signupButton: {
     paddingVertical: spacing.md + 2,
     borderRadius: 14,
@@ -315,21 +337,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   appleButton: {
+    height: 50,
+    width: '100%',
+  },
+  googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
-    paddingVertical: spacing.md + 2,
+    backgroundColor: '#FFFFFF',
+    height: 50,
     borderRadius: 14,
-    gap: spacing.sm,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#DADCE0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  appleButtonDisabled: {
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F1F1F',
+    letterSpacing: 0.1,
+  },
+  socialButtonDisabled: {
     opacity: 0.6,
-  },
-  appleButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
   },
   loginLink: {
     paddingVertical: spacing.md,

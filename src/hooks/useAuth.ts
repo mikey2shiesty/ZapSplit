@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { supabase } from '../services/supabase';
+
+// Configure Google Sign In
+// TODO: Replace with your real Web Client ID from Google Cloud Console
+GoogleSignin.configure({
+  webClientId: 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com',
+  scopes: ['profile', 'email'],
+});
 
 export interface AuthState {
   session: Session | null;
@@ -123,6 +131,36 @@ export function useAuth() {
     return data;
   };
 
+  const signInWithGoogle = async () => {
+    // Check if Google Play Services are available (Android)
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    // Sign in with Google
+    const response = await GoogleSignin.signIn();
+
+    if (!response.data?.idToken) {
+      throw new Error('No ID token received from Google');
+    }
+
+    // Sign in with Supabase using the Google ID token
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.data.idToken,
+    });
+
+    if (error) throw error;
+
+    // Update profile with Google name if available
+    const googleUser = response.data.user;
+    if (googleUser?.name && data.user) {
+      await supabase.auth.updateUser({
+        data: { full_name: googleUser.name },
+      });
+    }
+
+    return data;
+  };
+
   // Check if Apple Sign In is available on this device
   const isAppleSignInAvailable = Platform.OS === 'ios';
 
@@ -133,5 +171,6 @@ export function useAuth() {
     signOut,
     signInWithApple,
     isAppleSignInAvailable,
+    signInWithGoogle,
   };
 }
