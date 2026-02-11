@@ -50,8 +50,23 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       return false;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
+      return false;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      Alert.alert('Error', 'Password must contain at least one uppercase letter');
+      return false;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      Alert.alert('Error', 'Password must contain at least one number');
+      return false;
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      Alert.alert('Error', 'Password must contain at least one special character');
       return false;
     }
 
@@ -155,7 +170,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             <View style={[styles.passwordContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
               <TextInput
                 style={[styles.passwordInput, { color: colors.gray900 }]}
-                placeholder="At least 6 characters"
+                placeholder="Create a password"
                 placeholderTextColor={colors.textSecondary}
                 value={password}
                 onChangeText={setPassword}
@@ -170,6 +185,50 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.gray500} />
               </TouchableOpacity>
             </View>
+            {password.length > 0 && (
+              <View style={styles.requirements}>
+                <View style={styles.requirementRow}>
+                  <Ionicons
+                    name={password.length >= 8 ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={password.length >= 8 ? '#34C759' : colors.gray400}
+                  />
+                  <Text style={[styles.requirementText, { color: password.length >= 8 ? '#34C759' : colors.gray400 }]}>
+                    At least 8 characters
+                  </Text>
+                </View>
+                <View style={styles.requirementRow}>
+                  <Ionicons
+                    name={/[A-Z]/.test(password) ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={/[A-Z]/.test(password) ? '#34C759' : colors.gray400}
+                  />
+                  <Text style={[styles.requirementText, { color: /[A-Z]/.test(password) ? '#34C759' : colors.gray400 }]}>
+                    One uppercase letter
+                  </Text>
+                </View>
+                <View style={styles.requirementRow}>
+                  <Ionicons
+                    name={/[0-9]/.test(password) ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={/[0-9]/.test(password) ? '#34C759' : colors.gray400}
+                  />
+                  <Text style={[styles.requirementText, { color: /[0-9]/.test(password) ? '#34C759' : colors.gray400 }]}>
+                    One number
+                  </Text>
+                </View>
+                <View style={styles.requirementRow}>
+                  <Ionicons
+                    name={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '#34C759' : colors.gray400}
+                  />
+                  <Text style={[styles.requirementText, { color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '#34C759' : colors.gray400 }]}>
+                    One special character
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -278,6 +337,20 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     gap: spacing.xs,
+  },
+  requirements: {
+    marginTop: 6,
+    gap: 4,
+    paddingLeft: spacing.xs,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  requirementText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   label: {
     fontSize: 14,
