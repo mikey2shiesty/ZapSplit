@@ -2,15 +2,20 @@ import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { supabase } from '../services/supabase';
 
-// Configure Google Sign In
-// TODO: Replace with your real Web Client ID from Google Cloud Console
-GoogleSignin.configure({
-  webClientId: 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com',
-  scopes: ['profile', 'email'],
-});
+// Safely import Google Sign In (native module, not available in Expo Go)
+let GoogleSignin: any = null;
+try {
+  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+  GoogleSignin.configure({
+    webClientId: '721298532681-gjse114iqmumq7vrf4c18cbe3252u4pj.apps.googleusercontent.com',
+    iosClientId: '721298532681-23u9e6stdpjjf0v3do9fcqraj96ekca8.apps.googleusercontent.com',
+    scopes: ['profile', 'email'],
+  });
+} catch {
+  // Native module not available (e.g. running in Expo Go)
+}
 
 export interface AuthState {
   session: Session | null;
@@ -132,6 +137,10 @@ export function useAuth() {
   };
 
   const signInWithGoogle = async () => {
+    if (!GoogleSignin) {
+      throw new Error('Google Sign In is not available. Please use a development build.');
+    }
+
     // Check if Google Play Services are available (Android)
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
