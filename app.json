@@ -19,11 +19,14 @@
       "buildNumber": "1.0.0",
       "associatedDomains": [
         "applinks:zapsplit.app",
+        "applinks:www.zapsplit.app",
+        "applinks:zapsplit.app",
         "applinks:www.zapsplit.app"
       ],
       "infoPlist": {
         "NSCameraUsageDescription": "ZapSplit needs camera access to scan receipts and automatically split bills.",
-        "NSPhotoLibraryUsageDescription": "ZapSplit needs access to your photos to upload receipt images."
+        "NSPhotoLibraryUsageDescription": "ZapSplit needs access to your photos to upload receipt images.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -34,9 +37,10 @@
       "package": "com.yourname.zapsplit",
       "versionCode": 1,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ],
       "targetSdkVersion": 35,
       "compileSdkVersion": 35,
@@ -56,7 +60,10 @@
               "pathPrefix": "/pay"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -88,6 +95,11 @@
           "iosUrlScheme": "com.googleusercontent.apps.721298532681-23u9e6stdpjjf0v3do9fcqraj96ekca8"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b353cf00-111a-455b-9cff-a5622fd4cbf4"
+      }
+    }
   }
 }
