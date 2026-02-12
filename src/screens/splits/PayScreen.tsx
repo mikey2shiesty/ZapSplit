@@ -34,8 +34,9 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
   const [split, setSplit] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [recipientReady, setRecipientReady] = useState(false);
+  const [participantCount, setParticipantCount] = useState(2);
 
-  const fees = calculateFees(amount);
+  const fees = calculateFees(amount, participantCount);
 
   useEffect(() => {
     loadPaymentData();
@@ -93,6 +94,15 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         return;
       }
       setSplit(splitData);
+
+      // Get participant count for fair fee splitting
+      const { count } = await supabase
+        .from('split_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('split_id', splitId);
+      if (count && count > 0) {
+        setParticipantCount(count);
+      }
     } catch (error) {
       console.error('Error loading payment data:', error);
       Alert.alert('Error', 'Failed to load payment information');
@@ -119,7 +129,8 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         amount,
         splitId,
         initPaymentSheet,
-        presentPaymentSheet
+        presentPaymentSheet,
+        participantCount
       );
 
       if (result.success) {
@@ -214,12 +225,12 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
           <Text style={[styles.breakdownTitle, { color: colors.gray900 }]}>Payment Breakdown</Text>
 
           <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Split amount</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Your share</Text>
             <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>${fees.amount.toFixed(2)}</Text>
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Processing fee (split 50/50)</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Fees (split {participantCount} ways)</Text>
             <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>+${fees.userFee.toFixed(2)}</Text>
           </View>
 
@@ -231,8 +242,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
           </View>
 
           <Text style={[styles.feeNote, { color: colors.gray500 }]}>
-            Stripe charges {(fees.stripeFee / fees.amount * 100).toFixed(1)}% + $0.30 per transaction.
-            You and {recipient.full_name?.split(' ')[0] || 'the recipient'} split this fee equally.
+            All fees (processing, instant payout, and service fee) are split equally among all {participantCount} participants.
           </Text>
         </Card>
 

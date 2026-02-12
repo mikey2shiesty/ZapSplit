@@ -10,6 +10,8 @@ export interface PaymentFeeBreakdown {
   amount: number;
   stripeFee: number;
   userFee: number;
+  instantPayoutFee: number;
+  platformFee: number;
   total: number;
 }
 
@@ -69,18 +71,28 @@ export interface Payment {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
- * Calculate Stripe fees and split 50/50 between payer and receiver
- * Stripe fee: 2.9% + $0.30 AUD per transaction
+ * Calculate all fees for a payment, split fairly among ALL participants:
+ * 1. Stripe processing fee: 2.9% + $0.30 AUD (split equally among all participants)
+ * 2. Instant payout fee: 1.5% (split equally among all participants)
+ * 3. Platform fee: $0.50 AUD ZapSplit fee (split equally among all participants)
+ *
+ * @param amount - The amount this payer owes
+ * @param participantCount - Total number of participants in the split (including receiver)
  */
-export function calculateFees(amount: number): PaymentFeeBreakdown {
-  const stripeFee = amount * 0.029 + 0.3;
-  const userFee = stripeFee / 2; // Split 50/50
-  const total = amount + userFee;
+export function calculateFees(amount: number, participantCount: number = 2): PaymentFeeBreakdown {
+  const stripeFee = amount * 0.029 + 0.3; // Stripe's fee for this transaction
+  const instantPayoutFee = amount * 0.015; // 1.5% instant payout fee
+  const platformFee = 0.5 / participantCount; // $0.50 split among all participants
+  const userFee = stripeFee / participantCount; // Each person's share of Stripe fee
+  const userInstantFee = instantPayoutFee / participantCount; // Each person's share of instant fee
+  const total = amount + userFee + userInstantFee + platformFee;
 
   return {
     amount: parseFloat(amount.toFixed(2)),
     stripeFee: parseFloat(stripeFee.toFixed(2)),
-    userFee: parseFloat(userFee.toFixed(2)),
+    userFee: parseFloat((userFee + userInstantFee + platformFee).toFixed(2)), // Total fee this payer pays
+    instantPayoutFee: parseFloat(userInstantFee.toFixed(2)),
+    platformFee: parseFloat(platformFee.toFixed(2)),
     total: parseFloat(total.toFixed(2)),
   };
 }
@@ -154,7 +166,8 @@ export async function createPayment(
   amount: number,
   splitId: string,
   initPaymentSheet: any, // Pass from useStripe() hook
-  presentPaymentSheet: any // Pass from useStripe() hook
+  presentPaymentSheet: any, // Pass from useStripe() hook
+  participantCount: number = 2
 ): Promise<CreatePaymentResult> {
   try {
     // Call Edge Function to create payment intent
@@ -164,6 +177,7 @@ export async function createPayment(
         toUserId,
         amount,
         splitId,
+        participantCount,
       },
     });
 

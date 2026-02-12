@@ -37,7 +37,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { fromUserId, toUserId, amount, splitId } = await req.json();
+    const { fromUserId, toUserId, amount, splitId, participantCount = 2 } = await req.json();
 
     // Validate input
     if (!fromUserId || !toUserId || !amount || !splitId) {
@@ -116,16 +116,19 @@ serve(async (req) => {
         .eq('id', fromUserId);
     }
 
-    // Calculate fees
-    // 1. Stripe processing fee: 2.9% + $0.30 (split 50/50 between payer and receiver)
-    // 2. Instant payout fee: 1.5% (paid by payer so receiver gets money instantly)
+    // Calculate fees — all fees split equally among all participants
+    // 1. Stripe processing fee: 2.9% + $0.30 AUD per transaction
+    // 2. Instant payout fee: 1.5% per transaction
+    // 3. Platform fee: $0.50 AUD total (ZapSplit's revenue)
     const amountCents = Math.round(amount * 100);
     const stripeFee = Math.round(amount * 0.029 * 100 + 30); // 2.9% + $0.30 in cents
-    const halfStripeFee = Math.round(stripeFee / 2);
     const instantPayoutFee = Math.round(amountCents * 0.015); // 1.5% for instant payout
+    const platformFeeCents = Math.round(50 / participantCount); // $0.50 split among all participants
+    const payerStripeFee = Math.round(stripeFee / participantCount); // This payer's share of Stripe fee
+    const payerInstantFee = Math.round(instantPayoutFee / participantCount); // This payer's share of instant fee
 
-    const payerTotal = amountCents + halfStripeFee + instantPayoutFee; // Amount + fees
-    const applicationFee = halfStripeFee; // ZapSplit keeps half the Stripe fee
+    const payerTotal = amountCents + payerStripeFee + payerInstantFee + platformFeeCents;
+    const applicationFee = platformFeeCents; // ZapSplit keeps the platform fee portion
 
     // Create PaymentIntent with destination charge
     // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
@@ -145,8 +148,9 @@ serve(async (req) => {
         fromUserId,
         toUserId,
         originalAmount: amount.toString(),
-        instantPayoutAmount: (amountCents - halfStripeFee).toString(), // Amount receiver gets (in cents)
+        instantPayoutAmount: (amountCents - payerStripeFee).toString(), // Amount receiver gets (in cents)
         connectedAccountId: receiver.stripe_connect_account_id,
+        participantCount: participantCount.toString(),
       },
       description: `Payment for Split #${splitId.substring(0, 8)}`,
     });
@@ -173,7 +177,7 @@ serve(async (req) => {
     }
 
     // Return client secret for frontend
-    const totalFee = halfStripeFee + instantPayoutFee;
+    const totalFee = payerStripeFee + payerInstantFee + platformFeeCents;
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
@@ -181,6 +185,7 @@ serve(async (req) => {
         paymentId: payment?.id,
         amount: (payerTotal / 100).toFixed(2),
         fee: (totalFee / 100).toFixed(2),
+        platformFee: (platformFeeCents / 100).toFixed(2),
         instantPayout: true,
       }),
       {
@@ -191,7 +196,7 @@ serve(async (req) => {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating payment intent:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
