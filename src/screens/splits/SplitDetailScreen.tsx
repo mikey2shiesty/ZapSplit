@@ -288,19 +288,28 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   // Calculate what others owe (sum of all participant amounts)
   const othersOweTotal = split.participants.reduce((sum, p) => sum + (p.amount_owed || 0), 0);
 
-  // For receipt splits, calculate creator's share from their claimed items
-  // For other splits, creator's share is total minus what others owe
-  const creatorClaimsTotal = isReceiptSplit && currentUserId
+  // Calculate the current user's share from their claimed items (for receipt splits)
+  const currentUserClaims = isReceiptSplit && currentUserId
     ? (itemClaims.get(currentUserId) || []).reduce((sum: number, claim: any) => sum + (Number(claim.item_amount) / (claim.share_count || 1)), 0)
     : 0;
+
+  // Creator's share calculation
+  const creatorShareFromClaims = isReceiptSplit && split.creator_id
+    ? (itemClaims.get(split.creator_id) || []).reduce((sum: number, claim: any) => sum + (Number(claim.item_amount) / (claim.share_count || 1)), 0)
+    : 0;
   const creatorShare = isReceiptSplit
-    ? (creatorClaimsTotal > 0 ? creatorClaimsTotal : split.total_amount - othersOweTotal)
+    ? (creatorShareFromClaims > 0 ? creatorShareFromClaims : split.total_amount - othersOweTotal)
     : split.total_amount - othersOweTotal;
 
   // Check if current user owes money
   const userParticipant = split.participants.find(p => p.user_id === currentUserId);
   const userOwesMoney = userParticipant && userParticipant.amount_owed > 0 && userParticipant.status !== 'paid';
   const amountOwed = userParticipant?.amount_owed || 0;
+
+  // "Your Share" depends on who is viewing
+  const yourShare = isCreator
+    ? creatorShare
+    : (isReceiptSplit && currentUserClaims > 0 ? currentUserClaims : amountOwed);
 
   // Check if user can claim items (receipt split - creators can also claim their own items)
   const canClaimItems = isReceiptSplit;
@@ -367,19 +376,47 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           {/* Payment Progress */}
           <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
-          {/* Show creator's share for non-receipt splits */}
-          {creatorShare > 0.01 && (
+          {/* Your Share — shows different value for creator vs participant */}
+          {yourShare > 0.01 && (
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Your Share</Text>
               <Text style={[styles.summaryValue, { color: colors.primary }]}>
-                ${creatorShare.toFixed(2)}
+                ${yourShare.toFixed(2)}
               </Text>
             </View>
           )}
 
-          {/* Show collection info only if others actually owe something */}
+          {/* Status section — different for creator vs participant */}
           {(() => {
-            // For receipt splits, check if others have claimed items even if amount_owed is 0
+            if (!isCreator) {
+              // Participant view: show their payment status
+              // Check split_participants status, amount_paid, AND web payments
+              const userPart = userParticipant as any;
+              const participantEmail = userPart?.user?.email?.toLowerCase();
+              const participantName = userPart?.user?.full_name?.toLowerCase();
+              const webPayments = split.web_payments || [];
+              const paidViaWeb = webPayments.some((wp: any) => {
+                const payerEmail = wp.payer_email?.toLowerCase();
+                const payerName = wp.payer_name?.toLowerCase();
+                if (participantEmail && payerEmail === participantEmail) return true;
+                if (participantName && payerName) {
+                  if (payerName === participantName) return true;
+                  if (participantName.includes(payerName) || payerName.includes(participantName)) return true;
+                }
+                return false;
+              });
+              const isPaid = userParticipant?.status === 'paid' || (userParticipant?.amount_paid && userParticipant.amount_paid > 0) || paidViaWeb;
+              return (
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
+                  <Text style={[styles.summaryValue, { color: isPaid ? colors.success : colors.warning }]}>
+                    {isPaid ? 'Paid' : 'Unpaid'}
+                  </Text>
+                </View>
+              );
+            }
+
+            // Creator view: show collection tracking
             const othersHaveClaims = isReceiptSplit && Array.from(itemClaims.entries()).some(
               ([userId, claims]) => userId !== currentUserId && claims.length > 0
             );
@@ -389,7 +426,6 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             const remaining = effectiveOwed - totalPaid;
 
             if (!hasOthersOwing) {
-              // Solo split where creator has everything
               return (
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
@@ -398,7 +434,6 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               );
             }
 
-            // Others owe money - show full collection tracking
             return (
               <>
                 <View style={styles.summaryRow}>
@@ -415,7 +450,6 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                     </Text>
                   </View>
                 )}
-                {/* Progress Bar */}
                 <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
                   <View
                     style={[
@@ -497,17 +531,22 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             </Text>
           </View>
 
-          {/* Creator's Card - shown first with highlight */}
+          {/* Creator's Card - highlighted only if current user IS the creator */}
           {creatorShare > 0.01 && (
-            <View style={[styles.participantCard, { backgroundColor: colors.primaryLight, borderWidth: 2, borderColor: colors.primary }]}>
+            <View style={[
+              styles.participantCard,
+              isCreator
+                ? { backgroundColor: colors.primaryLight, borderWidth: 2, borderColor: colors.primary }
+                : { backgroundColor: colors.surface }
+            ]}>
               <View style={styles.participantInfo}>
                 <View style={styles.participantAvatar}>
                   {split.creator?.avatar_url ? (
                     <Image source={{ uri: split.creator.avatar_url }} style={styles.avatarImage} />
                   ) : (
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: isCreator ? colors.primary : colors.gray400 }]}>
                       <Text style={[styles.avatarInitials, { color: colors.surface }]}>
-                        {getInitials(split.creator?.full_name || 'You')}
+                        {getInitials(split.creator?.full_name || 'Creator')}
                       </Text>
                     </View>
                   )}
@@ -535,6 +574,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               key={participant.id}
               participant={participant}
               isCreator={isCreator}
+              isCurrentUser={participant.user_id === currentUserId}
               onMarkAsPaid={() => handleMarkAsPaid(participant)}
               colors={colors}
               webPayments={split.web_payments || []}
@@ -600,6 +640,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 function ParticipantCard({
   participant,
   isCreator,
+  isCurrentUser,
   onMarkAsPaid,
   colors,
   webPayments,
@@ -607,6 +648,7 @@ function ParticipantCard({
 }: {
   participant: any;
   isCreator: boolean;
+  isCurrentUser: boolean;
   onMarkAsPaid: () => void;
   colors: ThemeColors;
   webPayments: any[];
@@ -635,14 +677,19 @@ function ParticipantCard({
   const paidAmount = isPaidViaWeb ? Number(webPayment.amount) : participant.amount_paid;
 
   return (
-    <View style={[styles.participantCard, { backgroundColor: colors.surface }]}>
+    <View style={[
+      styles.participantCard,
+      isCurrentUser
+        ? { backgroundColor: colors.primaryLight, borderWidth: 2, borderColor: colors.primary }
+        : { backgroundColor: colors.surface }
+    ]}>
       <View style={styles.participantInfo}>
         {/* Avatar */}
         <View style={styles.participantAvatar}>
           {participant.user?.avatar_url ? (
             <Image source={{ uri: participant.user.avatar_url }} style={styles.avatarImage} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: isCurrentUser ? colors.primary : colors.gray400 }]}>
               <Text style={[styles.avatarInitials, { color: colors.surface }]}>
                 {getInitials(participant.user?.full_name || 'U')}
               </Text>
@@ -652,7 +699,7 @@ function ParticipantCard({
 
         {/* Name and Amount */}
         <View style={styles.participantDetails}>
-          <Text style={[styles.participantName, { color: colors.gray900 }]}>{participant.user?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.participantName, { color: colors.gray900 }]}>{isCurrentUser ? 'You' : (participant.user?.full_name || 'Unknown')}</Text>
           <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
             ${isPaidViaWeb ? paidAmount.toFixed(2) : participant.amount_owed.toFixed(2)}
           </Text>
