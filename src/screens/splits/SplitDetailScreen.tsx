@@ -287,8 +287,15 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   // Calculate what others owe (sum of all participant amounts)
   const othersOweTotal = split.participants.reduce((sum, p) => sum + (p.amount_owed || 0), 0);
-  // Creator's share is total minus what others owe
-  const creatorShare = split.total_amount - othersOweTotal;
+
+  // For receipt splits, calculate creator's share from their claimed items
+  // For other splits, creator's share is total minus what others owe
+  const creatorClaimsTotal = isReceiptSplit && currentUserId
+    ? (itemClaims.get(currentUserId) || []).reduce((sum: number, claim: any) => sum + (Number(claim.item_amount) / (claim.share_count || 1)), 0)
+    : 0;
+  const creatorShare = isReceiptSplit
+    ? (creatorClaimsTotal > 0 ? creatorClaimsTotal : split.total_amount - othersOweTotal)
+    : split.total_amount - othersOweTotal;
 
   // Check if current user owes money
   const userParticipant = split.participants.find(p => p.user_id === currentUserId);
@@ -372,9 +379,14 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
           {/* Show collection info only if others actually owe something */}
           {(() => {
-            const hasOthersOwing = othersOweTotal > 0.01;
+            // For receipt splits, check if others have claimed items even if amount_owed is 0
+            const othersHaveClaims = isReceiptSplit && Array.from(itemClaims.entries()).some(
+              ([userId, claims]) => userId !== currentUserId && claims.length > 0
+            );
+            const hasOthersOwing = othersOweTotal > 0.01 || othersHaveClaims;
             const totalPaid = split.total_paid || 0;
-            const remaining = othersOweTotal - totalPaid;
+            const effectiveOwed = othersOweTotal > 0.01 ? othersOweTotal : (split.total_amount - creatorShare);
+            const remaining = effectiveOwed - totalPaid;
 
             if (!hasOthersOwing) {
               // Solo split where creator has everything
@@ -392,7 +404,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
                   <Text style={[styles.summaryValue, { color: colors.success }]}>
-                    ${totalPaid.toFixed(2)} of ${othersOweTotal.toFixed(2)}
+                    ${totalPaid.toFixed(2)} of ${effectiveOwed.toFixed(2)}
                   </Text>
                 </View>
                 {remaining > 0.01 && (
@@ -410,7 +422,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                       styles.progressBar,
                       {
                         backgroundColor: remaining <= 0.01 ? colors.success : colors.primary,
-                        width: `${Math.min(100, (totalPaid / othersOweTotal) * 100)}%`,
+                        width: `${Math.min(100, effectiveOwed > 0 ? (totalPaid / effectiveOwed) * 100 : 0)}%`,
                       },
                     ]}
                   />
@@ -460,11 +472,12 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
             <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
               {(() => {
-                // Only count participants who actually owe money (exclude creator with $0)
-                const owingParticipants = split.participants.filter((p: any) => p.amount_owed > 0);
+                // Count participants who owe money (exclude creator)
+                const owingParticipants = split.participants.filter((p: any) => p.user_id !== split.creator_id);
                 const webPayments = split.web_payments || [];
                 const paidCount = owingParticipants.filter((p: any) => {
                   if (p.status === 'paid') return true;
+                  if (p.amount_paid > 0) return true;
                   // Check if any web payment matches this participant
                   const participantEmail = p.user?.email?.toLowerCase();
                   const participantName = p.user?.full_name?.toLowerCase();

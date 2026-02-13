@@ -1,8 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-// Supabase Edge Function: stripe-webhook
-// Purpose: Handle Stripe webhook events (payment success, failure, etc.)
-// ═══════════════════════════════════════════════════════════════
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
@@ -16,45 +11,49 @@ const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const cryptoProvider = Stripe.createSubtleCryptoProvider();
+
 serve(async (req) => {
   try {
-    // Handle CORS preflight (not needed for webhooks, but good practice)
     if (req.method === 'OPTIONS') {
       return new Response('ok', { status: 200 });
     }
 
-    // Only allow POST requests
     if (req.method !== 'POST') {
       return new Response('Method not allowed', { status: 405 });
     }
 
-    // Get raw body and signature
     const body = await req.text();
     const signature = req.headers.get('stripe-signature');
 
     if (!signature) {
+      console.error('Missing stripe-signature header');
       return new Response('Missing stripe-signature header', { status: 400 });
     }
 
-    // Verify webhook signature
+    // Use async version for Deno (WebCrypto API)
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        webhookSecret,
+        undefined,
+        cryptoProvider
+      );
+    } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
-    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Handle different event types
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         console.log('Payment succeeded:', paymentIntent.id);
 
-        // Update payment record
+        // Update payment record to completed
         const { error: updateError } = await supabase
           .from('payments')
           .update({
@@ -73,7 +72,6 @@ serve(async (req) => {
 
         if (instantPayoutAmount && connectedAccountId) {
           try {
-            // Create instant payout to connected account's bank
             const payout = await stripe.payouts.create(
               {
                 amount: parseInt(instantPayoutAmount),
@@ -81,46 +79,57 @@ serve(async (req) => {
                 method: 'instant',
                 description: `ZapSplit payment - ${paymentIntent.metadata?.splitId?.substring(0, 8)}`,
               },
-              {
-                stripeAccount: connectedAccountId,
-              }
+              { stripeAccount: connectedAccountId }
             );
-            console.log('Instant payout created:', payout.id, 'Amount:', instantPayoutAmount);
+            console.log('Instant payout created:', payout.id);
           } catch (payoutError: any) {
-            // If instant payout fails (e.g., bank doesn't support it), fall back to standard
             console.error('Instant payout failed, falling back to standard:', payoutError.message);
-
-            // Standard payouts happen automatically, so just log the error
-            // The money will still reach the creator within 2 business days
           }
         }
 
         // Update split_participant status
         const { data: payment } = await supabase
           .from('payments')
-          .select('from_user_id, split_id')
+          .select('from_user_id, split_id, amount')
           .eq('stripe_payment_intent_id', paymentIntent.id)
           .single();
 
         if (payment) {
+          // Get participant's amount_owed to set as amount_paid
+          const { data: participant } = await supabase
+            .from('split_participants')
+            .select('amount_owed')
+            .eq('split_id', payment.split_id)
+            .eq('user_id', payment.from_user_id)
+            .single();
+
           await supabase
             .from('split_participants')
             .update({
               status: 'paid',
-              amount_paid: supabase.raw('amount_owed'),
+              amount_paid: participant?.amount_owed || payment.amount,
               payment_method: 'stripe',
             })
             .eq('split_id', payment.split_id)
             .eq('user_id', payment.from_user_id);
 
-          // Check if all participants paid → mark split as settled
+          // Check if all participants paid -> mark split as settled
           const { data: participants } = await supabase
             .from('split_participants')
-            .select('status')
+            .select('status, user_id')
             .eq('split_id', payment.split_id);
 
-          const allPaid = participants?.every((p) => p.status === 'paid');
-          if (allPaid) {
+          // Get the split to know the creator_id
+          const { data: splitData } = await supabase
+            .from('splits')
+            .select('creator_id')
+            .eq('id', payment.split_id)
+            .single();
+
+          // All non-creator participants are paid
+          const nonCreatorParticipants = participants?.filter(p => p.user_id !== splitData?.creator_id);
+          const allPaid = nonCreatorParticipants?.every((p) => p.status === 'paid');
+          if (allPaid && nonCreatorParticipants && nonCreatorParticipants.length > 0) {
             await supabase
               .from('splits')
               .update({ status: 'settled' })
@@ -137,10 +146,7 @@ serve(async (req) => {
 
         await supabase
           .from('payments')
-          .update({
-            status: 'failed',
-            failed_at: new Date().toISOString(),
-          })
+          .update({ status: 'failed' })
           .eq('stripe_payment_intent_id', paymentIntent.id);
 
         break;
@@ -152,10 +158,7 @@ serve(async (req) => {
 
         await supabase
           .from('payments')
-          .update({
-            status: 'cancelled',
-            failed_at: new Date().toISOString(),
-          })
+          .update({ status: 'cancelled' })
           .eq('stripe_payment_intent_id', paymentIntent.id);
 
         break;
@@ -165,14 +168,11 @@ serve(async (req) => {
         const account = event.data.object as Stripe.Account;
         console.log('Connect account updated:', account.id);
 
-        // Update profile with onboarding status
         const onboardingComplete = account.details_submitted && account.charges_enabled;
 
         await supabase
           .from('profiles')
-          .update({
-            stripe_connect_onboarding_complete: onboardingComplete,
-          })
+          .update({ stripe_connect_onboarding_complete: onboardingComplete })
           .eq('stripe_connect_account_id', account.id);
 
         break;
@@ -182,7 +182,6 @@ serve(async (req) => {
         const charge = event.data.object as Stripe.Charge;
         console.log('Charge refunded:', charge.id);
 
-        // Find payment by payment_intent
         await supabase
           .from('payments')
           .update({ status: 'refunded' })
@@ -195,19 +194,15 @@ serve(async (req) => {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    // Return success response
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Webhook error:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 });
