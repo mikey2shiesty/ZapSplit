@@ -117,7 +117,7 @@ The "price" field must be the PER-UNIT price, NOT the line total.
 - If a line shows "Burger $10.00", then price: 10.00, quantity: 1
 
 IMPORTANT RULES:
-1. Extract ALL food/drink items
+1. Extract ALL food/drink items as MAIN ITEMS ONLY
 2. ALWAYS calculate per-unit price by dividing the line total by quantity
 3. Generate a unique ID for each item (use simple incrementing numbers like "1", "2", "3")
 4. If quantity is not shown, assume quantity = 1
@@ -125,7 +125,9 @@ IMPORTANT RULES:
 6. Extract tax amount (if shown)
 7. Extract tip amount (if shown, otherwise set to 0)
 8. Set total to the final amount on the receipt
-9. CONFIDENCE SCORING - Set based on how well you could read the receipt:
+9. MODIFIERS/ADD-ONS: Items shown indented, with a dash prefix, or listed beneath a main item (e.g. sauces, extras, toppings, sides added to a dish) are modifiers whose price is ALREADY INCLUDED in the parent item's price. Do NOT list them as separate items. Instead, append the modifier name to the parent item name. Example: if "Wings $7.50" has "- Ranch (1 x $1.50)" below it, output ONE item: {"name": "Wings + Ranch", "price": 7.50, "quantity": 1}. The $1.50 is already part of the $7.50.
+10. VERIFY: The sum of all item prices times quantities must equal the receipt subtotal/total. If it doesn't, you likely double-counted modifiers.
+11. CONFIDENCE SCORING - Set based on how well you could read the receipt:
    - 0.98-1.0: Perfect quality, all text crystal clear
    - 0.90-0.97: Good quality, most text readable
    - 0.80-0.89: Moderate quality, some items may be unclear
