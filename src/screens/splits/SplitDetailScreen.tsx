@@ -422,7 +422,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             );
             const hasOthersOwing = othersOweTotal > 0.01 || othersHaveClaims;
             const totalPaid = split.total_paid || 0;
-            const effectiveOwed = othersOweTotal > 0.01 ? othersOweTotal : (split.total_amount - creatorShare);
+            const calculatedOwed = othersOweTotal > 0.01 ? othersOweTotal : (split.total_amount - creatorShare);
+            const effectiveOwed = Math.max(calculatedOwed, totalPaid);
             const remaining = effectiveOwed - totalPaid;
 
             if (!hasOthersOwing) {
