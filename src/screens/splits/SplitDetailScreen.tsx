@@ -560,9 +560,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                     ${creatorShare.toFixed(2)}
                   </Text>
                 </View>
-                <View style={[styles.paidBadge, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                  <Text style={[styles.paidBadgeText, { color: colors.success }]}>Paid</Text>
+                <View style={[styles.paidBadge, { backgroundColor: isCreator ? colors.primaryLight : colors.successLight }]}>
+                  <Ionicons name={isCreator ? 'person-circle' : 'checkmark-circle'} size={20} color={isCreator ? colors.primary : colors.success} />
+                  <Text style={[styles.paidBadgeText, { color: isCreator ? colors.primary : colors.success }]}>
+                    {isCreator ? 'You' : 'Creator'}
+                  </Text>
                 </View>
               </View>
             </View>
