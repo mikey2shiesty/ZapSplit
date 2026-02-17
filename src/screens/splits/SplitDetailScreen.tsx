@@ -657,9 +657,11 @@ function ParticipantCard({
   webPayments: any[];
   claimedItems: any[];
 }) {
+  const isExternal = !participant.user_id && !!participant.external_name;
+
   // Check if paid via split_participants OR via web payment (matching email OR name)
-  const participantEmail = participant.user?.email?.toLowerCase();
-  const participantName = participant.user?.full_name?.toLowerCase();
+  const participantEmail = (participant.user?.email || participant.external_email)?.toLowerCase();
+  const participantName = (participant.user?.full_name || participant.external_name)?.toLowerCase();
 
   // Try to match web payment by email first, then by name as fallback
   const webPayment = webPayments.find((wp) => {
@@ -689,7 +691,11 @@ function ParticipantCard({
       <View style={styles.participantInfo}>
         {/* Avatar */}
         <View style={styles.participantAvatar}>
-          {participant.user?.avatar_url ? (
+          {isExternal ? (
+            <View style={[styles.avatarPlaceholder, { backgroundColor: '#FFF3E0' }]}>
+              <Ionicons name="link" size={22} color="#F57C00" />
+            </View>
+          ) : participant.user?.avatar_url ? (
             <Image source={{ uri: participant.user.avatar_url }} style={styles.avatarImage} />
           ) : (
             <View style={[styles.avatarPlaceholder, { backgroundColor: isCurrentUser ? colors.primary : colors.gray400 }]}>
@@ -702,7 +708,7 @@ function ParticipantCard({
 
         {/* Name and Amount */}
         <View style={styles.participantDetails}>
-          <Text style={[styles.participantName, { color: colors.gray900 }]}>{isCurrentUser ? 'You' : (participant.user?.full_name || 'Unknown')}</Text>
+          <Text style={[styles.participantName, { color: colors.gray900 }]}>{isCurrentUser ? 'You' : (participant.external_name || participant.user?.full_name || 'Unknown')}</Text>
           <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
             ${isPaidViaWeb ? paidAmount.toFixed(2) : participant.amount_owed.toFixed(2)}
           </Text>

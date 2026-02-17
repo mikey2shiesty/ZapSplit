@@ -15,7 +15,7 @@ import { spacing, radius, typography } from '../../constants/theme';
 import { SplitMethodCard, SplitMethod } from '../../components/splits';
 
 export default function SplitMethodScreen({ navigation, route }: SplitMethodScreenProps) {
-  const { amount, title, description, selectedFriends } = route.params;
+  const { amount, title, description, selectedFriends, externalPeople } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -23,7 +23,8 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
 
   // For display purposes, count includes everyone (creator + friends)
   // Friends count is used for calculating how much they owe the creator
-  const friendsCount = selectedFriends.length;
+  const externalCount = externalPeople?.length || 0;
+  const friendsCount = selectedFriends.length + externalCount;
   const totalPeopleCount = friendsCount + 1; // +1 for creator
 
   const handleMethodSelect = (method: SplitMethod) => {
@@ -41,6 +42,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
         title,
         description,
         selectedFriends,
+        externalPeople,
         splitMethod: selectedMethod,
       });
     } else {
@@ -50,6 +52,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
         title,
         description,
         selectedFriends,
+        externalPeople,
         splitMethod: selectedMethod,
       });
     }

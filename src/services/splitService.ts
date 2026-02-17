@@ -1,15 +1,20 @@
 import { supabase } from './supabase';
 
+export interface CreateSplitParticipant {
+  user_id?: string;
+  amount_owed: number;
+  external_name?: string;
+  external_email?: string;
+  external_phone?: string;
+}
+
 export interface CreateSplitData {
   title: string;
   description?: string;
   total_amount: number;
   currency: string;
   split_method: 'equal' | 'custom' | 'percentage' | 'receipt';
-  participants: {
-    user_id: string;
-    amount_owed: number;
-  }[];
+  participants: CreateSplitParticipant[];
   image_url?: string;
   receipt_data?: {
     subtotal: number;
@@ -42,10 +47,13 @@ export interface Split {
 export interface SplitParticipant {
   id: string;
   split_id: string;
-  user_id: string;
+  user_id: string | null;
   amount_owed: number;
   amount_paid: number;
   status: 'pending' | 'paid';
+  external_name?: string | null;
+  external_email?: string | null;
+  external_phone?: string | null;
 }
 
 /**
@@ -81,13 +89,16 @@ export async function createSplit(data: CreateSplitData): Promise<Split> {
   if (splitError) throw splitError;
   if (!split) throw new Error('Failed to create split');
 
-  // Insert participants (including creator)
+  // Insert participants (including creator and external participants)
   const participantsData = data.participants.map(p => ({
     split_id: split.id,
-    user_id: p.user_id,
+    user_id: p.user_id || null,
     amount_owed: p.amount_owed,
     amount_paid: 0,
     status: 'pending' as const,
+    external_name: p.external_name || null,
+    external_email: p.external_email || null,
+    external_phone: p.external_phone || null,
   }));
 
   const { error: participantsError } = await supabase
@@ -430,7 +441,22 @@ export async function getSplitParticipants(splitId: string) {
     .eq('split_id', splitId);
 
   if (error) throw error;
-  return data;
+
+  // For external participants (no user_id), populate user-like fields from external_ columns
+  return (data || []).map(p => {
+    if (!p.user_id && p.external_name) {
+      return {
+        ...p,
+        user: {
+          id: p.id,
+          email: p.external_email || '',
+          full_name: p.external_name,
+          avatar_url: null,
+        },
+      };
+    }
+    return p;
+  });
 }
 
 /**
@@ -527,7 +553,7 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
   if (!split) return null;
 
   // Get participants with user details
-  const { data: participants, error: participantsError } = await supabase
+  const { data: rawParticipants, error: participantsError } = await supabase
     .from('split_participants')
     .select(`
       *,
@@ -541,6 +567,22 @@ export async function getSplitById(splitId: string): Promise<SplitWithParticipan
     .eq('split_id', splitId);
 
   if (participantsError) throw participantsError;
+
+  // For external participants (no user_id), populate user-like fields
+  const participants = (rawParticipants || []).map(p => {
+    if (!p.user_id && p.external_name) {
+      return {
+        ...p,
+        user: {
+          id: p.id,
+          email: p.external_email || '',
+          full_name: p.external_name,
+          avatar_url: null,
+        },
+      };
+    }
+    return p;
+  });
 
   // Get web payments for this split
   const { data: webPayments } = await supabase

@@ -19,7 +19,7 @@ import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
-  const { amount, title, description, selectedFriends, splitMethod, customAmounts } = route.params;
+  const { amount, title, description, selectedFriends, splitMethod, customAmounts, externalPeople } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -37,11 +37,14 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   // For custom split: amounts are already set by user, divide only among friends
   const isEqualSplit = splitMethod === 'equal' || !splitMethod;
 
+  // Generate IDs for external people for equal split calculation
+  const externalIds = (externalPeople || []).map((_, i) => `ext_${i}`);
+
   // For equal split, include creator in the count for fair division
   // e.g., $78.44 with 2 people = $39.22 each, friend owes $39.22
   const equalSplitIds = isEqualSplit
-    ? [...selectedFriends, user?.id || 'creator'] // Include creator for equal division
-    : selectedFriends;
+    ? [...selectedFriends, ...externalIds, user?.id || 'creator'] // Include creator + external for equal division
+    : [...selectedFriends, ...externalIds];
   const equalAmounts = calculateEqualSplitAmounts(amount, equalSplitIds);
 
   // Calculate amounts based on split method
@@ -77,17 +80,37 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       amount_paid: 0,
       status: 'pending' as const,
     })),
+    ...(externalPeople || []).map((person, i) => ({
+      id: `ext_${i}`,
+      name: person.name,
+      email: person.email,
+      amount_owed: equalAmounts[`ext_${i}`] || 0,
+      amount_paid: 0,
+      status: 'pending' as const,
+    })),
   ];
 
   // Friends-only list for database (they are the ones who owe money)
-  const participants: Participant[] = selectedFriendsData.map(friend => ({
-    id: friend!.id,
-    name: friend!.full_name || 'Unknown',
-    email: friend!.email,
-    amount_owed: calculateAmount(friend!.id),
-    amount_paid: 0,
-    status: 'pending' as const,
-  }));
+  const participants: Participant[] = [
+    ...selectedFriendsData.map(friend => ({
+      id: friend!.id,
+      name: friend!.full_name || 'Unknown',
+      email: friend!.email,
+      amount_owed: calculateAmount(friend!.id),
+      amount_paid: 0,
+      status: 'pending' as const,
+    })),
+    ...(externalPeople || []).map((person, i) => ({
+      id: `ext_${i}`,
+      name: person.name,
+      email: person.email,
+      amount_owed: equalAmounts[`ext_${i}`] || 0,
+      amount_paid: 0,
+      status: 'pending' as const,
+      isExternal: true,
+      externalPhone: person.phone,
+    })),
+  ];
 
   const handleCreateSplit = async () => {
     if (!user) {
@@ -100,10 +123,20 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
       // Prepare participants for database
-      const participantsData = participants.map(p => ({
-        user_id: p.id,
-        amount_owed: p.amount_owed,
-      }));
+      const participantsData = participants.map(p => {
+        if ((p as any).isExternal) {
+          return {
+            amount_owed: p.amount_owed,
+            external_name: p.name,
+            external_email: p.email,
+            external_phone: (p as any).externalPhone,
+          };
+        }
+        return {
+          user_id: p.id,
+          amount_owed: p.amount_owed,
+        };
+      });
 
       // Create split in Supabase
       const split = await createSplit({

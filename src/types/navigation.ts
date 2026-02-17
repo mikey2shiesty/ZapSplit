@@ -71,12 +71,14 @@ export type SplitFlowParamList = {
     title: string;
     description?: string;
     selectedFriends: string[]; // Array of user IDs
+    externalPeople?: { name: string; email?: string; phone?: string }[];
   };
   CustomAmounts: {
     amount: number;
     title: string;
     description?: string;
     selectedFriends: string[];
+    externalPeople?: { name: string; email?: string; phone?: string }[];
     splitMethod?: 'custom' | 'percentage';
   };
   ReviewSplit: {
@@ -84,6 +86,7 @@ export type SplitFlowParamList = {
     title: string;
     description?: string;
     selectedFriends: string[];
+    externalPeople?: { name: string; email?: string; phone?: string }[];
     splitMethod: 'equal' | 'custom' | 'percentage' | 'receipt';
     customAmounts?: Record<string, number>; // userId -> amount
     receiptImageUri?: string;

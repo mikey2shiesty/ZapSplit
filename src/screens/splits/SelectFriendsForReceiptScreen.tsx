@@ -7,6 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -19,6 +23,13 @@ import { useFriends } from '../../hooks/useFriends';
 import { supabase } from '../../services/supabase';
 import { createReceiptSplit, getOrCreatePaymentLink } from '../../services/splitService';
 import { uploadReceiptToStorage } from '../../services/receiptService';
+
+interface ExternalPerson {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
 
 export default function SelectFriendsForReceiptScreen({
   navigation,
@@ -33,6 +44,11 @@ export default function SelectFriendsForReceiptScreen({
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [externalPeople, setExternalPeople] = useState<ExternalPerson[]>([]);
+  const [showAddExternal, setShowAddExternal] = useState(false);
+  const [externalName, setExternalName] = useState('');
+  const [externalEmail, setExternalEmail] = useState('');
+  const [externalPhone, setExternalPhone] = useState('');
 
   const handleToggleFriend = (friendId: string) => {
     setSelectedFriendIds((prev) =>
@@ -40,6 +56,26 @@ export default function SelectFriendsForReceiptScreen({
         ? prev.filter((id) => id !== friendId)
         : [...prev, friendId]
     );
+  };
+
+  const handleAddExternalPerson = () => {
+    if (!externalName.trim()) return;
+    const newPerson: ExternalPerson = {
+      id: `ext_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: externalName.trim(),
+      email: externalEmail.trim() || undefined,
+      phone: externalPhone.trim() || undefined,
+    };
+    setExternalPeople(prev => [...prev, newPerson]);
+    setExternalName('');
+    setExternalEmail('');
+    setExternalPhone('');
+    setShowAddExternal(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleRemoveExternal = (id: string) => {
+    setExternalPeople(prev => prev.filter(p => p.id !== id));
   };
 
   // Create split and generate payment link (skip item assignment)
@@ -58,10 +94,18 @@ export default function SelectFriendsForReceiptScreen({
       const receiptImageUrl = await uploadReceiptToStorage(imageUri, currentUser.id);
 
       // 2. Build participants data - friends will claim items later, so amount_owed starts at 0
-      const participantsData = selectedFriendIds.map(friendId => ({
-        user_id: friendId,
-        amount_owed: 0, // Will be calculated when they claim items
-      }));
+      const participantsData = [
+        ...selectedFriendIds.map(friendId => ({
+          user_id: friendId,
+          amount_owed: 0,
+        })),
+        ...externalPeople.map(person => ({
+          amount_owed: 0,
+          external_name: person.name,
+          external_email: person.email,
+          external_phone: person.phone,
+        })),
+      ];
 
       // 3. Create the split record (without item assignments)
       const splitData = {
@@ -92,10 +136,10 @@ export default function SelectFriendsForReceiptScreen({
       navigation.navigate('SplitSuccess', {
         splitId: split.id,
         amount: receipt.total,
-        participantCount: selectedFriendIds.length,
+        participantCount: selectedFriendIds.length + externalPeople.length,
         splitMethod: 'receipt',
-        participantAmounts: [], // No amounts yet - friends will claim items
-        paymentLink: paymentLink?.url, // Pass the payment link for sharing
+        participantAmounts: [],
+        paymentLink: paymentLink?.url,
       });
     } catch (error: any) {
       console.error('Error creating split:', error);
@@ -157,7 +201,8 @@ export default function SelectFriendsForReceiptScreen({
     }
   };
 
-  const isValid = selectedFriendIds.length > 0;
+  const totalSelected = selectedFriendIds.length + externalPeople.length;
+  const isValid = totalSelected > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
@@ -227,23 +272,118 @@ export default function SelectFriendsForReceiptScreen({
           </View>
         )}
 
-        {/* Empty State - Only show when no friends */}
-        {!loading && !error && friends.length === 0 && (
+        {/* Empty State - Only show when no friends and no external people */}
+        {!loading && !error && friends.length === 0 && externalPeople.length === 0 && (
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={64} color={colors.textTertiary} />
             <Text style={[styles.emptyText, { color: colors.text }]}>No friends yet</Text>
             <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
-              Add friends from your profile to split bills with them
+              Add friends or tap below to add someone without the app
             </Text>
           </View>
         )}
+
+        {/* External People List */}
+        {externalPeople.length > 0 && (
+          <View style={styles.externalSection}>
+            <Text style={[styles.externalSectionTitle, { color: colors.textSecondary }]}>
+              People without the app
+            </Text>
+            {externalPeople.map(person => (
+              <View key={person.id} style={[styles.externalPersonCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.externalAvatar, { backgroundColor: colors.warningLight }]}>
+                  <Ionicons name="link" size={18} color={colors.warning} />
+                </View>
+                <View style={styles.externalPersonInfo}>
+                  <Text style={[styles.externalPersonName, { color: colors.text }]}>{person.name}</Text>
+                  {person.email && (
+                    <Text style={[styles.externalPersonDetail, { color: colors.textSecondary }]}>{person.email}</Text>
+                  )}
+                </View>
+                <TouchableOpacity onPress={() => handleRemoveExternal(person.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons name="close-circle" size={22} color={colors.textTertiary} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Add External Person Button */}
+        {!loading && (
+          <TouchableOpacity
+            style={[styles.addExternalButton, { borderColor: colors.primary }]}
+            onPress={() => setShowAddExternal(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="person-add-outline" size={20} color={colors.primary} />
+            <Text style={[styles.addExternalButtonText, { color: colors.primary }]}>
+              Add someone without the app
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Add External Person Modal */}
+      <Modal visible={showAddExternal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Person</Text>
+              <TouchableOpacity onPress={() => { setShowAddExternal(false); setExternalName(''); setExternalEmail(''); setExternalPhone(''); }}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Name *</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              placeholder="Their name"
+              placeholderTextColor={colors.textTertiary}
+              value={externalName}
+              onChangeText={setExternalName}
+              autoFocus
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Email (optional)</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              placeholder="Their email"
+              placeholderTextColor={colors.textTertiary}
+              value={externalEmail}
+              onChangeText={setExternalEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Phone (optional)</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              placeholder="Their phone number"
+              placeholderTextColor={colors.textTertiary}
+              value={externalPhone}
+              onChangeText={setExternalPhone}
+              keyboardType="phone-pad"
+            />
+
+            <TouchableOpacity
+              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.gray200 }]}
+              onPress={handleAddExternalPerson}
+              disabled={!externalName.trim()}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.modalAddButtonText, { color: externalName.trim() ? colors.surface : colors.textTertiary }]}>
+                Add Person
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Footer Buttons */}
       <View style={[styles.buttonContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-        {selectedFriendIds.length > 0 && !saving && (
+        {totalSelected > 0 && !saving && (
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
-            {selectedFriendIds.length} friend{selectedFriendIds.length > 1 ? 's' : ''} selected
+            {totalSelected} {totalSelected === 1 ? 'person' : 'people'} selected
           </Text>
         )}
 
@@ -418,5 +558,101 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  externalSection: {
+    marginTop: spacing.md,
+  },
+  externalSectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  externalPersonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
+  },
+  externalAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  externalPersonInfo: {
+    flex: 1,
+  },
+  externalPersonName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  externalPersonDetail: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  addExternalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  addExternalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    marginTop: spacing.md,
+  },
+  modalInput: {
+    fontSize: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  modalAddButton: {
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.xl,
+  },
+  modalAddButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

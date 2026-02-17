@@ -6,14 +6,26 @@ import {
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { SelectFriendsScreenProps } from '../../types/navigation';
 import { spacing, radius, typography } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
+
+interface ExternalPerson {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
 
 export default function SelectFriendsScreen({ navigation, route }: SelectFriendsScreenProps) {
   const { amount, title, description } = route.params;
@@ -24,6 +36,11 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const { friends, loading, error } = useFriends();
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [externalPeople, setExternalPeople] = useState<ExternalPerson[]>([]);
+  const [showAddExternal, setShowAddExternal] = useState(false);
+  const [externalName, setExternalName] = useState('');
+  const [externalEmail, setExternalEmail] = useState('');
+  const [externalPhone, setExternalPhone] = useState('');
 
   const handleToggleFriend = (friendId: string) => {
     setSelectedFriendIds((prev) =>
@@ -33,8 +50,28 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
     );
   };
 
+  const handleAddExternalPerson = () => {
+    if (!externalName.trim()) return;
+    const newPerson: ExternalPerson = {
+      id: `ext_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: externalName.trim(),
+      email: externalEmail.trim() || undefined,
+      phone: externalPhone.trim() || undefined,
+    };
+    setExternalPeople(prev => [...prev, newPerson]);
+    setExternalName('');
+    setExternalEmail('');
+    setExternalPhone('');
+    setShowAddExternal(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleRemoveExternal = (id: string) => {
+    setExternalPeople(prev => prev.filter(p => p.id !== id));
+  };
+
   const handleContinue = () => {
-    if (selectedFriendIds.length === 0) return;
+    if (selectedFriendIds.length === 0 && externalPeople.length === 0) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -43,10 +80,12 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       title,
       description,
       selectedFriends: selectedFriendIds,
+      externalPeople: externalPeople.map(p => ({ name: p.name, email: p.email, phone: p.phone })),
     });
   };
 
-  const isValid = selectedFriendIds.length > 0;
+  const totalSelected = selectedFriendIds.length + externalPeople.length;
+  const isValid = totalSelected > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
@@ -98,22 +137,117 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           </View>
         )}
 
-        {/* Empty State - Only show when no friends */}
-        {!loading && !error && friends.length === 0 && (
+        {/* Empty State - Only show when no friends and no external people */}
+        {!loading && !error && friends.length === 0 && externalPeople.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.gray900 }]}>No friends yet</Text>
             <Text style={[styles.emptyHint, { color: colors.gray500 }]}>
-              Add friends from your profile to start splitting bills
+              Add friends or tap below to add someone without the app
             </Text>
           </View>
         )}
+
+        {/* External People List */}
+        {externalPeople.length > 0 && (
+          <View style={styles.externalSection}>
+            <Text style={[styles.externalSectionTitle, { color: colors.gray500 }]}>
+              People without the app
+            </Text>
+            {externalPeople.map(person => (
+              <View key={person.id} style={[styles.externalPersonCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+                <View style={[styles.externalAvatar, { backgroundColor: '#FFF3E0' }]}>
+                  <Ionicons name="link" size={18} color="#F57C00" />
+                </View>
+                <View style={styles.externalPersonInfo}>
+                  <Text style={[styles.externalPersonName, { color: colors.gray900 }]}>{person.name}</Text>
+                  {person.email && (
+                    <Text style={[styles.externalPersonDetail, { color: colors.gray500 }]}>{person.email}</Text>
+                  )}
+                </View>
+                <TouchableOpacity onPress={() => handleRemoveExternal(person.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons name="close-circle" size={22} color={colors.gray400} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Add External Person Button */}
+        {!loading && (
+          <TouchableOpacity
+            style={[styles.addExternalButton, { borderColor: colors.primary }]}
+            onPress={() => setShowAddExternal(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="person-add-outline" size={20} color={colors.primary} />
+            <Text style={[styles.addExternalButtonText, { color: colors.primary }]}>
+              Add someone without the app
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Add External Person Modal */}
+      <Modal visible={showAddExternal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.gray900 }]}>Add Person</Text>
+              <TouchableOpacity onPress={() => { setShowAddExternal(false); setExternalName(''); setExternalEmail(''); setExternalPhone(''); }}>
+                <Ionicons name="close" size={24} color={colors.gray500} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Name *</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              placeholder="Their name"
+              placeholderTextColor={colors.gray400}
+              value={externalName}
+              onChangeText={setExternalName}
+              autoFocus
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Email (optional)</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              placeholder="Their email"
+              placeholderTextColor={colors.gray400}
+              value={externalEmail}
+              onChangeText={setExternalEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Phone (optional)</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              placeholder="Their phone number"
+              placeholderTextColor={colors.gray400}
+              value={externalPhone}
+              onChangeText={setExternalPhone}
+              keyboardType="phone-pad"
+            />
+
+            <TouchableOpacity
+              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.gray200 }]}
+              onPress={handleAddExternalPerson}
+              disabled={!externalName.trim()}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.modalAddButtonText, { color: externalName.trim() ? colors.surface : colors.gray400 }]}>
+                Add Person
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Continue Button - Fixed at Bottom */}
       <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
-        {selectedFriendIds.length > 0 && (
+        {totalSelected > 0 && (
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
-            {selectedFriendIds.length} friend{selectedFriendIds.length > 1 ? 's' : ''} selected
+            {totalSelected} {totalSelected === 1 ? 'person' : 'people'} selected
           </Text>
         )}
         <TouchableOpacity
@@ -239,5 +373,101 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  externalSection: {
+    marginTop: spacing.md,
+  },
+  externalSectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  externalPersonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
+  },
+  externalAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  externalPersonInfo: {
+    flex: 1,
+  },
+  externalPersonName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  externalPersonDetail: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  addExternalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  addExternalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    marginTop: spacing.md,
+  },
+  modalInput: {
+    fontSize: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  modalAddButton: {
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.xl,
+  },
+  modalAddButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
