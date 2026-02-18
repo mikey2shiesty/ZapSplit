@@ -581,7 +581,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               onMarkAsPaid={() => handleMarkAsPaid(participant)}
               colors={colors}
               webPayments={split.web_payments || []}
-              claimedItems={itemClaims.get(participant.user_id) || itemClaims.get(participant.user?.email?.toLowerCase()) || []}
+              claimedItems={(participant.user_id ? itemClaims.get(participant.user_id) : undefined) || itemClaims.get((participant as any).user?.email?.toLowerCase()) || []}
             />
           ))}
         </View>
