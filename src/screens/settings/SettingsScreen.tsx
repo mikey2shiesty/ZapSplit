@@ -224,10 +224,10 @@ export default function SettingsScreen() {
             label="Help & FAQ"
             onPress={() => Alert.alert(
               'Need Help?',
-              'For questions or support, email us at support@zapsplit.app',
+              'For questions or support, email us at zapsplit@gmail.com',
               [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Email Support', onPress: () => Linking.openURL('mailto:support@zapsplit.app?subject=ZapSplit%20Support') }
+                { text: 'Email Support', onPress: () => Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Support') }
               ]
             )}
             colors={colors}
@@ -235,7 +235,7 @@ export default function SettingsScreen() {
           <SettingsItem
             icon="chatbubble-outline"
             label="Contact Support"
-            onPress={() => Linking.openURL('mailto:support@zapsplit.app?subject=ZapSplit%20Feedback')}
+            onPress={() => Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Feedback')}
             colors={colors}
           />
           <SettingsItem

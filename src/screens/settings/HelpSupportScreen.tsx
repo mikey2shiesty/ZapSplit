@@ -70,7 +70,7 @@ export default function HelpSupportScreen() {
   };
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:support@zapsplit.app?subject=ZapSplit%20Support%20Request');
+    Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Support%20Request');
   };
 
   return (
@@ -155,7 +155,7 @@ export default function HelpSupportScreen() {
           <QuickLink
             icon="mail-outline"
             label="Contact Support"
-            subtitle="support@zapsplit.app"
+            subtitle="zapsplit@gmail.com"
             onPress={handleEmailSupport}
             colors={colors}
           />
