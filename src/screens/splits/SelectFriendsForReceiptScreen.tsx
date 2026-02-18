@@ -80,7 +80,7 @@ export default function SelectFriendsForReceiptScreen({
 
   // Create split and generate payment link (skip item assignment)
   const handleContinue = async () => {
-    if (selectedFriendIds.length === 0) return;
+    if (selectedFriendIds.length === 0 && externalPeople.length === 0) return;
 
     try {
       setSaving(true);
