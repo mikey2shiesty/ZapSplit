@@ -298,7 +298,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
     ? (itemClaims.get(split.creator_id) || []).reduce((sum: number, claim: any) => sum + (Number(claim.item_amount) / (claim.share_count || 1)), 0)
     : 0;
   const creatorShare = isReceiptSplit
-    ? (creatorShareFromClaims > 0 ? creatorShareFromClaims : split.total_amount - othersOweTotal)
+    ? creatorShareFromClaims
     : split.total_amount - othersOweTotal;
 
   // Check if current user owes money
