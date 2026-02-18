@@ -10,18 +10,22 @@
 Your app is **~85% ready** for submission. There are several critical items that MUST be fixed before submitting to either store.
 
 ### Critical Blockers (MUST FIX)
-1. **Google Sign In NOT implemented** - Required for Android, recommended for iOS
-2. **Help & Support goes to wrong screen** - Bug reported
+1. ~~**Google Sign In NOT implemented**~~ - DONE
+2. ~~**Help & Support goes to wrong screen**~~ - FIXED
 3. **Deep linking web files missing** - Need AASA and assetlinks.json
 4. **Bundle identifier is placeholder** - `com.yourname.zapsplit` must be updated
 
 ### What's Already Good
 - Apple Pay & Google Pay configured
-- Apple Sign In implemented
-- Privacy Policy & Terms of Service complete
+- Apple Sign In + Google Sign In implemented
+- Privacy Policy & Terms of Service complete (app + web)
 - Delete Account functionality (Apple requirement)
 - Dark mode support
 - All permissions properly declared
+- External friends / share with non-app users
+- Web pages live: privacy, terms, support at zapsplit.com.au
+- All emails consolidated to zapsplit@gmail.com
+- App Store description and keywords written
 
 ---
 
@@ -185,33 +189,36 @@ googlePay: {
 
 ### 4.1 Privacy Policy
 **Status:** COMPLETE
-**Location:** `src/screens/settings/PrivacyPolicyScreen.tsx`
-**Last Updated:** January 2026
+**Location:** `src/screens/settings/PrivacyPolicyScreen.tsx` + `zapsplit-web/src/app/privacy/page.tsx`
+**Last Updated:** February 2026
+**Web URL:** https://zapsplit.com.au/privacy
 **Contents:**
 - Data collection disclosure
-- Third-party sharing (Stripe, Supabase, OpenAI)
-- Data retention (30 days after deletion)
-- User rights (access, deletion, correction)
-- Australian Privacy Law compliance
-- Contact: privacy@zapsplit.com
+- Third-party sharing (Stripe, Supabase, OpenAI, Apple/Google, Expo)
+- Data retention (30 days after deletion, 7 years for financial records)
+- User rights (access, deletion, correction, withdraw consent, OAIC complaint)
+- Australian Privacy Act 1988 compliance
+- Contact: zapsplit@gmail.com
+- Location: Perth, Western Australia
 
 ### 4.2 Terms of Service
 **Status:** COMPLETE
-**Location:** `src/screens/settings/TermsOfServiceScreen.tsx`
-**Last Updated:** January 2026
+**Location:** `src/screens/settings/TermsOfServiceScreen.tsx` + `zapsplit-web/src/app/terms/page.tsx`
+**Last Updated:** February 2026
+**Web URL:** https://zapsplit.com.au/terms
 **Contents:**
 - Age requirement (18+)
 - Service description
-- Payment terms
+- Payment terms ($0.50 AUD platform fee disclosed)
 - AI processing consent (OpenAI)
 - Liability limitation
-- Contact: legal@zapsplit.com
+- Australian Consumer Law compliance
+- Western Australia jurisdiction
+- Contact: zapsplit@gmail.com
 
 ### 4.3 Email Addresses
-**Action Required:** Verify these emails exist and are monitored:
-- [ ] support@zapsplit.app
-- [ ] privacy@zapsplit.com
-- [ ] legal@zapsplit.com
+**Status:** COMPLETE — All using `zapsplit@gmail.com`
+- [x] zapsplit@gmail.com (used across app, web, and store listings)
 
 ---
 
@@ -251,8 +258,8 @@ googlePay: {
 - [ ] Primary Category: `Finance`
 - [ ] Secondary Category: `Utilities` or `Lifestyle`
 - [ ] Content Rating: Complete questionnaire (likely 4+)
-- [ ] Privacy Policy URL: `https://zapsplit.app/privacy`
-- [ ] Support URL: `https://zapsplit.app/support`
+- [ ] Privacy Policy URL: `https://zapsplit.com.au/privacy`
+- [ ] Support URL: `https://zapsplit.com.au/support`
 
 #### Screenshots Required
 | Device | Resolution | Required |
@@ -265,7 +272,7 @@ googlePay: {
 #### App Review Notes
 Provide demo account:
 ```
-Email: demo@zapsplit.app
+Email: demo@zapsplit.com.au
 Password: [create demo account]
 Notes: This account has pre-populated splits for testing.
 ```
@@ -301,12 +308,12 @@ Must declare:
 ## PART 7: DEEP LINKING
 
 ### 7.1 Current Configuration
-**iOS:** `applinks:zapsplit.app` configured in app.json
-**Android:** Intent filters for `https://zapsplit.app/pay/*`
+**iOS:** `applinks:zapsplit.com.au` configured in app.json
+**Android:** Intent filters for `https://zapsplit.com.au/pay/*`
 **Custom Scheme:** `zapsplit://`
 
 ### 7.2 MISSING: Apple App Site Association
-**Action Required:** Create file at `https://zapsplit.app/.well-known/apple-app-site-association`
+**Action Required:** Create file at `https://zapsplit.com.au/.well-known/apple-app-site-association`
 
 ```json
 {
@@ -324,7 +331,7 @@ Must declare:
 Replace `TEAMID` with your Apple Developer Team ID.
 
 ### 7.3 MISSING: Android Asset Links
-**Action Required:** Create file at `https://zapsplit.app/.well-known/assetlinks.json`
+**Action Required:** Create file at `https://zapsplit.com.au/.well-known/assetlinks.json`
 
 ```json
 [{
@@ -417,7 +424,7 @@ WRITE_EXTERNAL_STORAGE
 - [ ] Test receipt scanning (camera permission)
 - [ ] Test photo upload (gallery permission)
 - [ ] Test push notifications
-- [ ] Test deep links (`https://zapsplit.app/pay/TESTCODE`)
+- [ ] Test deep links (`https://zapsplit.com.au/pay/TESTCODE`)
 - [ ] Test delete account flow
 - [ ] Test Stripe Connect onboarding
 - [ ] Test payment flow end-to-end
@@ -441,7 +448,7 @@ Create account with:
 3. [ ] Update bundle identifier from placeholder
 4. [ ] Create AASA file for iOS deep links
 5. [ ] Create assetlinks.json for Android deep links
-6. [ ] Verify email addresses exist (support@, privacy@, legal@)
+6. [x] ~~Verify email addresses~~ — using zapsplit@gmail.com
 
 ### HIGH PRIORITY
 7. [ ] Complete Financial Features Declaration (Google)
