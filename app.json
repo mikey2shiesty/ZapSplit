@@ -18,10 +18,8 @@
       "bundleIdentifier": "com.yourname.zapsplit",
       "buildNumber": "1.0.0",
       "associatedDomains": [
-        "applinks:zapsplit.app",
-        "applinks:www.zapsplit.app",
-        "applinks:zapsplit.app",
-        "applinks:www.zapsplit.app"
+        "applinks:zapsplit.com.au",
+        "applinks:www.zapsplit.com.au"
       ],
       "infoPlist": {
         "NSCameraUsageDescription": "ZapSplit needs camera access to scan receipts and automatically split bills.",
@@ -51,12 +49,12 @@
           "data": [
             {
               "scheme": "https",
-              "host": "zapsplit.app",
+              "host": "zapsplit.com.au",
               "pathPrefix": "/pay"
             },
             {
               "scheme": "https",
-              "host": "www.zapsplit.app",
+              "host": "www.zapsplit.com.au",
               "pathPrefix": "/pay"
             }
           ],
