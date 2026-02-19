@@ -12,7 +12,7 @@ Your app is **~85% ready** for submission. There are several critical items that
 ### Critical Blockers (MUST FIX)
 1. ~~**Google Sign In NOT implemented**~~ - DONE
 2. ~~**Help & Support goes to wrong screen**~~ - FIXED
-3. **Deep linking web files missing** - Need AASA and assetlinks.json
+3. ~~**Deep linking web files missing**~~ - DONE (AASA + assetlinks.json created)
 4. **Bundle identifier is placeholder** - `com.yourname.zapsplit` must be updated
 
 ### What's Already Good
@@ -308,42 +308,25 @@ Must declare:
 ## PART 7: DEEP LINKING
 
 ### 7.1 Current Configuration
+**Status:** COMPLETE
 **iOS:** `applinks:zapsplit.com.au` configured in app.json
 **Android:** Intent filters for `https://zapsplit.com.au/pay/*`
 **Custom Scheme:** `zapsplit://`
 
-### 7.2 MISSING: Apple App Site Association
-**Action Required:** Create file at `https://zapsplit.com.au/.well-known/apple-app-site-association`
+### 7.2 Apple App Site Association
+**Status:** DONE
+**Location:** `zapsplit-web/src/app/.well-known/apple-app-site-association/route.ts`
+**URL:** `https://zapsplit.com.au/.well-known/apple-app-site-association`
+- App ID: `48TQ9H988B.com.yourname.zapsplit`
+- Paths: `/pay/*`
 
-```json
-{
-  "applinks": {
-    "apps": [],
-    "details": [
-      {
-        "appID": "TEAMID.com.zapsplit.app",
-        "paths": ["/pay/*"]
-      }
-    ]
-  }
-}
-```
-Replace `TEAMID` with your Apple Developer Team ID.
-
-### 7.3 MISSING: Android Asset Links
-**Action Required:** Create file at `https://zapsplit.com.au/.well-known/assetlinks.json`
-
-```json
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.zapsplit.app",
-    "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
-  }
-}]
-```
-Get fingerprint from Play Console after enrolling in Play App Signing.
+### 7.3 Android Asset Links
+**Status:** DONE
+**Location:** `zapsplit-web/src/app/.well-known/assetlinks.json/route.ts`
+**URL:** `https://zapsplit.com.au/.well-known/assetlinks.json`
+- Package: `com.yourname.zapsplit`
+- SHA-256: `FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C`
+- **Note:** Update SHA-256 with Play App Signing fingerprint before Android release
 
 ---
 
@@ -446,8 +429,8 @@ Create account with:
 1. [ ] Implement Google Sign In
 2. [ ] Fix Help & Support navigation bug
 3. [ ] Update bundle identifier from placeholder
-4. [ ] Create AASA file for iOS deep links
-5. [ ] Create assetlinks.json for Android deep links
+4. [x] ~~Create AASA file for iOS deep links~~ — DONE
+5. [x] ~~Create assetlinks.json for Android deep links~~ — DONE
 6. [x] ~~Verify email addresses~~ — using zapsplit@gmail.com
 
 ### HIGH PRIORITY
