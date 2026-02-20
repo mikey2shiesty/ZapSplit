@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Session } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../services/supabase';
 
@@ -21,6 +21,7 @@ export interface AuthState {
   session: Session | null;
   user: Session['user'] | null;
   loading: boolean;
+  authEvent: AuthChangeEvent | null;
 }
 
 export function useAuth() {
@@ -28,6 +29,7 @@ export function useAuth() {
     session: null,
     user: null,
     loading: true,
+    authEvent: null,
   });
 
   useEffect(() => {
@@ -37,16 +39,18 @@ export function useAuth() {
         session,
         user: session?.user ?? null,
         loading: false,
+        authEvent: null,
       });
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setAuthState({
           session,
           user: session?.user ?? null,
           loading: false,
+          authEvent: event,
         });
       }
     );
