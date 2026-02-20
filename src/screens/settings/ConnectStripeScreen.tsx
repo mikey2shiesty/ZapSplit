@@ -167,16 +167,25 @@ export default function ConnectStripeScreen() {
         {!isConnected ? (
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-              <Text style={styles.iconText}>💳</Text>
+              <Ionicons name="wallet-outline" size={40} color={colors.primary} />
             </View>
             <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Connect Your Bank Account</Text>
             <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
               To receive payments through ZapSplit, you'll need to connect your bank account via Stripe.
             </Text>
             <View style={styles.benefits}>
-              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ Secure bank-level encryption</Text>
-              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ Fast payouts (1-3 business days)</Text>
-              <Text style={[styles.benefitItem, { color: colors.gray700 }]}>✓ No monthly fees</Text>
+              <View style={styles.benefitRow}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                <Text style={[styles.benefitText, { color: colors.gray700 }]}>Secure bank-level encryption</Text>
+              </View>
+              <View style={styles.benefitRow}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                <Text style={[styles.benefitText, { color: colors.gray700 }]}>Instant payouts to your bank</Text>
+              </View>
+              <View style={styles.benefitRow}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                <Text style={[styles.benefitText, { color: colors.gray700 }]}>No monthly fees</Text>
+              </View>
             </View>
             <Button
               variant="primary"
@@ -188,15 +197,15 @@ export default function ConnectStripeScreen() {
               {connecting ? 'Connecting...' : 'Connect Bank Account'}
             </Button>
             <View style={styles.stripeFooter}>
+              <Ionicons name="lock-closed" size={13} color={colors.gray500} />
               <Text style={[styles.poweredBy, { color: colors.gray500 }]}>Powered by</Text>
               <Text style={styles.stripeLogo}>Stripe</Text>
-              <Text style={styles.lockIcon}>🔒</Text>
             </View>
           </View>
         ) : (
           <View style={styles.cardContent}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-              <Text style={styles.iconText}>✅</Text>
+            <View style={[styles.iconContainer, { backgroundColor: colors.success + '15' }]}>
+              <Ionicons name="checkmark-circle" size={40} color={colors.success} />
             </View>
             <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Bank Account Connected</Text>
             <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
@@ -214,13 +223,13 @@ export default function ConnectStripeScreen() {
               {accountStatus?.chargesEnabled && (
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Charges</Text>
-                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled ✓</Text>
+                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled</Text>
                 </View>
               )}
               {accountStatus?.payoutsEnabled && (
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Payouts</Text>
-                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled ✓</Text>
+                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled</Text>
                 </View>
               )}
             </View>
@@ -240,7 +249,10 @@ export default function ConnectStripeScreen() {
       {/* Requirements (if any) */}
       {accountStatus?.requirements && accountStatus.requirements.currently_due.length > 0 && (
         <Card variant="default" style={[styles.requirementsCard, { backgroundColor: colors.warningLight }]}>
-          <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>⚠️ Action Required</Text>
+          <View style={styles.requirementsTitleRow}>
+            <Ionicons name="warning" size={20} color={colors.warning} />
+            <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>Action Required</Text>
+          </View>
           <Text style={[styles.requirementsDescription, { color: colors.gray700 }]}>
             Please complete the following to activate your account:
           </Text>
@@ -267,7 +279,7 @@ export default function ConnectStripeScreen() {
           1. Connect your bank account through Stripe's secure onboarding
         </Text>
         <Text style={[styles.infoText, { color: colors.gray700 }]}>
-          2. Stripe verifies your information (instant or 1-2 business days)
+          2. Stripe verifies your information (usually instant)
         </Text>
         <Text style={[styles.infoText, { color: colors.gray700 }]}>
           3. Start receiving payments from your splits
@@ -346,8 +358,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  iconText: {
-    fontSize: 40,
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm + 2,
+    gap: spacing.sm + 2,
+  },
+  benefitText: {
+    fontSize: 15,
+    flex: 1,
   },
   cardTitle: {
     fontSize: 22,
@@ -365,10 +384,11 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: spacing.lg,
   },
-  benefitItem: {
-    fontSize: 15,
+  requirementsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.sm,
-    paddingLeft: spacing.sm,
   },
   connectButton: {
     width: '100%',
@@ -387,9 +407,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#635BFF',
-  },
-  lockIcon: {
-    fontSize: 14,
   },
   accountInfo: {
     width: '100%',
@@ -430,7 +447,6 @@ const styles = StyleSheet.create({
   requirementsTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: spacing.sm,
   },
   requirementsDescription: {
     fontSize: 14,

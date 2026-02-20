@@ -81,7 +81,7 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
 
   const benefits = [
     { icon: 'shield-checkmark-outline' as const, text: 'Secure bank-level encryption' },
-    { icon: 'flash-outline' as const, text: 'Fast Australian payouts (1-3 business days)' },
+    { icon: 'flash-outline' as const, text: 'Instant payouts to your Australian bank' },
     { icon: 'wallet-outline' as const, text: 'No monthly fees — only pay when you get paid' },
   ];
 
