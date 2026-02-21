@@ -141,25 +141,25 @@ export default function SplitsScreen() {
       </View>
 
       {/* Filter Tabs */}
-      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.gray100 }]}>
+      <View style={styles.filterContainer}>
         {(['all', 'pending', 'paid'] as FilterType[]).map((filterType) => (
           <TouchableOpacity
             key={filterType}
             style={[
               styles.filterTab,
-              { backgroundColor: colors.gray100 },
               filter === filterType && { backgroundColor: colors.primary },
             ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setFilter(filterType);
             }}
+            activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.filterTabText,
-                { color: colors.gray600 },
-                filter === filterType && { color: colors.textInverse },
+                { color: colors.gray500 },
+                filter === filterType && { color: '#FFFFFF' },
               ]}
             >
               {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
@@ -307,15 +307,17 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    gap: spacing.sm,
+    marginHorizontal: 20,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    gap: 10,
   },
   filterTab: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterTabText: {
     fontSize: 14,
