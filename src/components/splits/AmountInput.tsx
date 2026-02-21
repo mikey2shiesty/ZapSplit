@@ -60,48 +60,41 @@ export default function AmountInput({
 
   return (
     <View style={styles.container}>
-      {/* Label */}
-      {label && (
-        <Text style={[styles.label, { color: colors.gray500 }]}>{label}</Text>
-      )}
-
       {/* Large Amount Display */}
-      <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.amountTouchable}>
         <Text style={[
           styles.formattedValue,
           { color: colors.gray900 },
           numericValue === 0 && { color: colors.gray300 },
+          isFocused && numericValue === 0 && { color: colors.gray400 },
           error && { color: colors.error },
         ]}>
           {currency}{displayValue}
         </Text>
+        {isFocused && (
+          <View style={[styles.cursor, { backgroundColor: colors.primary }]} />
+        )}
       </TouchableOpacity>
 
-      {/* Tappable Input Area */}
-      <TouchableOpacity
-        style={[
-          styles.inputContainer,
-          { backgroundColor: colors.surface, borderColor: colors.gray200 },
-          isFocused && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
-          error && { borderColor: colors.error, backgroundColor: colors.errorLight },
-        ]}
-        activeOpacity={0.7}
-        onPress={handlePress}
-      >
-        {/* Instruction Text */}
-        <Text style={[styles.instructionText, { color: colors.gray500 }]}>Tap to enter amount</Text>
-
-        {/* Clear Button */}
-        {value && value !== '0' && (
+      {/* Tap hint + Clear */}
+      <View style={styles.controlsRow}>
+        {value && value !== '0' ? (
           <TouchableOpacity
-            style={styles.clearButton}
+            style={[styles.clearButton, { backgroundColor: colors.gray100 }]}
             onPress={handleClear}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="backspace-outline" size={24} color={colors.gray500} />
+            <Ionicons name="backspace-outline" size={18} color={colors.gray500} />
+            <Text style={[styles.clearText, { color: colors.gray500 }]}>Clear</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+            <Text style={[styles.tapHint, { color: colors.gray400 }]}>
+              Tap the amount to edit
+            </Text>
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
 
       {/* Hidden TextInput (handles keyboard) */}
       <TextInput
@@ -121,11 +114,6 @@ export default function AmountInput({
       {error && (
         <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
       )}
-
-      {/* Helper Text */}
-      <Text style={[styles.helperText, { color: colors.gray500 }]}>
-        Enter the total bill amount
-      </Text>
     </View>
   );
 }
@@ -135,40 +123,42 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    alignSelf: 'flex-start',
-  },
-  formattedValue: {
-    fontSize: 64,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginVertical: 24,
-    letterSpacing: -2,
-  },
-  inputContainer: {
+  amountTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    borderWidth: 2,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-    width: '100%',
   },
-  instructionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
+  formattedValue: {
+    fontSize: 56,
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: -2,
+  },
+  cursor: {
+    width: 2,
+    height: 44,
+    marginLeft: 2,
+    borderRadius: 1,
+    opacity: 0.6,
+  },
+  controlsRow: {
+    marginTop: 12,
+    alignItems: 'center',
   },
   clearButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  clearText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  tapHint: {
+    fontSize: 14,
   },
   hiddenInput: {
     position: 'absolute',
@@ -179,12 +169,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  helperText: {
-    fontSize: 14,
-    textAlign: 'center',
     marginTop: 8,
   },
 });
