@@ -26,7 +26,7 @@ const faqs: FAQItem[] = [
   {
     question: 'How do I receive payments?',
     answer:
-      'You need to connect a Stripe account. Go to Profile → Connect Stripe Account and complete the onboarding. Once set up, payments from your splits will be sent directly to your bank account.',
+      'You need to connect a Stripe account. Go to Settings → Connect Stripe and complete the onboarding. Once set up, payments from your splits will be sent directly to your bank account.',
   },
   {
     question: 'How fast will I receive my money?',

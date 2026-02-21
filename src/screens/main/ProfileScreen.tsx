@@ -113,12 +113,6 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>PAYMENTS</Text>
           <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
             <MenuItem
-              icon="card-outline"
-              label="Connect Stripe Account"
-              onPress={() => navigation.navigate('ConnectStripe')}
-            />
-            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
-            <MenuItem
               icon="time-outline"
               label="Payment History"
               onPress={() => navigation.navigate('PaymentHistory')}

@@ -246,28 +246,23 @@ export default function ConnectStripeScreen() {
         )}
       </Card>
 
-      {/* Requirements (if any) */}
-      {accountStatus?.requirements && accountStatus.requirements.currently_due.length > 0 && (
+      {/* Requirements — only show when NOT fully connected */}
+      {!isConnected && accountStatus?.requirements && accountStatus.requirements.currently_due.length > 0 && (
         <Card variant="default" style={[styles.requirementsCard, { backgroundColor: colors.warningLight }]}>
           <View style={styles.requirementsTitleRow}>
-            <Ionicons name="warning" size={20} color={colors.warning} />
-            <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>Action Required</Text>
+            <Ionicons name="information-circle" size={20} color={colors.warning} />
+            <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>Finish Your Setup</Text>
           </View>
           <Text style={[styles.requirementsDescription, { color: colors.gray700 }]}>
-            Please complete the following to activate your account:
+            Stripe needs a few more details to verify your identity and enable payouts. Tap below to continue where you left off.
           </Text>
-          {accountStatus.requirements.currently_due.map((req, index) => (
-            <Text key={index} style={[styles.requirementItem, { color: colors.gray700 }]}>
-              • {req.replace(/_/g, ' ')}
-            </Text>
-          ))}
           <Button
             variant="primary"
             size="small"
             onPress={handleConnectAccount}
             style={styles.completeButton}
           >
-            Complete Setup
+            Continue Setup
           </Button>
         </Card>
       )}
@@ -451,10 +446,6 @@ const styles = StyleSheet.create({
   requirementsDescription: {
     fontSize: 14,
     marginBottom: spacing.sm + 4,
-  },
-  requirementItem: {
-    fontSize: 14,
-    marginBottom: 6,
   },
   completeButton: {
     marginTop: spacing.sm + 4,
