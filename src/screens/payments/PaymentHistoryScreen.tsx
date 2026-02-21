@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
     gap: 10,
   },
   tabButton: {
