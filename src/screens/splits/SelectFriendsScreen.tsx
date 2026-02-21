@@ -10,16 +10,26 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { SelectFriendsScreenProps } from '../../types/navigation';
-import { spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
-import { getGroupWithMembers } from '../../services/groupService';
+import { getUserGroups, getGroupWithMembers, Group, GroupType } from '../../services/groupService';
+import { supabase } from '../../services/supabase';
+
+const GROUP_TYPE_ICONS: Record<GroupType, string> = {
+  household: 'home-outline',
+  trip: 'airplane-outline',
+  event: 'calendar-outline',
+  work: 'briefcase-outline',
+  custom: 'people-outline',
+};
 
 interface ExternalPerson {
   id: string;
@@ -37,22 +47,69 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const { friends, loading, error } = useFriends();
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(groupId || null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Load current user and groups
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoadingGroups(false);
+          return;
+        }
+        setCurrentUserId(user.id);
+        const userGroups = await getUserGroups(user.id);
+        setGroups(userGroups);
+      } catch (err) {
+        console.error('Error loading groups:', err);
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+    load();
+  }, []);
 
   // Pre-select group members when coming from a group
   useEffect(() => {
-    if (groupId && friends.length > 0 && selectedFriendIds.length === 0) {
+    if (groupId && friends.length > 0 && selectedFriendIds.length === 0 && currentUserId) {
       getGroupWithMembers(groupId).then(group => {
         if (!group) return;
         const friendIds = friends.map(f => f.id);
         const memberIds = group.members
           .map(m => m.user?.id)
-          .filter((id): id is string => !!id && friendIds.includes(id));
+          .filter((id): id is string => !!id && friendIds.includes(id) && id !== currentUserId);
         if (memberIds.length > 0) {
           setSelectedFriendIds(memberIds);
         }
       });
     }
-  }, [groupId, friends]);
+  }, [groupId, friends, currentUserId]);
+
+  const handleGroupSelect = async (group: Group) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (activeGroupId === group.id) {
+      // Deselect group
+      setActiveGroupId(null);
+      setSelectedFriendIds([]);
+      return;
+    }
+
+    setActiveGroupId(group.id);
+    const groupData = await getGroupWithMembers(group.id);
+    if (!groupData) return;
+
+    const friendIds = friends.map(f => f.id);
+    const memberIds = groupData.members
+      .map(m => m.user?.id)
+      .filter((id): id is string => !!id && friendIds.includes(id) && id !== currentUserId);
+    setSelectedFriendIds(memberIds);
+  };
+
   const [externalPeople, setExternalPeople] = useState<ExternalPerson[]>([]);
   const [showAddExternal, setShowAddExternal] = useState(false);
   const [externalName, setExternalName] = useState('');
@@ -60,6 +117,10 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const [externalPhone, setExternalPhone] = useState('');
 
   const handleToggleFriend = (friendId: string) => {
+    // Clear group highlight when manually toggling friends
+    if (activeGroupId && !groupId) {
+      setActiveGroupId(null);
+    }
     setSelectedFriendIds((prev) =>
       prev.includes(friendId)
         ? prev.filter((id) => id !== friendId)
@@ -98,7 +159,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       description,
       selectedFriends: selectedFriendIds,
       externalPeople: externalPeople.map(p => ({ name: p.name, email: p.email, phone: p.phone })),
-      groupId,
+      groupId: activeGroupId || groupId,
     });
   };
 
@@ -109,15 +170,12 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Select Friends</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
-            Who are you splitting with?
-          </Text>
-        </View>
-
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Split Details Badge */}
         <View style={[styles.splitBadge, { backgroundColor: colors.infoLight }]}>
           <Text style={[styles.splitBadgeTitle, { color: colors.gray900 }]}>{title}</Text>
@@ -125,6 +183,59 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
             ${amount.toFixed(2)}
           </Text>
         </View>
+
+        {/* Groups Quick Select */}
+        {!loadingGroups && groups.length > 0 && (
+          <View style={styles.groupsSection}>
+            <Text style={[styles.groupsSectionTitle, { color: colors.gray500 }]}>
+              Quick select from group
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.groupsScrollContent}
+            >
+              {groups.map(group => {
+                const isActive = activeGroupId === group.id;
+                const icon = GROUP_TYPE_ICONS[group.type] || 'people-outline';
+                return (
+                  <TouchableOpacity
+                    key={group.id}
+                    style={[
+                      styles.groupChip,
+                      { backgroundColor: isActive ? colors.primary : colors.surface, borderColor: isActive ? colors.primary : colors.gray200 },
+                    ]}
+                    onPress={() => handleGroupSelect(group)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={icon as any}
+                      size={16}
+                      color={isActive ? colors.surface : colors.gray600}
+                    />
+                    <Text
+                      style={[
+                        styles.groupChipName,
+                        { color: isActive ? colors.surface : colors.gray900 },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {group.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.groupChipCount,
+                        { color: isActive ? colors.surface : colors.gray400 },
+                      ]}
+                    >
+                      {group.member_count}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -146,13 +257,11 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
 
         {/* Friend Selector - Only show when friends exist */}
         {!loading && !error && friends.length > 0 && (
-          <View style={styles.friendSelectorContainer}>
-            <FriendSelector
-              friends={friends}
-              selectedFriendIds={selectedFriendIds}
-              onToggleFriend={handleToggleFriend}
-            />
-          </View>
+          <FriendSelector
+            friends={friends}
+            selectedFriendIds={selectedFriendIds}
+            onToggleFriend={handleToggleFriend}
+          />
         )}
 
         {/* Empty State - Only show when no friends and no external people */}
@@ -203,7 +312,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
             </Text>
           </TouchableOpacity>
         )}
-      </View>
+      </ScrollView>
 
       {/* Add External Person Modal */}
       <Modal visible={showAddExternal} animationType="slide" transparent>
@@ -297,24 +406,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: spacing.lg,
-  },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  pageTitle: {
-    ...typography.h2,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-  },
-  pageSubtitle: {
-    fontSize: 16,
-    textAlign: 'center',
+    paddingTop: spacing.sm,
   },
   splitBadge: {
     borderRadius: radius.md,
     padding: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -328,8 +428,36 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  friendSelectorContainer: {
-    flex: 1,
+  groupsSection: {
+    marginBottom: spacing.sm,
+  },
+  groupsSectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  groupsScrollContent: {
+    gap: 8,
+  },
+  groupChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  groupChipName: {
+    fontSize: 14,
+    fontWeight: '600',
+    maxWidth: 120,
+  },
+  groupChipCount: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   buttonContainer: {
     padding: spacing.lg,

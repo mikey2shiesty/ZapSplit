@@ -148,6 +148,7 @@ export default function FriendSelector({
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
       />
 
       {/* Add Friend Button */}
