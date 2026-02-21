@@ -287,6 +287,7 @@ export async function getPaymentsSent(userId: string): Promise<Payment[]> {
         split:split_id (id, title)
       `)
       .eq('from_user_id', userId)
+      .neq('to_user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -314,6 +315,7 @@ export async function getPaymentsReceived(userId: string): Promise<Payment[]> {
         split:split_id (id, title)
       `)
       .eq('to_user_id', userId)
+      .neq('from_user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
