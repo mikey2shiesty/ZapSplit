@@ -38,6 +38,7 @@ export default function CreateGroupScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedType, setSelectedType] = useState<GroupType>('custom');
+  const [customTypeName, setCustomTypeName] = useState('');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -93,9 +94,15 @@ export default function CreateGroupScreen() {
 
     try {
       setLoading(true);
+      const groupDescription = selectedType === 'custom' && customTypeName.trim()
+        ? description.trim()
+          ? `${customTypeName.trim()} — ${description.trim()}`
+          : customTypeName.trim()
+        : description.trim() || undefined;
+
       const result = await createGroup(currentUserId, {
         name: name.trim(),
-        description: description.trim() || undefined,
+        description: groupDescription,
         type: selectedType,
         memberIds: selectedMembers,
       });
@@ -218,6 +225,15 @@ export default function CreateGroupScreen() {
           <View style={styles.typeGrid}>
             {GROUP_TYPES.map(renderTypeOption)}
           </View>
+          {selectedType === 'custom' && (
+            <TextInput
+              style={[styles.input, styles.customTypeInput, { backgroundColor: colors.gray100, color: colors.gray900 }]}
+              placeholder="e.g., Sports Team, Book Club..."
+              placeholderTextColor={colors.gray400}
+              value={customTypeName}
+              onChangeText={setCustomTypeName}
+            />
+          )}
         </Card>
 
         <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -325,6 +341,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  customTypeInput: {
+    marginTop: 12,
+    marginBottom: 0,
   },
   typeOption: {
     flexDirection: 'row',
