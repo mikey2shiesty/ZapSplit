@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import {
@@ -36,6 +37,7 @@ export default function GroupDetailScreen() {
   const route = useRoute<RouteProp<RouteParams, 'GroupDetail'>>();
   const { groupId } = route.params;
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [group, setGroup] = useState<GroupWithMembers | null>(null);
   const [splits, setSplits] = useState<GroupSplit[]>([]);
@@ -145,7 +147,7 @@ export default function GroupDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -153,7 +155,7 @@ export default function GroupDetailScreen() {
 
   if (!group) {
     return (
-      <View style={[styles.errorContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.errorContainer, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
         <Text style={[styles.errorText, { color: colors.gray600 }]}>Group not found</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={[styles.errorLink, { color: colors.primary }]}>Go back</Text>
@@ -163,7 +165,7 @@ export default function GroupDetailScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: colors.surface }]}
