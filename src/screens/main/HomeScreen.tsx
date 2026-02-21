@@ -294,9 +294,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <View style={styles.content}>
           {/* Main Balance Card */}
           <View style={[styles.balanceCard, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.balanceAmount, { color: colors.gray900 }]}>
-              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Text>
+            {loading && !refreshing ? (
+              <View style={styles.balanceLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : (
+              <Text style={[styles.balanceAmount, { color: colors.gray900 }]}>
+                ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+            )}
 
             <View style={[styles.oweRow, { borderTopColor: colors.gray200 }]}>
               <View style={styles.oweItem}>
@@ -304,9 +310,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   <Ionicons name="trending-up" size={16} color={colors.error} />
                   <Text style={[styles.oweLabel, { color: colors.gray600 }]}>You owe</Text>
                 </View>
-                <Text style={[styles.oweAmount, { color: colors.error }]}>
-                  ${youOwe.toFixed(2)}
-                </Text>
+                {loading && !refreshing ? (
+                  <View style={[styles.oweAmountPlaceholder, { backgroundColor: colors.gray100 }]} />
+                ) : (
+                  <Text style={[styles.oweAmount, { color: colors.error }]}>
+                    ${youOwe.toFixed(2)}
+                  </Text>
+                )}
               </View>
 
               <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
@@ -316,9 +326,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   <Ionicons name="trending-down" size={16} color={colors.success} />
                   <Text style={[styles.oweLabel, { color: colors.gray600 }]}>Owed to you</Text>
                 </View>
-                <Text style={[styles.oweAmount, { color: colors.success }]}>
-                  ${owedToYou.toFixed(2)}
-                </Text>
+                {loading && !refreshing ? (
+                  <View style={[styles.oweAmountPlaceholder, { backgroundColor: colors.gray100 }]} />
+                ) : (
+                  <Text style={[styles.oweAmount, { color: colors.success }]}>
+                    ${owedToYou.toFixed(2)}
+                  </Text>
+                )}
               </View>
             </View>
           </View>
@@ -742,6 +756,18 @@ const styles = StyleSheet.create({
   balanceCard: {
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  balanceLoading: {
+    height: 58,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  oweAmountPlaceholder: {
+    height: 22,
+    width: 60,
+    borderRadius: 4,
+    marginTop: 4,
   },
   balanceAmount: {
     fontSize: 48,

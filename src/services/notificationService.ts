@@ -123,8 +123,15 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
     // Save token to database
     await savePushToken(token);
-  } catch (error) {
-    console.error('Error getting push token:', error);
+  } catch (error: any) {
+    // Silently handle Firebase not configured (Android without google-services.json)
+    const msg = error?.message || '';
+    if (msg.includes('FirebaseApp') || msg.includes('Firebase')) {
+      console.warn('Push notifications unavailable: Firebase not configured');
+    } else {
+      console.warn('Push token registration skipped:', msg);
+    }
+    return null;
   }
 
   // Android-specific channel configuration

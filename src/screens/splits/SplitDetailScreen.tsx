@@ -896,6 +896,7 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: spacing.xs,
   },
   summaryLabel: {
@@ -904,6 +905,8 @@ const styles = StyleSheet.create({
   summaryValue: {
     ...typography.body,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
   },
   section: {
     paddingHorizontal: spacing.md,
