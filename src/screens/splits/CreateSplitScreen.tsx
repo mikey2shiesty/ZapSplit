@@ -18,9 +18,10 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
 import { AmountInput } from '../../components/splits';
 
-export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps) {
+export default function CreateSplitScreen({ navigation, route }: CreateSplitScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const groupId = route.params?.groupId;
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -38,6 +39,7 @@ export default function CreateSplitScreen({ navigation }: CreateSplitScreenProps
       amount: amountValue,
       title: title.trim(),
       description: description.trim() || undefined,
+      groupId,
     });
   };
 

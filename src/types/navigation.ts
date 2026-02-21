@@ -47,7 +47,7 @@ export type MainTabParamList = {
 
 // Split Flow Navigation Types
 export type SplitFlowParamList = {
-  CreateSplit: undefined;
+  CreateSplit: { groupId?: string } | undefined;
   ScanReceipt: undefined;
   ReviewReceipt: {
     imageUri: string;
@@ -65,6 +65,7 @@ export type SplitFlowParamList = {
     amount: number;
     title: string;
     description?: string;
+    groupId?: string;
   };
   SplitMethod: {
     amount: number;
@@ -72,6 +73,7 @@ export type SplitFlowParamList = {
     description?: string;
     selectedFriends: string[]; // Array of user IDs
     externalPeople?: { name: string; email?: string; phone?: string }[];
+    groupId?: string;
   };
   CustomAmounts: {
     amount: number;
@@ -80,6 +82,7 @@ export type SplitFlowParamList = {
     selectedFriends: string[];
     externalPeople?: { name: string; email?: string; phone?: string }[];
     splitMethod?: 'custom' | 'percentage';
+    groupId?: string;
   };
   ReviewSplit: {
     amount: number;
@@ -90,6 +93,7 @@ export type SplitFlowParamList = {
     splitMethod: 'equal' | 'custom' | 'percentage' | 'receipt';
     customAmounts?: Record<string, number>; // userId -> amount
     receiptImageUri?: string;
+    groupId?: string;
   };
   PaymentRequest: {
     amount: number; // Your total amount

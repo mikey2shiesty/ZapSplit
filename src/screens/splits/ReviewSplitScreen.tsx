@@ -19,7 +19,7 @@ import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
-  const { amount, title, description, selectedFriends, splitMethod, customAmounts, externalPeople } = route.params;
+  const { amount, title, description, selectedFriends, splitMethod, customAmounts, externalPeople, groupId } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -146,6 +146,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
         currency: 'AUD',
         split_method: splitMethod,
         participants: participantsData,
+        group_id: groupId,
       });
 
       // Build participant amounts for display

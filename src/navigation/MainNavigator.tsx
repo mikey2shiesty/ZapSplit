@@ -19,6 +19,7 @@ import FriendProfileScreen from '../screens/friends/FriendProfileScreen';
 import GroupsScreen from '../screens/groups/GroupsScreen';
 import CreateGroupScreen from '../screens/groups/CreateGroupScreen';
 import GroupDetailScreen from '../screens/groups/GroupDetailScreen';
+import AddGroupMembersScreen from '../screens/groups/AddGroupMembersScreen';
 // Notification screens
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import NotificationSettingsScreen from '../screens/notifications/NotificationSettingsScreen';
@@ -221,6 +222,14 @@ export default function MainNavigator() {
       <Stack.Screen
         name="GroupDetail"
         component={GroupDetailScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="AddGroupMembers"
+        component={AddGroupMembersScreen}
         options={{
           presentation: 'card',
           headerShown: false,

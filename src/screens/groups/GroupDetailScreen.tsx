@@ -136,7 +136,7 @@ export default function GroupDetailScreen() {
   };
 
   const handleCreateSplit = () => {
-    navigation.navigate('CreateSplit', { groupId: groupId });
+    navigation.navigate('SplitFlow', { screen: 'CreateSplit', params: { groupId } });
   };
 
   const formatAmount = (amount: number) => {

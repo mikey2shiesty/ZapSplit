@@ -21,6 +21,7 @@ export interface CreateSplitData {
     tax: number;
     tip: number;
   };
+  group_id?: string;
 }
 
 export interface Split {
@@ -76,6 +77,7 @@ export async function createSplit(data: CreateSplitData): Promise<Split> {
     currency: data.currency,
     split_type: data.split_method, // Map split_method to split_type column
     image_url: data.image_url || null,
+    group_id: data.group_id || null,
     status: 'active' as const,
   };
 

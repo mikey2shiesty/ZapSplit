@@ -15,7 +15,7 @@ import { spacing, radius, typography } from '../../constants/theme';
 import { SplitMethodCard, SplitMethod } from '../../components/splits';
 
 export default function SplitMethodScreen({ navigation, route }: SplitMethodScreenProps) {
-  const { amount, title, description, selectedFriends, externalPeople } = route.params;
+  const { amount, title, description, selectedFriends, externalPeople, groupId } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -44,6 +44,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
         selectedFriends,
         externalPeople,
         splitMethod: selectedMethod,
+        groupId,
       });
     } else {
       // For custom/percentage, go to CustomAmounts screen
@@ -54,6 +55,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
         selectedFriends,
         externalPeople,
         splitMethod: selectedMethod,
+        groupId,
       });
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { spacing, radius, typography } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FriendSelector } from '../../components/splits';
 import { useFriends } from '../../hooks/useFriends';
+import { getGroupWithMembers } from '../../services/groupService';
 
 interface ExternalPerson {
   id: string;
@@ -28,7 +29,7 @@ interface ExternalPerson {
 }
 
 export default function SelectFriendsScreen({ navigation, route }: SelectFriendsScreenProps) {
-  const { amount, title, description } = route.params;
+  const { amount, title, description, groupId } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -36,6 +37,22 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const { friends, loading, error } = useFriends();
 
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+
+  // Pre-select group members when coming from a group
+  useEffect(() => {
+    if (groupId && friends.length > 0 && selectedFriendIds.length === 0) {
+      getGroupWithMembers(groupId).then(group => {
+        if (!group) return;
+        const friendIds = friends.map(f => f.id);
+        const memberIds = group.members
+          .map(m => m.user?.id)
+          .filter((id): id is string => !!id && friendIds.includes(id));
+        if (memberIds.length > 0) {
+          setSelectedFriendIds(memberIds);
+        }
+      });
+    }
+  }, [groupId, friends]);
   const [externalPeople, setExternalPeople] = useState<ExternalPerson[]>([]);
   const [showAddExternal, setShowAddExternal] = useState(false);
   const [externalName, setExternalName] = useState('');
@@ -81,6 +98,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       description,
       selectedFriends: selectedFriendIds,
       externalPeople: externalPeople.map(p => ({ name: p.name, email: p.email, phone: p.phone })),
+      groupId,
     });
   };
 

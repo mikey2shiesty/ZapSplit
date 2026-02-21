@@ -25,7 +25,7 @@ interface ParticipantEntry {
 }
 
 export default function CustomAmountsScreen({ navigation, route }: CustomAmountsScreenProps) {
-  const { amount, title, description, selectedFriends, splitMethod = 'custom' } = route.params;
+  const { amount, title, description, selectedFriends, splitMethod = 'custom', groupId } = route.params;
   const isPercentageMode = splitMethod === 'percentage';
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -136,6 +136,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
       selectedFriends,
       splitMethod,
       customAmounts,
+      groupId,
     });
   };
 
