@@ -72,6 +72,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       if (user?.id) {
         getUnreadCount(user.id).then(setUnreadCount);
       }
+      refresh();
     }, [user?.id])
   );
 

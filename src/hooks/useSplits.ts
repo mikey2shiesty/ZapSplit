@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUserSplits, SplitWithParticipants } from '../services/splitService';
 import { useAuth } from './useAuth';
+import { supabase } from '../services/supabase';
 
 export interface SplitStats {
   totalBalance: number;
@@ -14,6 +15,7 @@ export function useSplits() {
   const [splits, setSplits] = useState<SplitWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initialLoadDone = useRef(false);
   const [stats, setStats] = useState<SplitStats>({
     totalBalance: 0,
     youOwe: 0,
@@ -76,11 +78,15 @@ export function useSplits() {
     }
 
     try {
-      setLoading(true);
+      // Only show full loading spinner on initial load (no data yet)
+      if (!initialLoadDone.current) {
+        setLoading(true);
+      }
       setError(null);
 
       const splitsData = await getUserSplits();
       setSplits(splitsData);
+      initialLoadDone.current = true;
 
       // Calculate stats
       const calculatedStats = calculateStats(splitsData);
@@ -96,6 +102,34 @@ export function useSplits() {
   useEffect(() => {
     loadSplits();
   }, [loadSplits]);
+
+  // Real-time subscription for live updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('splits-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'splits' },
+        () => { loadSplits(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'split_participants' },
+        () => { loadSplits(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'web_payments' },
+        () => { loadSplits(); }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, loadSplits]);
 
   return {
     splits,
