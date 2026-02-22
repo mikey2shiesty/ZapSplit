@@ -202,9 +202,13 @@ export async function createPayment(
         merchantCountryCode: 'AU',
       },
       // Enable Google Pay
+      // Note: testEnv must be false for Google Pay to appear in the payment sheet.
+      // In dev mode (Stripe test keys), Google Pay will show but can't complete payment.
+      // In production (live Stripe keys), Google Pay works fully.
       googlePay: {
         merchantCountryCode: 'AU',
-        testEnv: __DEV__, // Use test environment in development
+        testEnv: false,
+        currencyCode: 'AUD',
       },
     });
 
