@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,6 +28,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   // Fetch profile when screen focuses (to get updated avatar after editing)
@@ -75,7 +77,7 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
         <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Profile</Text>
       </View>
 
@@ -176,7 +178,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: 10,
     paddingBottom: spacing.md,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',

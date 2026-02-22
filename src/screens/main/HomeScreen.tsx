@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { HomeScreenProps } from '../../types/navigation';
@@ -41,6 +42,7 @@ function getDisplayTitle(split: SplitWithParticipants, userId?: string): string 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { splits, loading, stats, refresh, hasRecentSplits, isNewUser } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -175,7 +177,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Coinbase-style Top Navigation */}
-      <View style={[styles.topNav, { backgroundColor: colors.surface }]}>
+      <View style={[styles.topNav, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           style={styles.menuButton}
           onPress={() => {
@@ -580,7 +582,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             style={[styles.requestModalBackdrop, { backgroundColor: colors.surface }]}
             onPress={closeRequestModal}
           />
-          <View style={[styles.requestModalContent, { backgroundColor: colors.surface }]}>
+          <View style={[styles.requestModalContent, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
             <View style={[styles.requestModalHeader, { borderBottomColor: colors.gray100 }]}>
               <TouchableOpacity
                 onPress={requestStep === 'amount' ? () => setRequestStep('select') : closeRequestModal}
@@ -716,7 +718,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: 10,
     paddingBottom: spacing.md,
     gap: spacing.sm,
   },
@@ -1056,7 +1058,7 @@ const styles = StyleSheet.create({
   },
   requestModalContent: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 34 : spacing.lg,
   },
   requestModalHeader: {

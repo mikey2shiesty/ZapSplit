@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -32,6 +33,7 @@ export default function SplitsScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { splits, loading, refresh } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -126,7 +128,7 @@ export default function SplitsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
         <View style={styles.placeholder} />
         <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Your Splits</Text>
         <TouchableOpacity
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: 10,
     paddingBottom: spacing.md,
   },
   headerTitle: {

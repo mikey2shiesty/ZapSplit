@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -23,6 +24,7 @@ interface SignupScreenProps {
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { signUp, signInWithApple, isAppleSignInAvailable, signInWithGoogle } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -129,7 +131,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: colors.gray50 }]}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.gray900 }]}>Create Account</Text>
           <Text style={[styles.subtitle, { color: colors.gray500 }]}>
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: spacing.xl,
-    paddingTop: Platform.OS === 'ios' ? 80 : 60,
+    paddingTop: 20,
   },
   header: {
     alignItems: 'center',

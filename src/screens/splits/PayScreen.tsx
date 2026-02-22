@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -24,6 +25,7 @@ type PayScreenProps = StackScreenProps<SplitFlowParamList, 'PayScreen'>;
 export default function PayScreen({ navigation, route }: PayScreenProps) {
   const { splitId, participantId, recipientId, amount } = route.params;
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   // Get Stripe functions from hook
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -168,7 +170,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading payment details...</Text>
@@ -182,7 +184,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.gray50 }]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.gray50 }]} contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.gray900 }]}>Pay with Card</Text>
