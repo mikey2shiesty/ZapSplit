@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import { searchUsers, sendFriendRequest, UserSearchResult } from '../../services/friendService';
@@ -23,6 +24,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 export default function AddFriendScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -166,7 +168,7 @@ export default function AddFriendScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.gray50 }]}
+      style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
