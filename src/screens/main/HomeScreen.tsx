@@ -445,10 +445,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   const isCreator = split.creator_id === user?.id;
                   const userParticipant = split.participants.find(p => p.user_id === user?.id);
 
-                  // For creator: show total collected (what others have paid)
+                  // For creator: show total amount owed to them
                   // For participant: show what they owe
                   const displayAmount = isCreator
-                    ? (split.total_paid || 0)
+                    ? (split.total_amount || 0)
                     : (userParticipant?.amount_owed || 0);
                   const isPaid = userParticipant?.status === 'paid';
                   const isFullyCollected = isCreator && (split.amount_remaining || 0) === 0 && displayAmount > 0;
