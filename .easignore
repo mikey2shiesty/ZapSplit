@@ -1,0 +1,69 @@
+# Same as .gitignore but includes .env for EAS builds
+
+# dependencies
+node_modules/
+jspm_packages/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+lerna-debug.log*
+
+# macOS
+.DS_Store
+*.pem
+
+# NOTE: .env is NOT excluded here so EAS builds can use it
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# Logs
+logs
+*.log
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Build outputs
+build/
+out/
+
+# Cache directories
+.cache
+.parcel-cache
+.npm
+.eslintcache
+.stylelintcache
+
+# Various framework outputs
+.next
+.nuxt
+.serverless/
+.firebase/
+.dynamodb/
