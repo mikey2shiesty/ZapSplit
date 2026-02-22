@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import {
@@ -20,7 +21,6 @@ import {
   FriendRequest,
 } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
-import Card from '../../components/common/Card';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
 
@@ -29,6 +29,7 @@ type TabType = 'incoming' | 'outgoing';
 export default function FriendRequestsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('incoming');
   const [incoming, setIncoming] = useState<FriendRequest[]>([]);
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([]);
@@ -150,7 +151,7 @@ export default function FriendRequestsScreen() {
   };
 
   const renderIncomingItem = ({ item }: { item: FriendRequest }) => (
-    <Card variant="default" style={styles.requestCard}>
+    <View style={[styles.requestCard, { backgroundColor: colors.surface }]}>
       <View style={styles.requestContent}>
         <Avatar
           name={item.sender?.full_name || 'Unknown'}
@@ -159,9 +160,9 @@ export default function FriendRequestsScreen() {
         />
         <View style={styles.requestInfo}>
           <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.sender?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.requestEmail, { color: colors.gray500 }]}>{item.sender?.email}</Text>
+          <Text style={[styles.requestEmail, { color: colors.gray500 }]} numberOfLines={1}>{item.sender?.email}</Text>
           <Text style={[styles.requestTime, { color: colors.gray400 }]}>
-            Sent {new Date(item.created_at).toLocaleDateString()}
+            {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
       </View>
@@ -185,11 +186,11 @@ export default function FriendRequestsScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </Card>
+    </View>
   );
 
   const renderOutgoingItem = ({ item }: { item: FriendRequest }) => (
-    <Card variant="default" style={styles.requestCard}>
+    <View style={[styles.requestCard, { backgroundColor: colors.surface }]}>
       <View style={styles.requestContent}>
         <Avatar
           name={item.receiver?.full_name || 'Unknown'}
@@ -198,9 +199,9 @@ export default function FriendRequestsScreen() {
         />
         <View style={styles.requestInfo}>
           <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.receiver?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.requestEmail, { color: colors.gray500 }]}>{item.receiver?.email}</Text>
+          <Text style={[styles.requestEmail, { color: colors.gray500 }]} numberOfLines={1}>{item.receiver?.email}</Text>
           <Text style={[styles.requestTime, { color: colors.gray400 }]}>
-            Sent {new Date(item.created_at).toLocaleDateString()}
+            {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
         <View style={[styles.pendingBadge, { backgroundColor: colors.warningLight }]}>
@@ -208,7 +209,7 @@ export default function FriendRequestsScreen() {
           <Text style={[styles.pendingText, { color: colors.warning }]}>Pending</Text>
         </View>
       </View>
-    </Card>
+    </View>
   );
 
   const renderEmptyState = () => (
@@ -226,7 +227,7 @@ export default function FriendRequestsScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     gap: spacing.sm,
   },
   tabButton: {
@@ -306,9 +307,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     gap: spacing.sm,
   },
   tabText: {
@@ -338,8 +339,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   requestCard: {
-    marginBottom: radius.md,
+    marginBottom: spacing.sm,
     padding: spacing.md,
+    borderRadius: radius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   requestContent: {
     flexDirection: 'row',
@@ -363,15 +370,13 @@ const styles = StyleSheet.create({
   },
   requestActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     marginTop: spacing.md,
-    gap: radius.md,
+    gap: spacing.sm,
   },
   declineButton: {
     flex: 1,
-    paddingVertical: radius.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 10,
+    paddingVertical: 11,
+    borderRadius: radius.md,
     alignItems: 'center',
   },
   declineButtonText: {
@@ -380,9 +385,8 @@ const styles = StyleSheet.create({
   },
   acceptButton: {
     flex: 1,
-    paddingVertical: radius.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 10,
+    paddingVertical: 11,
+    borderRadius: radius.md,
     alignItems: 'center',
   },
   acceptButtonText: {
