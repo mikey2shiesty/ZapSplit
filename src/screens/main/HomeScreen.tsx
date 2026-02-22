@@ -13,6 +13,7 @@ import {
   Pressable,
   Alert,
   KeyboardAvoidingView,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -360,7 +361,17 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           {/* Get Started Card - Only for new users */}
           {isNewUser && (
             <GetStartedCard
-              onInviteFriends={() => navigation.navigate('AddFriend')}
+              onInviteFriends={async () => {
+                try {
+                  await Share.share({
+                    message: Platform.OS === 'ios'
+                      ? 'Split bills instantly with ZapSplit! Download it here: https://zapsplit.com.au'
+                      : 'Split bills instantly with ZapSplit! Download it here: https://zapsplit.com.au',
+                    url: 'https://zapsplit.com.au', // iOS only - shows as link preview
+                    title: 'Join me on ZapSplit',
+                  });
+                } catch {}
+              }}
               onScanReceipt={() => navigation.navigate('SplitFlow')}
             />
           )}

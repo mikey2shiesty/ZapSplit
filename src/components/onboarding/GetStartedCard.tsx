@@ -32,12 +32,12 @@ export default function GetStartedCard({
         }}
       >
         <View style={[styles.iconContainer, { backgroundColor: colors.gray100 }]}>
-          <Ionicons name="person-add" size={24} color={colors.primary} />
+          <Ionicons name="share-social" size={24} color={colors.primary} />
         </View>
         <View style={styles.stepContent}>
           <Text style={[styles.stepTitle, { color: colors.gray900 }]}>Invite your first friend</Text>
           <Text style={[styles.stepDescription, { color: colors.gray600 }]}>
-            Start splitting bills with friends and family
+            Share ZapSplit with friends and family
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
