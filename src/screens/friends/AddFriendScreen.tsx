@@ -37,7 +37,7 @@ export default function AddFriendScreen() {
 
   useEffect(() => {
     const delaySearch = setTimeout(() => {
-      if (searchQuery.length >= 2 && currentUserId) {
+      if (searchQuery.length >= 3 && currentUserId) {
         performSearch();
       } else {
         setResults([]);
