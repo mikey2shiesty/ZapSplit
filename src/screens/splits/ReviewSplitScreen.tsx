@@ -166,8 +166,8 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
     } catch (error) {
       console.error('Error creating split:', error);
       Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create split. Please try again.'
+        'Something went wrong',
+        'We couldn\'t create your split. Please try again.'
       );
     } finally {
       setLoading(false);

@@ -187,10 +187,10 @@ export default function FriendProfileScreen() {
       if (result.success) {
         Alert.alert('Report Submitted', 'Thank you for your report. We will review it shortly.');
       } else {
-        Alert.alert('Error', result.error || 'Failed to submit report');
+        Alert.alert('Something went wrong', 'Couldn\'t send your report. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit report');
+      Alert.alert('Something went wrong', 'Couldn\'t send your report. Please try again.');
     } finally {
       setActionLoading(false);
     }

@@ -145,8 +145,8 @@ export default function SelectFriendsForReceiptScreen({
       console.error('Error creating split:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
-        'Error',
-        error.message || 'Failed to create split. Please try again.',
+        'Something went wrong',
+        'We couldn\'t create your split. Please try again.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -195,7 +195,7 @@ export default function SelectFriendsForReceiptScreen({
     } catch (error: any) {
       console.error('Error creating split:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', error.message || 'Failed to create split.', [{ text: 'OK' }]);
+      Alert.alert('Something went wrong', 'We couldn\'t create your split. Please try again.', [{ text: 'OK' }]);
     } finally {
       setSaving(false);
     }

@@ -83,7 +83,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
       }
     } catch (error) {
       console.error('Error loading split:', error);
-      Alert.alert('Error', 'Failed to load split details');
+      Alert.alert('Something went wrong', 'Couldn\'t load the split. Please try again.');
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -205,7 +205,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error sharing:', error);
-      Alert.alert('Error', 'Failed to create share link. Please try again.');
+      Alert.alert('Something went wrong', 'Couldn\'t create the link. Please try again.');
     }
   };
 
@@ -254,7 +254,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
       );
     } catch (error: any) {
       console.error('Payment error:', error);
-      Alert.alert('Payment Error', error.message || 'Failed to process payment');
+      Alert.alert('Payment didn\'t go through', 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);
     }

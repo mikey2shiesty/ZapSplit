@@ -112,10 +112,10 @@ export default function CreateGroupScreen() {
           { text: 'OK', onPress: () => navigation.goBack() }
         ]);
       } else {
-        Alert.alert('Error', result.error || 'Failed to create group');
+        Alert.alert('Something went wrong', 'Couldn\'t create the group. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to create group');
+      Alert.alert('Something went wrong', 'Couldn\'t create the group. Please try again.');
     } finally {
       setLoading(false);
     }

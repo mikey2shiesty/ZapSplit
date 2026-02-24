@@ -107,7 +107,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
       }
     } catch (error) {
       console.error('Error loading payment data:', error);
-      Alert.alert('Error', 'Failed to load payment information');
+      Alert.alert('Something went wrong', 'Couldn\'t load payment details. Please try again.');
       navigation.goBack();
     } finally {
       setLoading(false);

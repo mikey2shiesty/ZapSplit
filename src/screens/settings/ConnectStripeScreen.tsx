@@ -53,7 +53,7 @@ export default function ConnectStripeScreen() {
       setAccountStatus(status);
     } catch (error) {
       console.error('Error loading account status:', error);
-      Alert.alert('Error', 'Failed to load account status. Please try again.');
+      Alert.alert('Something went wrong', 'Couldn\'t load your account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export default function ConnectStripeScreen() {
       }
     } catch (error: any) {
       console.error('Error connecting account:', error);
-      Alert.alert('Connection Failed', error.message || 'Failed to connect bank account. Please try again.');
+      Alert.alert('Something went wrong', 'Couldn\'t connect your bank account. Please try again.');
     } finally {
       setConnecting(false);
     }

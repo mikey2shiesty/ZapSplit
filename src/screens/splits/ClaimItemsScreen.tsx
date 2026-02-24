@@ -116,7 +116,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load split details');
+      Alert.alert('Something went wrong', 'Couldn\'t load the split. Please try again.');
       navigation.goBack();
     } finally {
       setLoading(false);

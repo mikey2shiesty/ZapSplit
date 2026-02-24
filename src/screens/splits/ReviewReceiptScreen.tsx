@@ -73,7 +73,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
       console.error('Failed to parse receipt:', err);
-      setError(err.message || 'Failed to parse receipt');
+      setError('We couldn\'t read your receipt. Please try a clearer photo.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -231,9 +231,9 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={80} color={colors.error} />
-          <Text style={[styles.errorTitle, { color: colors.gray900 }]}>Failed to Parse Receipt</Text>
+          <Text style={[styles.errorTitle, { color: colors.gray900 }]}>Couldn't read receipt</Text>
           <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
-            {error || 'Could not extract items from the receipt image'}
+            Make sure the receipt is clear and well-lit, then try again
           </Text>
           <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={parseReceipt}>
             <Ionicons name="refresh-outline" size={20} color={colors.surface} />
