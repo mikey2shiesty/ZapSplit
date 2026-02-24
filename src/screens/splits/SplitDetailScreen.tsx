@@ -27,7 +27,7 @@ import {
   SplitParticipant,
 } from '../../services/splitService';
 import { supabase } from '../../services/supabase';
-import { createPayment } from '../../services/stripeService';
+import { createPayment, checkAccountStatus } from '../../services/stripeService';
 import { useStripe } from '@stripe/stripe-react-native';
 
 export default function SplitDetailScreen({ navigation, route }: SplitDetailScreenProps) {
@@ -180,6 +180,23 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Check if creator has Stripe Connect set up before generating payment link
+      const accountStatus = await checkAccountStatus(currentUserId);
+      if (!accountStatus?.connected || !accountStatus?.chargesEnabled) {
+        Alert.alert(
+          'Set up your bank account first',
+          'You need to connect your bank account before sharing a payment link. This is where you\'ll receive payments.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            {
+              text: 'Set up now',
+              onPress: () => navigation.navigate('ConnectStripe' as any),
+            },
+          ]
+        );
+        return;
+      }
 
       // Generate or get existing payment link
       const result = await getOrCreatePaymentLink(split.id, currentUserId);
