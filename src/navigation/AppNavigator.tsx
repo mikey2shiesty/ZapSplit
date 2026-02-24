@@ -34,12 +34,13 @@ export default function AppNavigator() {
 
     const checkOnboarding = async () => {
       try {
-        // Only show for fresh signups — account created within the last 2 minutes
+        // Only show for fresh signups — account created within the last 10 minutes
         // and this is a SIGNED_IN event (not INITIAL_SESSION which fires on app relaunch)
+        // Using 10 minutes to account for OAuth flows (Google/Apple) that take longer
         const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
         const isNewAccount =
-          authEvent === 'SIGNED_IN' &&
-          Date.now() - createdAt < 2 * 60 * 1000;
+          (authEvent === 'SIGNED_IN' || authEvent === 'TOKEN_REFRESHED') &&
+          Date.now() - createdAt < 10 * 60 * 1000;
 
         if (!isNewAccount) {
           if (!cancelled) {
