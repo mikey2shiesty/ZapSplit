@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,11 +80,14 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.gray50 }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       {/* Header */}
       <Header title="Delete Account" onBack={() => navigation.goBack()} />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Warning Card */}
         <View style={[styles.warningCard, { backgroundColor: colors.errorLight }]}>
           <View style={[styles.warningIconContainer, { backgroundColor: colors.surface }]}>
@@ -182,7 +187,7 @@ export default function DeleteAccountScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
