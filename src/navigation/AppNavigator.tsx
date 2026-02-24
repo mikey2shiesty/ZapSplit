@@ -8,7 +8,7 @@ import MainNavigator from './MainNavigator';
 import StripeOnboardingScreen from '../screens/onboarding/StripeOnboardingScreen';
 
 export default function AppNavigator() {
-  const { session, user, loading, authEvent } = useAuth();
+  const { session, user, loading } = useAuth();
   const { colors } = useTheme();
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -34,22 +34,6 @@ export default function AppNavigator() {
 
     const checkOnboarding = async () => {
       try {
-        // Only show for fresh signups — account created within the last 10 minutes
-        // and this is a SIGNED_IN event (not INITIAL_SESSION which fires on app relaunch)
-        // Using 10 minutes to account for OAuth flows (Google/Apple) that take longer
-        const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
-        const isNewAccount =
-          (authEvent === 'SIGNED_IN' || authEvent === 'TOKEN_REFRESHED') &&
-          Date.now() - createdAt < 10 * 60 * 1000;
-
-        if (!isNewAccount) {
-          if (!cancelled) {
-            setShowOnboarding(false);
-            setOnboardingChecked(true);
-          }
-          return;
-        }
-
         // Check profile for existing Stripe setup or prior dismissal
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -66,6 +50,7 @@ export default function AppNavigator() {
           return;
         }
 
+        // Show onboarding if user hasn't set up Stripe and hasn't dismissed the prompt
         const shouldShow =
           !profile.stripe_connect_account_id &&
           !profile.stripe_connect_onboarding_complete &&
@@ -87,7 +72,7 @@ export default function AppNavigator() {
     return () => {
       cancelled = true;
     };
-  }, [session, user, loading, authEvent]);
+  }, [session, user, loading]);
 
   const handleOnboardingComplete = useCallback(() => {
     setShowOnboarding(false);
