@@ -37,7 +37,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { fromUserId, toUserId, amount, splitId, participantCount = 2 } = await req.json();
+    const { fromUserId, toUserId, amount, splitId, participantCount = 1 } = await req.json();
 
     // Validate input
     if (!fromUserId || !toUserId || !amount || !splitId) {
@@ -116,16 +116,35 @@ serve(async (req) => {
         .eq('id', fromUserId);
     }
 
-    // Calculate fees — all fees split equally among all participants
+    // Get the actual paying participant count (exclude the creator)
+    const { data: splitData } = await supabase
+      .from('splits')
+      .select('creator_id')
+      .eq('id', splitId)
+      .single();
+
+    let actualParticipantCount = participantCount;
+    if (splitData?.creator_id) {
+      const { count: payingCount } = await supabase
+        .from('split_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('split_id', splitId)
+        .neq('user_id', splitData.creator_id);
+      if (payingCount && payingCount > 0) {
+        actualParticipantCount = payingCount;
+      }
+    }
+
+    // Calculate fees — all fees split equally among paying participants
     // 1. Stripe processing fee: 2.9% + $0.30 AUD per transaction
     // 2. Instant payout fee: 1.5% per transaction
     // 3. Platform fee: $0.50 AUD total (ZapSplit's revenue)
     const amountCents = Math.round(amount * 100);
     const stripeFee = Math.round(amount * 0.029 * 100 + 30); // 2.9% + $0.30 in cents
     const instantPayoutFee = Math.round(amountCents * 0.015); // 1.5% for instant payout
-    const platformFeeCents = Math.round(50 / participantCount); // $0.50 split among all participants
-    const payerStripeFee = Math.round(stripeFee / participantCount); // This payer's share of Stripe fee
-    const payerInstantFee = Math.round(instantPayoutFee / participantCount); // This payer's share of instant fee
+    const platformFeeCents = Math.round(50 / actualParticipantCount); // $0.50 split among paying participants
+    const payerStripeFee = Math.round(stripeFee / actualParticipantCount); // This payer's share of Stripe fee
+    const payerInstantFee = Math.round(instantPayoutFee / actualParticipantCount); // This payer's share of instant fee
 
     const payerTotal = amountCents + payerStripeFee + payerInstantFee + platformFeeCents;
     const applicationFee = platformFeeCents; // ZapSplit keeps the platform fee portion

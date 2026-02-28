@@ -36,7 +36,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
   const [split, setSplit] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [recipientReady, setRecipientReady] = useState(false);
-  const [participantCount, setParticipantCount] = useState(2);
+  const [participantCount, setParticipantCount] = useState(1);
 
   const fees = calculateFees(amount, participantCount);
 
@@ -97,11 +97,12 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
       }
       setSplit(splitData);
 
-      // Get participant count for fair fee splitting
+      // Get paying participant count (exclude the creator — they don't pay)
       const { count } = await supabase
         .from('split_participants')
         .select('*', { count: 'exact', head: true })
-        .eq('split_id', splitId);
+        .eq('split_id', splitId)
+        .neq('user_id', splitData.creator_id);
       if (count && count > 0) {
         setParticipantCount(count);
       }

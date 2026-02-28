@@ -79,7 +79,7 @@ export interface Payment {
  * @param amount - The amount this payer owes
  * @param participantCount - Total number of participants in the split (including receiver)
  */
-export function calculateFees(amount: number, participantCount: number = 2): PaymentFeeBreakdown {
+export function calculateFees(amount: number, participantCount: number = 1): PaymentFeeBreakdown {
   const stripeFee = amount * 0.029 + 0.3; // Stripe's fee for this transaction
   const instantPayoutFee = amount * 0.015; // 1.5% instant payout fee
   const platformFee = 0.5 / participantCount; // $0.50 split among all participants
@@ -167,7 +167,7 @@ export async function createPayment(
   splitId: string,
   initPaymentSheet: any, // Pass from useStripe() hook
   presentPaymentSheet: any, // Pass from useStripe() hook
-  participantCount: number = 2
+  participantCount: number = 1
 ): Promise<CreatePaymentResult> {
   try {
     // Call Edge Function to create payment intent
