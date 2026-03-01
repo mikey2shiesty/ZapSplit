@@ -13,11 +13,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { SplitSuccessScreenProps } from '../../types/navigation';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SplitSuccessScreen({ navigation, route }: SplitSuccessScreenProps) {
   const { splitId, amount, participantCount, splitMethod, participantAmounts, paymentLink } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const isEqualSplit = splitMethod === 'equal' || !splitMethod;
 
   // Haptic feedback on mount
@@ -65,8 +67,8 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Success Icon */}
@@ -79,61 +81,61 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
         </View>
 
         {/* Success Message */}
-        <Text style={styles.title}>Split Created!</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>Split Created!</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Your split has been created successfully
         </Text>
 
         {/* Summary Card */}
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Amount</Text>
-            <Text style={styles.summaryAmount}>${amount.toFixed(2)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Total Amount</Text>
+            <Text style={[styles.summaryAmount, { color: colors.primary }]}>${amount.toFixed(2)}</Text>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Participants</Text>
-            <Text style={styles.summaryValue}>{participantCount} people</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Participants</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>{participantCount} people</Text>
           </View>
 
           {isEqualSplit ? (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Per Person</Text>
-              <Text style={styles.summaryValue}>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Per Person</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>
                 ${(amount / participantCount).toFixed(2)}
               </Text>
             </View>
           ) : participantAmounts && participantAmounts.length > 0 ? (
             <View style={styles.participantsList}>
-              <Text style={styles.participantsHeader}>Individual Amounts</Text>
+              <Text style={[styles.participantsHeader, { color: colors.textSecondary }]}>Individual Amounts</Text>
               {participantAmounts.map((p, index) => (
                 <View key={index} style={styles.participantRow}>
-                  <Text style={styles.participantName}>{p.name}</Text>
-                  <Text style={styles.participantAmount}>${p.amount.toFixed(2)}</Text>
+                  <Text style={[styles.participantName, { color: colors.text }]}>{p.name}</Text>
+                  <Text style={[styles.participantAmount, { color: colors.text }]}>${p.amount.toFixed(2)}</Text>
                 </View>
               ))}
             </View>
           ) : (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Per Person</Text>
-              <Text style={styles.summaryValue}>Varies</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Per Person</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>Varies</Text>
             </View>
           )}
         </View>
 
         {/* Info Text */}
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(59,130,246,0.1)' : colors.infoLight }]}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.text }]}>
             Share the link below - friends can claim their items and pay via card, Apple Pay, or Google Pay
           </Text>
         </View>
 
         {/* Payment Link Card */}
         {paymentLink && (
-          <TouchableOpacity style={styles.linkCard} onPress={handleCopyLink} activeOpacity={0.7}>
+          <TouchableOpacity style={[styles.linkCard, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={handleCopyLink} activeOpacity={0.7}>
             <View style={styles.linkContent}>
               <Ionicons name="link" size={20} color={colors.primary} />
               <Text style={styles.linkText} numberOfLines={1}>{paymentLink}</Text>
@@ -150,16 +152,16 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
           onPress={handleShareLink}
           activeOpacity={0.7}
         >
-          <Ionicons name="share-outline" size={20} color={colors.surface} style={{ marginRight: 8 }} />
+          <Ionicons name="share-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
           <Text style={styles.primaryButtonText}>Share Link</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={[styles.secondaryButton, { backgroundColor: colors.gray100 }]}
           onPress={handleViewSplit}
           activeOpacity={0.7}
         >
-          <Text style={styles.secondaryButtonText}>View Split Details</Text>
+          <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>View Split Details</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -167,7 +169,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
           onPress={handleDone}
           activeOpacity={0.7}
         >
-          <Text style={styles.doneButtonText}>Done</Text>
+          <Text style={[styles.doneButtonText, { color: colors.textSecondary }]}>Done</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -177,7 +179,6 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -190,18 +191,15 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
     marginBottom: spacing.xl,
     textAlign: 'center',
   },
   summaryCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     width: '100%',
@@ -215,20 +213,16 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
   summaryAmount: {
     ...typography.numberLarge,
-    color: colors.primary,
   },
   summaryValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray200,
     marginVertical: spacing.md,
   },
   participantsList: {
@@ -236,7 +230,6 @@ const styles = StyleSheet.create({
   },
   participantsHeader: {
     fontSize: 14,
-    color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
   participantRow: {
@@ -247,25 +240,21 @@ const styles = StyleSheet.create({
   },
   participantName: {
     fontSize: 15,
-    color: colors.text,
     fontWeight: '500',
   },
   participantAmount: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.text,
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.infoLight,
     borderRadius: radius.md,
     padding: spacing.md,
     width: '100%',
   },
   infoText: {
     fontSize: 14,
-    color: colors.text,
     marginLeft: spacing.sm,
     flex: 1,
   },
@@ -275,7 +264,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flexDirection: 'row',
-    backgroundColor: colors.primary,
+    backgroundColor: '#3B82F6',
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
@@ -285,11 +274,10 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.surface,
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   secondaryButton: {
-    backgroundColor: colors.gray100,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
@@ -299,7 +287,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
     letterSpacing: 0.5,
   },
   doneButton: {
@@ -310,19 +297,16 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.textSecondary,
   },
   linkCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
     width: '100%',
     marginTop: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   linkContent: {
     flexDirection: 'row',
@@ -332,7 +316,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: colors.primary,
+    color: '#3B82F6',
     marginLeft: spacing.sm,
     flex: 1,
   },

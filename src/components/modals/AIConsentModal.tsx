@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, spacing, radius } from '../../constants/theme';
+import { spacing, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const AI_CONSENT_KEY = '@zapsplit_ai_consent';
 
@@ -20,6 +21,7 @@ interface AIConsentModalProps {
 }
 
 export default function AIConsentModal({ visible, onAccept, onDecline }: AIConsentModalProps) {
+  const { colors, isDark } = useTheme();
   const handleAccept = async () => {
     try {
       await AsyncStorage.setItem(AI_CONSENT_KEY, 'accepted');
@@ -36,10 +38,10 @@ export default function AIConsentModal({ visible, onAccept, onDecline }: AIConse
       presentationStyle="pageSheet"
       onRequestClose={onDecline}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={onDecline}>
+          <TouchableOpacity style={[styles.closeButton, { backgroundColor: colors.gray100 }]} onPress={onDecline}>
             <Ionicons name="close" size={24} color={colors.gray600} />
           </TouchableOpacity>
         </View>
@@ -47,73 +49,73 @@ export default function AIConsentModal({ visible, onAccept, onDecline }: AIConse
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Icon */}
           <View style={styles.iconContainer}>
-            <View style={styles.iconCircle}>
+            <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(59,130,246,0.15)' : colors.primaryLight }]}>
               <Ionicons name="sparkles" size={40} color={colors.primary} />
             </View>
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>AI-Powered Receipt Scanning</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>AI-Powered Receipt Scanning</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             ZapSplit uses artificial intelligence to read your receipts
           </Text>
 
           {/* Info Cards */}
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
             <View style={styles.infoHeader}>
               <Ionicons name="eye-outline" size={24} color={colors.primary} />
-              <Text style={styles.infoTitle}>What We Process</Text>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>What We Process</Text>
             </View>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               When you scan a receipt, the image is sent to OpenAI's Vision API to extract:
             </Text>
             <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} Store/restaurant name
               </Text>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} Individual items and prices
               </Text>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} Tax, tip, and total amounts
               </Text>
             </View>
           </View>
 
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
             <View style={styles.infoHeader}>
               <Ionicons name="shield-checkmark-outline" size={24} color={colors.success} />
-              <Text style={styles.infoTitle}>How Your Data is Protected</Text>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>How Your Data is Protected</Text>
             </View>
             <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} Images are processed securely via encrypted connection
               </Text>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} OpenAI does not store your receipt images
               </Text>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} Data is used only to extract receipt information
               </Text>
-              <Text style={styles.bulletItem}>
+              <Text style={[styles.bulletItem, { color: colors.textSecondary }]}>
                 {'\u2022'} We never share your receipts for advertising
               </Text>
             </View>
           </View>
 
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
             <View style={styles.infoHeader}>
               <Ionicons name="document-text-outline" size={24} color={colors.info} />
-              <Text style={styles.infoTitle}>Your Rights</Text>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>Your Rights</Text>
             </View>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               You can withdraw consent at any time by not using the receipt scanning
               feature. For more details, please review our Privacy Policy.
             </Text>
           </View>
 
           {/* Legal Notice */}
-          <Text style={styles.legalNotice}>
+          <Text style={[styles.legalNotice, { color: colors.textSecondary }]}>
             By tapping "Accept & Continue", you consent to your receipt images being
             processed by OpenAI's Vision API in accordance with our Privacy Policy
             and Terms of Service.
@@ -123,13 +125,13 @@ export default function AIConsentModal({ visible, onAccept, onDecline }: AIConse
         </ScrollView>
 
         {/* Footer Buttons */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <TouchableOpacity
-            style={styles.declineButton}
+            style={[styles.declineButton, { backgroundColor: colors.gray100 }]}
             onPress={onDecline}
             activeOpacity={0.7}
           >
-            <Text style={styles.declineButtonText}>Decline</Text>
+            <Text style={[styles.declineButtonText, { color: colors.text }]}>Decline</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -169,7 +171,6 @@ export async function resetAIConsent(): Promise<void> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -181,7 +182,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -197,26 +197,22 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.gray900,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.gray600,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
   infoCard: {
-    backgroundColor: colors.gray50,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -230,11 +226,9 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   infoText: {
     fontSize: 14,
-    color: colors.gray700,
     lineHeight: 22,
   },
   bulletList: {
@@ -242,13 +236,11 @@ const styles = StyleSheet.create({
   },
   bulletItem: {
     fontSize: 14,
-    color: colors.gray700,
     lineHeight: 24,
     paddingLeft: spacing.sm,
   },
   legalNotice: {
     fontSize: 13,
-    color: colors.gray500,
     lineHeight: 20,
     textAlign: 'center',
     marginTop: spacing.lg,
@@ -261,27 +253,24 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
   },
   declineButton: {
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   declineButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray700,
   },
   acceptButton: {
     flex: 2,
     flexDirection: 'row',
     paddingVertical: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
