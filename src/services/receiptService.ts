@@ -11,12 +11,10 @@ import {
   ParsedReceipt,
   ReceiptParseError,
   ReceiptParseErrorType,
-  OpenAIVisionRequest,
-  OpenAIVisionResponse,
 } from '../types/receipt';
 
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 /**
  * Upload receipt image to Supabase Storage
@@ -43,7 +41,7 @@ export async function uploadReceiptToStorage(
     const arrayBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('split-receipts')
       .upload(filename, arrayBuffer, {
         contentType: 'image/jpeg',
@@ -76,111 +74,37 @@ export async function parseReceiptWithAI(
   imageUri: string
 ): Promise<ParsedReceipt> {
   try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
-
     // Read image as base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
       encoding: 'base64',
     });
 
-    // Prepare the request to OpenAI Vision API
-    const request: OpenAIVisionRequest = {
-      model: 'gpt-4o', // Latest vision model
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are a receipt parsing assistant. Analyze this receipt image and extract the following information in JSON format:
+    // Get auth token for the edge function
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
 
-{
-  "items": [
-    {"id": "uuid", "name": "item name", "price": 0.00, "quantity": 1}
-  ],
-  "subtotal": 0.00,
-  "tax": 0.00,
-  "tip": 0.00,
-  "total": 0.00,
-  "merchant": "restaurant name",
-  "date": "YYYY-MM-DD",
-  "confidence": <calculated>
-}
-
-CRITICAL - AUSTRALIAN RECEIPTS (AUD):
-All prices on Australian receipts INCLUDE GST. The "Subtotal" and "Tax/GST" lines just show the GST breakdown — the GST is ALREADY included in the item prices. Therefore:
-- Set "subtotal" to the receipt TOTAL (the final amount paid)
-- Set "tax" to 0 (GST is already included in item prices, do NOT add it again)
-- Set "total" to the same value as subtotal
-- All item prices must sum to the receipt TOTAL (the final amount paid)
-
-CRITICAL - PRICE INTERPRETATION:
-The "price" field must be the PER-UNIT price, NOT the line total.
-- If a line shows "2 Burger $20.00", the $20 is the LINE TOTAL for 2 burgers
-  - price should be: 10.00 (20 ÷ 2 = 10 per burger)
-  - quantity should be: 2
-- If a line shows "Burger $10.00", then price: 10.00, quantity: 1
-
-IMPORTANT RULES:
-1. Extract ONLY top-level purchasable items (meals, combos, boxes, individual items, standalone add-ons)
-2. ALWAYS calculate per-unit price by dividing the line total by quantity
-3. Generate a unique ID for each item (use simple incrementing numbers like "1", "2", "3")
-4. If quantity is not shown, assume quantity = 1
-5. Set subtotal to the receipt TOTAL (the final amount paid, GST-inclusive)
-6. Set tax to 0 (GST is already included in item prices)
-7. Extract tip amount (if shown, otherwise set to 0)
-8. Set total to the final amount on the receipt
-9. COMBO/BOX/MEAL DEALS: Items like "Zing Box", "Big Mac Meal", "Family Feast", etc. are COMBO items. The items listed underneath them (burger, chips, drink, sides, etc.) are what COMES WITH the combo — they are NOT separate charges. Only output the combo/box/meal as ONE item at the combo price. Do NOT list individual combo contents as separate items. To identify combo contents: sum the prices of items listed under a combo. If they equal the combo price, they are combo contents.
-10. STANDALONE ADD-ONS: If an item listed under a combo causes the sum of sub-items to EXCEED the combo price, that item is a STANDALONE ADD-ON — list it as its own separate item. Example: "H&C Zing Box $15.45" has sub-items summing to $15.45, plus "Dip Supercharged $0.60" listed after them. The Dip is NOT part of the $15.45 combo — it is a separate $0.60 item. Output: {"name": "H&C Zing Box", "price": 15.45} AND {"name": "Dip Supercharged", "price": 0.60}.
-11. MODIFIERS: Items like "No Mayo", "Extra Cheese", "$0.00" customisations listed under a combo are just modifications — ignore them entirely, do NOT create items for them.
-12. VERIFY: The sum of all item prices times quantities MUST equal the receipt TOTAL (the final amount paid, GST-inclusive). If it doesn't, you likely missed a standalone add-on or incorrectly merged an item into a combo. Go back and check.
-13. CONFIDENCE SCORING - Set based on how well you could read the receipt:
-   - 0.98-1.0: Perfect quality, all text crystal clear
-   - 0.90-0.97: Good quality, most text readable
-   - 0.80-0.89: Moderate quality, some items may be unclear
-   - 0.70-0.79: Poor quality, had to guess some values
-   - Below 0.70: Very poor quality, many items unreadable
-
-Return ONLY the JSON object, no additional text.`,
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${base64}`,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 1000,
-      temperature: 0.2, // Low temperature for consistent, accurate parsing
-    };
-
-    // Call OpenAI API
-    const response = await fetch(OPENAI_API_URL, {
+    // Call parse-receipt edge function (OpenAI key stays server-side)
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/parse-receipt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${accessToken}`,
+        apikey: SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify({ base64Image: base64 }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        `OpenAI API error: ${errorData.error?.message || response.statusText}`
-      );
+      throw new Error(errorData.error || response.statusText);
     }
 
-    const data: OpenAIVisionResponse = await response.json();
-
-    // Extract the JSON from the response
-    const content = data.choices[0]?.message?.content;
+    const { content } = await response.json();
     if (!content) {
-      throw new Error('No content in OpenAI response');
+      throw new Error('No content in response');
     }
 
     // Check if AI indicates this is not a receipt
