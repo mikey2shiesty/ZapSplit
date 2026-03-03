@@ -32,7 +32,7 @@ const linking: LinkingOptions<any> = {
     },
   },
   // Custom function to get the split ID from the payment link code
-  async getStateFromPath(path, options) {
+  getStateFromPath(path, _options) {
     // Handle /pay/:code URLs - need to look up splitId from code
     const payMatch = path.match(/\/pay\/([^/?]+)/);
     if (payMatch) {
