@@ -71,28 +71,23 @@ export interface Payment {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
- * Calculate all fees for a payment, split fairly among ALL participants:
- * 1. Stripe processing fee: 2.9% + $0.30 AUD (split equally among all participants)
- * 2. Instant payout fee: 1.5% (split equally among all participants)
- * 3. Platform fee: $0.50 AUD ZapSplit fee (split equally among all participants)
+ * Calculate dynamic fee per payer that guarantees $0.50 profit after Stripe fees.
+ * Formula: fee = (0.80 + 0.0175 * amount) / 0.9825
+ * This covers Stripe processing (1.75% + $0.30) and nets $0.50 per transaction.
  *
  * @param amount - The amount this payer owes
- * @param participantCount - Total number of participants in the split (including receiver)
+ * @param participantCount - Not used anymore (kept for backwards compat)
  */
 export function calculateFees(amount: number, participantCount: number = 1): PaymentFeeBreakdown {
-  const stripeFee = amount * 0.029 + 0.3; // Stripe's fee for this transaction
-  const instantPayoutFee = amount * 0.015; // 1.5% instant payout fee
-  const platformFee = 0.5 / participantCount; // $0.50 split among all participants
-  const userFee = stripeFee / participantCount; // Each person's share of Stripe fee
-  const userInstantFee = instantPayoutFee / participantCount; // Each person's share of instant fee
-  const total = amount + userFee + userInstantFee + platformFee;
+  const fee = amount > 0 ? (0.80 + 0.0175 * amount) / 0.9825 : 0;
+  const total = amount + fee;
 
   return {
     amount: parseFloat(amount.toFixed(2)),
-    stripeFee: parseFloat(stripeFee.toFixed(2)),
-    userFee: parseFloat((userFee + userInstantFee + platformFee).toFixed(2)), // Total fee this payer pays
-    instantPayoutFee: parseFloat(userInstantFee.toFixed(2)),
-    platformFee: parseFloat(platformFee.toFixed(2)),
+    stripeFee: 0,
+    userFee: parseFloat(fee.toFixed(2)),
+    instantPayoutFee: 0,
+    platformFee: parseFloat(fee.toFixed(2)),
     total: parseFloat(total.toFixed(2)),
   };
 }

@@ -116,38 +116,13 @@ serve(async (req) => {
         .eq('id', fromUserId);
     }
 
-    // Get the actual paying participant count (exclude the creator)
-    const { data: splitData } = await supabase
-      .from('splits')
-      .select('creator_id')
-      .eq('id', splitId)
-      .single();
-
-    let actualParticipantCount = participantCount;
-    if (splitData?.creator_id) {
-      const { count: payingCount } = await supabase
-        .from('split_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('split_id', splitId)
-        .neq('user_id', splitData.creator_id);
-      if (payingCount && payingCount > 0) {
-        actualParticipantCount = payingCount;
-      }
-    }
-
-    // Calculate fees — all fees split equally among paying participants
-    // 1. Stripe processing fee: 2.9% + $0.30 AUD per transaction
-    // 2. Instant payout fee: 1.5% per transaction
-    // 3. Platform fee: $0.50 AUD total (ZapSplit's revenue)
+    // Dynamic fee: covers Stripe fees (1.75% + $0.30) and guarantees $0.50 profit
+    // Formula: fee = (0.80 + 0.0175 * amount) / 0.9825
     const amountCents = Math.round(amount * 100);
-    const stripeFee = Math.round(amount * 0.029 * 100 + 30); // 2.9% + $0.30 in cents
-    const instantPayoutFee = Math.round(amountCents * 0.015); // 1.5% for instant payout
-    const platformFeeCents = Math.round(50 / actualParticipantCount); // $0.50 split among paying participants
-    const payerStripeFee = Math.round(stripeFee / actualParticipantCount); // This payer's share of Stripe fee
-    const payerInstantFee = Math.round(instantPayoutFee / actualParticipantCount); // This payer's share of instant fee
-
-    const payerTotal = amountCents + payerStripeFee + payerInstantFee + platformFeeCents;
-    const applicationFee = platformFeeCents; // ZapSplit keeps the platform fee portion
+    const fee = (0.80 + 0.0175 * amount) / 0.9825;
+    const feeCents = Math.round(fee * 100);
+    const payerTotal = amountCents + feeCents;
+    const applicationFee = feeCents; // ZapSplit keeps the entire fee (Stripe deducts their cut from it)
 
     // Create PaymentIntent with destination charge
     // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
@@ -167,9 +142,8 @@ serve(async (req) => {
         fromUserId,
         toUserId,
         originalAmount: amount.toString(),
-        instantPayoutAmount: (amountCents - payerStripeFee).toString(), // Amount receiver gets (in cents)
+        instantPayoutAmount: amountCents.toString(), // Amount receiver gets (in cents)
         connectedAccountId: receiver.stripe_connect_account_id,
-        participantCount: participantCount.toString(),
       },
       description: `Payment for Split #${splitId.substring(0, 8)}`,
     });
@@ -182,7 +156,7 @@ serve(async (req) => {
         from_user_id: fromUserId,
         to_user_id: toUserId,
         amount: amount,
-        stripe_fee_amount: (stripeFee / 100).toFixed(2),
+        stripe_fee_amount: (feeCents / 100).toFixed(2),
         payment_method: 'stripe',
         stripe_payment_intent_id: paymentIntent.id,
         status: 'pending',
@@ -196,15 +170,14 @@ serve(async (req) => {
     }
 
     // Return client secret for frontend
-    const totalFee = payerStripeFee + payerInstantFee + platformFeeCents;
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         paymentId: payment?.id,
         amount: (payerTotal / 100).toFixed(2),
-        fee: (totalFee / 100).toFixed(2),
-        platformFee: (platformFeeCents / 100).toFixed(2),
+        fee: (feeCents / 100).toFixed(2),
+        platformFee: (feeCents / 100).toFixed(2),
         instantPayout: true,
       }),
       {
