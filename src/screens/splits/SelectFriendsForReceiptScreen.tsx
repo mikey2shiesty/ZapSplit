@@ -11,6 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -224,7 +225,7 @@ export default function SelectFriendsForReceiptScreen({
         </View>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Receipt Badge */}
         <View style={[styles.receiptBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.receiptBadgeLeft}>
@@ -321,7 +322,7 @@ export default function SelectFriendsForReceiptScreen({
             </Text>
           </TouchableOpacity>
         )}
-      </View>
+      </ScrollView>
 
       {/* Add External Person Modal */}
       <Modal visible={showAddExternal} animationType="slide" transparent>
