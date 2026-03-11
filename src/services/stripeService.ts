@@ -256,6 +256,7 @@ export async function createPayment(
  */
 export async function getPaymentHistory(userId: string): Promise<Payment[]> {
   try {
+    // Fetch in-app payments
     const { data, error } = await supabase
       .from('payments')
       .select(`
@@ -272,7 +273,40 @@ export async function getPaymentHistory(userId: string): Promise<Payment[]> {
       throw new Error(error.message);
     }
 
-    return data || [];
+    // Fetch web payments received by this user
+    const { data: webPayments } = await supabase
+      .from('web_payments')
+      .select('*, split:split_id (id, title)')
+      .eq('recipient_user_id', userId)
+      .eq('status', 'settled')
+      .order('created_at', { ascending: false });
+
+    // Convert web payments to Payment format
+    const webAsPayments: Payment[] = (webPayments || []).map((wp: any) => ({
+      id: wp.id,
+      split_id: wp.split_id,
+      from_user_id: '',
+      to_user_id: userId,
+      amount: wp.amount,
+      stripe_fee_amount: null,
+      payment_method: 'web',
+      stripe_payment_intent_id: null,
+      status: 'completed' as const,
+      created_at: wp.created_at,
+      completed_at: wp.created_at,
+      payer: {
+        id: '',
+        email: wp.payer_email || '',
+        full_name: wp.payer_name || 'Web Payment',
+        avatar_url: null,
+      },
+      split: wp.split,
+    }));
+
+    // Merge and sort by date
+    const all = [...(data || []), ...webAsPayments];
+    all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return all;
   } catch (error) {
     console.error('Failed to fetch payment history:', error);
     return [];
@@ -328,7 +362,38 @@ export async function getPaymentsReceived(userId: string): Promise<Payment[]> {
       throw new Error(error.message);
     }
 
-    return data || [];
+    // Also fetch web payments
+    const { data: webPayments } = await supabase
+      .from('web_payments')
+      .select('*, split:split_id (id, title)')
+      .eq('recipient_user_id', userId)
+      .eq('status', 'settled')
+      .order('created_at', { ascending: false });
+
+    const webAsPayments: Payment[] = (webPayments || []).map((wp: any) => ({
+      id: wp.id,
+      split_id: wp.split_id,
+      from_user_id: '',
+      to_user_id: userId,
+      amount: wp.amount,
+      stripe_fee_amount: null,
+      payment_method: 'web',
+      stripe_payment_intent_id: null,
+      status: 'completed' as const,
+      created_at: wp.created_at,
+      completed_at: wp.created_at,
+      payer: {
+        id: '',
+        email: wp.payer_email || '',
+        full_name: wp.payer_name || 'Web Payment',
+        avatar_url: null,
+      },
+      split: wp.split,
+    }));
+
+    const all = [...(data || []), ...webAsPayments];
+    all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return all;
   } catch (error) {
     console.error('Failed to fetch received payments:', error);
     return [];
