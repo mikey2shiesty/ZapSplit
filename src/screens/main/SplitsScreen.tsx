@@ -102,10 +102,10 @@ export default function SplitsScreen() {
     const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
 
     if (isCreator) {
-      // For creator: show paid count
-      const paidCount = split.participants.filter((p: any) => p.status === 'paid').length;
-      const totalCount = split.participants.length;
-      if (paidCount === totalCount) return 'All paid';
+      // For creator: use paid_count which includes web payments
+      const paidCount = split.paid_count ?? split.participants.filter((p: any) => p.status === 'paid').length;
+      const totalCount = split.participant_count ?? split.participants.length;
+      if (paidCount === totalCount && totalCount > 0) return 'All paid';
       return `${paidCount}/${totalCount} paid`;
     }
 
@@ -118,8 +118,8 @@ export default function SplitsScreen() {
     const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
 
     if (isCreator) {
-      // For creator: show total amount owed to them
-      return split.participants.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0);
+      // For creator: show total amount owed by others (includes web payments)
+      return split.amount_owed_by_others || split.participants.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0);
     }
 
     return userParticipant?.amount_owed || 0;

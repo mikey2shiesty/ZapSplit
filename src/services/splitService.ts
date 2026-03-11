@@ -346,7 +346,16 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
 
       const totalItemsValue = splitItems?.reduce((sum, item) => sum + Number(item.total_price), 0) || 0;
 
-      const paidCount = participants?.filter(p => p.status === 'paid').length || 0;
+      const participantPaidCount = participants?.filter(p => p.status === 'paid').length || 0;
+      const webPaidCount = webPayments?.length || 0;
+      // Count unique payers (avoid double counting if participant also paid via web)
+      const paidParticipantEmails = new Set(
+        participants?.filter(p => p.status === 'paid').map(p => p.external_email?.toLowerCase()).filter(Boolean)
+      );
+      const uniqueWebPaid = (webPayments || []).filter(
+        (wp: any) => !paidParticipantEmails.has(wp.payer_email?.toLowerCase())
+      ).length;
+      const paidCount = participantPaidCount + uniqueWebPaid;
 
       // Calculate creator's claimed items
       const creatorClaimedItems = creatorClaims?.reduce((sum, claim) => {
