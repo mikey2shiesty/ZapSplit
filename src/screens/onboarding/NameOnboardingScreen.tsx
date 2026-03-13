@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../services/supabase';
-import { spacing, radius } from '../../constants/theme';
+import { radius } from '../../constants/theme';
 
 interface Props {
   userId: string;
@@ -28,7 +28,6 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    // Auto-focus the input after a short delay
     const timer = setTimeout(() => inputRef.current?.focus(), 500);
     return () => clearTimeout(timer);
   }, []);
@@ -39,13 +38,11 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
 
     setSaving(true);
     try {
-      // Update profiles table
       await supabase
         .from('profiles')
         .update({ full_name: trimmed })
         .eq('id', userId);
 
-      // Also update auth metadata
       await supabase.auth.updateUser({
         data: { full_name: trimmed },
       });
@@ -53,7 +50,6 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
       onComplete();
     } catch (error) {
       console.error('Error saving name:', error);
-      // Still continue even if save fails — they can edit later
       onComplete();
     } finally {
       setSaving(false);
@@ -61,63 +57,98 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
   };
 
   const isValid = name.trim().length >= 2;
+  const initials = name.trim().split(' ').map(w => w[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('');
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 40 }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        {/* Icon */}
-        <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="person-outline" size={36} color={colors.primary} />
+    <View style={[styles.container, { backgroundColor: isDark ? '#0F0F1A' : '#F8F9FB', paddingTop: insets.top }]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Center everything vertically */}
+        <View style={styles.centerContent}>
+          {/* Avatar preview */}
+          <View style={[styles.avatar, { backgroundColor: name.trim() ? colors.primary : colors.primary + '20' }]}>
+            {name.trim() ? (
+              <Text style={styles.avatarInitials}>{initials || '?'}</Text>
+            ) : (
+              <Ionicons name="person" size={36} color={colors.primary} />
+            )}
+          </View>
+
+          {/* Title */}
+          <Text style={[styles.title, { color: colors.text }]}>What's your name?</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            This is how friends see you on splits
+          </Text>
+
+          {/* Input */}
+          <View style={[
+            styles.inputContainer,
+            {
+              backgroundColor: isDark ? colors.surface : '#FFFFFF',
+              borderColor: name.trim() ? colors.primary : isDark ? colors.border : '#E5E7EB',
+            },
+          ]}>
+            <Ionicons name="person-outline" size={20} color={name.trim() ? colors.primary : colors.textSecondary} style={styles.inputIcon} />
+            <TextInput
+              ref={inputRef}
+              style={[styles.input, { color: colors.text }]}
+              placeholder="First and last name"
+              placeholderTextColor={colors.textSecondary}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleContinue}
+            />
+            {name.trim().length > 0 && (
+              <TouchableOpacity onPress={() => setName('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Button */}
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                backgroundColor: isValid ? colors.primary : isDark ? colors.surface : '#E5E7EB',
+                shadowColor: isValid ? colors.primary : 'transparent',
+                shadowOpacity: isValid ? 0.3 : 0,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+              },
+            ]}
+            onPress={handleContinue}
+            disabled={!isValid || saving}
+            activeOpacity={0.8}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <View style={styles.buttonContent}>
+                <Text style={[styles.buttonText, { color: isValid ? '#FFFFFF' : colors.textSecondary }]}>
+                  Get Started
+                </Text>
+                {isValid && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
+              </View>
+            )}
+          </TouchableOpacity>
+
         </View>
 
-        {/* Title */}
-        <Text style={[styles.title, { color: colors.text }]}>What's your name?</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Your friends will see this when you split bills
-        </Text>
-
-        {/* Input */}
-        <TextInput
-          ref={inputRef}
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? colors.surface : colors.gray50,
-              borderColor: name.trim() ? colors.primary : colors.border,
-              color: colors.text,
-            },
-          ]}
-          placeholder="First and last name"
-          placeholderTextColor={colors.textSecondary}
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-          autoCorrect={false}
-          returnKeyType="done"
-          onSubmitEditing={handleContinue}
-        />
-
-        {/* Continue Button */}
-        <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: isValid ? colors.primary : colors.gray300 },
-          ]}
-          onPress={handleContinue}
-          disabled={!isValid || saving}
-          activeOpacity={0.8}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>Continue</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+        {/* Footer note - pinned to bottom */}
+        <View style={[styles.footerNote, { paddingBottom: insets.bottom + 16 }]}>
+          <Ionicons name="lock-closed" size={12} color={colors.textSecondary} />
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+            You can change this anytime in settings
+          </Text>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -125,17 +156,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    paddingHorizontal: 24,
-    alignItems: 'center',
+  flex: {
+    flex: 1,
   },
-  iconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    marginTop: -40,
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
+  },
+  avatarInitials: {
+    fontSize: 34,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   title: {
     fontSize: 26,
@@ -144,30 +186,51 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
+    marginBottom: 36,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 54,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    width: '100%',
-    height: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
+    flex: 1,
     fontSize: 17,
-    marginBottom: 24,
+    height: '100%',
   },
   button: {
     width: '100%',
-    height: 52,
-    borderRadius: radius.md,
+    height: 54,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   buttonText: {
-    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+  },
+  footerNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  footerText: {
+    fontSize: 13,
   },
 });
