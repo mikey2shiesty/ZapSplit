@@ -19,10 +19,11 @@ import {
 } from '../../services/notificationService';
 import Card from '../../components/common/Card';
 import Header from '../../components/common/Header';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function NotificationSettingsScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -83,12 +84,12 @@ export default function NotificationSettingsScreen() {
     icon: string
   ) => (
     <View style={styles.toggleRow}>
-      <View style={styles.toggleIconContainer}>
+      <View style={[styles.toggleIconContainer, { backgroundColor: colors.gray100 }]}>
         <Ionicons name={icon as any} size={22} color={colors.gray600} />
       </View>
       <View style={styles.toggleContent}>
-        <Text style={styles.toggleLabel}>{label}</Text>
-        <Text style={styles.toggleDescription}>{description}</Text>
+        <Text style={[styles.toggleLabel, { color: colors.gray900 }]}>{label}</Text>
+        <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>{description}</Text>
       </View>
       <Switch
         value={preferences?.[key] as boolean}
@@ -102,14 +103,14 @@ export default function NotificationSettingsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
       {/* Header */}
       <Header
         title="Notification Settings"
@@ -125,7 +126,7 @@ export default function NotificationSettingsScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Channels */}
-        <Text style={styles.sectionTitle}>Notification Channels</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Notification Channels</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Push Notifications',
@@ -133,14 +134,14 @@ export default function NotificationSettingsScreen() {
             'push',
             'phone-portrait-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Email Notifications',
             'Receive notifications via email',
             'email',
             'mail-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'SMS Notifications',
             'Receive notifications via SMS',
@@ -150,7 +151,7 @@ export default function NotificationSettingsScreen() {
         </Card>
 
         {/* Categories */}
-        <Text style={styles.sectionTitle}>Notification Types</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Notification Types</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Splits',
@@ -158,28 +159,28 @@ export default function NotificationSettingsScreen() {
             'split_notifications',
             'receipt-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Payments',
             'Payment requests and confirmations',
             'payment_notifications',
             'card-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Reminders',
             'Reminders for unpaid balances',
             'reminder_notifications',
             'alarm-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Friends',
             'Friend requests and activity',
             'friend_notifications',
             'people-outline'
           )}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
           {renderToggle(
             'Groups',
             'Group invites and activity',
@@ -189,7 +190,7 @@ export default function NotificationSettingsScreen() {
         </Card>
 
         {/* Quiet Hours */}
-        <Text style={styles.sectionTitle}>Quiet Hours</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Quiet Hours</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Enable Quiet Hours',
@@ -199,14 +200,14 @@ export default function NotificationSettingsScreen() {
           )}
           {preferences?.quiet_hours_enabled && (
             <>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
               <View style={styles.quietHoursInfo}>
                 <Ionicons name="time-outline" size={20} color={colors.gray500} />
-                <Text style={styles.quietHoursText}>
+                <Text style={[styles.quietHoursText, { color: colors.gray600 }]}>
                   {preferences.quiet_hours_start} - {preferences.quiet_hours_end}
                 </Text>
-                <TouchableOpacity style={styles.editButton}>
-                  <Text style={styles.editButtonText}>Edit</Text>
+                <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.gray100 }]}>
+                  <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -216,7 +217,7 @@ export default function NotificationSettingsScreen() {
         {/* Info */}
         <View style={styles.infoContainer}>
           <Ionicons name="information-circle-outline" size={20} color={colors.gray400} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.gray400 }]}>
             You can also manage notifications in your device settings.
           </Text>
         </View>
@@ -228,13 +229,11 @@ export default function NotificationSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray50,
   },
   content: {
     flex: 1,
@@ -243,7 +242,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -263,7 +261,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -274,16 +271,13 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray900,
   },
   toggleDescription: {
     fontSize: 13,
-    color: colors.gray500,
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray100,
     marginLeft: 68,
   },
   quietHoursInfo: {
@@ -296,18 +290,15 @@ const styles = StyleSheet.create({
   quietHoursText: {
     flex: 1,
     fontSize: 15,
-    color: colors.gray600,
   },
   editButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: colors.gray100,
   },
   editButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.primary,
   },
   infoContainer: {
     flexDirection: 'row',
@@ -319,7 +310,6 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray400,
     lineHeight: 18,
   },
 });
