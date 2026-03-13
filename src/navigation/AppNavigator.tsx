@@ -6,11 +6,13 @@ import { supabase } from '../services/supabase';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import StripeOnboardingScreen from '../screens/onboarding/StripeOnboardingScreen';
+import NameOnboardingScreen from '../screens/onboarding/NameOnboardingScreen';
 
 export default function AppNavigator() {
   const { session, user, loading } = useAuth();
   const { colors } = useTheme();
   const [showSplash, setShowSplash] = useState(true);
+  const [showNameOnboarding, setShowNameOnboarding] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
@@ -34,23 +36,27 @@ export default function AppNavigator() {
 
     const checkOnboarding = async () => {
       try {
-        // Check profile for existing Stripe setup or prior dismissal
+        // Check profile for name and Stripe setup
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('stripe_connect_account_id, stripe_connect_onboarding_complete, stripe_onboarding_dismissed')
+          .select('full_name, stripe_connect_account_id, stripe_connect_onboarding_complete, stripe_onboarding_dismissed')
           .eq('id', user.id)
           .single();
 
         if (cancelled) return;
 
         if (error || !profile) {
-          // On error, skip onboarding to avoid blocking the user
+          setShowNameOnboarding(false);
           setShowOnboarding(false);
           setOnboardingChecked(true);
           return;
         }
 
-        // Show onboarding if user hasn't set up Stripe and hasn't dismissed the prompt
+        // Show name screen if full_name is empty
+        const needsName = !profile.full_name || profile.full_name.trim() === '';
+        setShowNameOnboarding(needsName);
+
+        // Show Stripe onboarding if user hasn't set up Stripe and hasn't dismissed
         const shouldShow =
           !profile.stripe_connect_account_id &&
           !profile.stripe_connect_onboarding_complete &&
@@ -59,8 +65,8 @@ export default function AppNavigator() {
         setShowOnboarding(shouldShow);
         setOnboardingChecked(true);
       } catch {
-        // On any error, skip onboarding
         if (!cancelled) {
+          setShowNameOnboarding(false);
           setShowOnboarding(false);
           setOnboardingChecked(true);
         }
@@ -98,6 +104,10 @@ export default function AppNavigator() {
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  }
+
+  if (showNameOnboarding) {
+    return <NameOnboardingScreen userId={user!.id} onComplete={() => setShowNameOnboarding(false)} />;
   }
 
   if (showOnboarding) {
