@@ -202,13 +202,12 @@ export default function NotificationSettingsScreen() {
             <>
               <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
               <View style={styles.quietHoursInfo}>
-                <Ionicons name="time-outline" size={20} color={colors.gray500} />
+                <View style={styles.toggleIconContainer}>
+                  <Ionicons name="time-outline" size={20} color={colors.gray500} />
+                </View>
                 <Text style={[styles.quietHoursText, { color: colors.gray600 }]}>
-                  {preferences.quiet_hours_start} - {preferences.quiet_hours_end}
+                  11:00 PM - 8:00 AM
                 </Text>
-                <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.gray100 }]}>
-                  <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit</Text>
-                </TouchableOpacity>
               </View>
             </>
           )}
@@ -222,6 +221,7 @@ export default function NotificationSettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+
     </View>
   );
 }
@@ -290,15 +290,6 @@ const styles = StyleSheet.create({
   quietHoursText: {
     flex: 1,
     fontSize: 15,
-  },
-  editButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  editButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   infoContainer: {
     flexDirection: 'row',
