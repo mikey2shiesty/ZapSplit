@@ -203,7 +203,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.gray900 }]}>Analyzing receipt with AI...</Text>
+          <Text style={[styles.loadingText, { color: colors.gray900 }]}>Analysing receipt with AI...</Text>
           <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
             This may take a few seconds
           </Text>
