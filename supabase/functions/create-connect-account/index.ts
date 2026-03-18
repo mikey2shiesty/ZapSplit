@@ -83,12 +83,18 @@ serve(async (req) => {
       try {
         const account = await stripe.accounts.create({
           type: 'express',
+          country: 'AU',
           email: email,
           capabilities: {
             card_payments: { requested: true },
             transfers: { requested: true },
           },
           business_type: 'individual',
+          business_profile: {
+            mcc: '7299',
+            url: 'https://zapsplit.com.au',
+            product_description: 'Receiving peer-to-peer bill split payments via ZapSplit',
+          },
           metadata: {
             userId: userId,
           },
