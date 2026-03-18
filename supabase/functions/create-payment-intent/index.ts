@@ -37,7 +37,9 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { fromUserId, toUserId, amount, splitId, participantCount = 1 } = await req.json();
+    const body = await req.json();
+    console.log('Request body:', JSON.stringify(body));
+    const { fromUserId, toUserId, amount, splitId, participantCount = 1 } = body;
 
     // Validate input
     if (!fromUserId || !toUserId || !amount || !splitId) {
@@ -124,6 +126,8 @@ serve(async (req) => {
     const payerTotal = amountCents + feeCents;
     const applicationFee = feeCents; // ZapSplit keeps the entire fee (Stripe deducts their cut from it)
 
+    console.log('Creating PaymentIntent:', JSON.stringify({ payerTotal, applicationFee, amountCents, feeCents, connectedAccount: receiver.stripe_connect_account_id }));
+
     // Create PaymentIntent with destination charge
     // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
     const paymentIntent = await stripe.paymentIntents.create({
@@ -189,7 +193,13 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error('Error creating payment intent:', error);
+    console.error('Error creating payment intent:', JSON.stringify({
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      statusCode: error.statusCode,
+      raw: error.raw?.message,
+    }));
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
       {
