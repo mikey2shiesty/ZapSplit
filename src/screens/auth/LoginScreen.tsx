@@ -40,7 +40,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(email.trim())) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
@@ -58,7 +58,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
       // Navigation will be handled by auth state change
     } catch (error: any) {
       Alert.alert(

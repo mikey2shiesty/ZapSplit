@@ -71,3 +71,4 @@ out/
 .serverless/
 .firebase/
 .dynamodb/
+.vercel

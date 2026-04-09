@@ -32,6 +32,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "splash": {
+        "image": "./assets/splash-icon-android.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FFFFFF"
+      },
       "package": "com.zapsplit.app",
       "versionCode": 1,
       "permissions": [
