@@ -1,14 +1,12 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import {
-  createBottomTabNavigator,
-  BottomTabBarProps,
-} from '@react-navigation/bottom-tabs';
-import { Platform, View, Text, Pressable, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+// `@react-navigation/bottom-tabs/unstable` exposes the native bottom tab
+// navigator that wraps UITabBarController on iOS — the only path to the real
+// iOS 26 Liquid Glass tab bar (per Apple HIG: items rest on a Liquid Glass
+// background that the system controls). Falls back to a JS implementation on
+// Android / older iOS automatically.
+import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable';
 import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
 import SplitsScreen from '../screens/main/SplitsScreen';
@@ -47,201 +45,74 @@ import { RootStackParamList, MainTabParamList } from '../types/navigation';
 import { useTheme } from '../contexts/ThemeContext';
 
 const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
+const Tab = createNativeBottomTabNavigator<MainTabParamList>();
 
-// JS-side iOS 26-inspired tab bar. The "real" iOS 26 Liquid Glass needs the
-// native bottom tab navigator (`createNativeBottomTabNavigator`), which only
-// works in a dev build that includes the matching native module — Expo Go and
-// our current dev build don't have it. Switch to native once the next EAS
-// build with Xcode 26 is on the device.
-
-type TabIconName = keyof typeof Ionicons.glyphMap;
-
-const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName }> = {
-  Home: { active: 'home', inactive: 'home-outline' },
-  Scan: { active: 'camera', inactive: 'camera-outline' },
-  Splits: { active: 'receipt', inactive: 'receipt-outline' },
-  Profile: { active: 'person', inactive: 'person-outline' },
-};
-
-function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const bottomInset = Math.max(insets.bottom, 12);
-
-  return (
-    <View
-      style={[styles.tabBarWrapper, { paddingBottom: bottomInset }]}
-      pointerEvents="box-none"
-    >
-      <View style={styles.row}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const focused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!focused && !event.defaultPrevented) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              navigation.navigate(route.name as never);
-            }
-          };
-
-          const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Home;
-          const iconName = focused ? icons.active : icons.inactive;
-          const tone = focused ? colors.primary : colors.textSecondary;
-          const label =
-            options.tabBarLabel !== undefined
-              ? (options.tabBarLabel as string)
-              : options.title !== undefined
-              ? options.title
-              : route.name;
-
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              accessibilityRole="button"
-              accessibilityState={focused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              hitSlop={6}
-              style={({ pressed }) => [
-                styles.item,
-                pressed && { opacity: 0.6 },
-              ]}
-            >
-              {focused && (
-                <View
-                  style={[
-                    styles.activeCapsule,
-                    {
-                      borderColor: isDark
-                        ? 'rgba(255,255,255,0.14)'
-                        : 'rgba(15,24,48,0.10)',
-                    },
-                  ]}
-                  pointerEvents="none"
-                >
-                  {Platform.OS === 'ios' && (
-                    <BlurView
-                      intensity={50}
-                      tint={isDark ? 'dark' : 'light'}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  )}
-                  <View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      {
-                        backgroundColor: isDark
-                          ? 'rgba(40,48,68,0.62)'
-                          : 'rgba(255,255,255,0.72)',
-                      },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.activeTopHighlight,
-                      {
-                        backgroundColor: isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(255,255,255,0.55)',
-                      },
-                    ]}
-                  />
-                </View>
-              )}
-
-              <View style={styles.itemContent}>
-                <Ionicons name={iconName} size={24} color={tone} />
-                <Text
-                  style={[
-                    styles.label,
-                    {
-                      color: tone,
-                      fontWeight: focused ? '600' : '500',
-                    },
-                  ]}
-                >
-                  {String(label)}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
+// MainTabs — uses the official `createNativeBottomTabNavigator`. iOS gets
+// UITabBarController (real iOS 26 Liquid Glass on iOS 26+ / Xcode 26 builds,
+// real native iOS 18-style bar otherwise). Android gets BottomNavigationView.
+// SF Symbols on iOS, materialSymbol equivalents on Android. The system handles
+// content insets, blur, fill/outline icon transitions, and minimize-on-scroll.
 function MainTabs() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
-      tabBar={(props) => <FriendlyTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        // iOS 26: bar minimizes to the active tab when scrolling down (Music
+        // app behaviour). Auto-falls back to no-op on iOS 18.
+        tabBarMinimizeBehavior: 'onScrollDown',
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Scan" component={ScanScreen} />
-      <Tab.Screen name="Splits" component={SplitsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: Platform.select({
+            ios: { type: 'sfSymbol', name: 'house' },
+            android: { type: 'materialSymbol', name: 'home' },
+            default: undefined,
+          }) as any,
+        }}
+      />
+      <Tab.Screen
+        name="Scan"
+        component={ScanScreen}
+        options={{
+          tabBarIcon: Platform.select({
+            ios: { type: 'sfSymbol', name: 'camera' },
+            android: { type: 'materialSymbol', name: 'photo_camera' },
+            default: undefined,
+          }) as any,
+        }}
+      />
+      <Tab.Screen
+        name="Splits"
+        component={SplitsScreen}
+        options={{
+          tabBarIcon: Platform.select({
+            ios: { type: 'sfSymbol', name: 'list.bullet.rectangle' },
+            android: { type: 'materialSymbol', name: 'receipt_long' },
+            default: undefined,
+          }) as any,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: Platform.select({
+            ios: { type: 'sfSymbol', name: 'person.crop.circle' },
+            android: { type: 'materialSymbol', name: 'person' },
+            default: undefined,
+          }) as any,
+        }}
+      />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBarWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 8,
-    paddingTop: 6,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'space-around',
-  },
-  item: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-    minHeight: 56,
-    position: 'relative',
-  },
-  itemContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  activeCapsule: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 6,
-    right: 6,
-    borderRadius: 22,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  activeTopHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  label: {
-    fontSize: 10,
-    letterSpacing: 0.1,
-  },
-});
 
 // Main Navigator with Modal Stack
 export default function MainNavigator() {

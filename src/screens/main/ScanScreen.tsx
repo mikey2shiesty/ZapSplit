@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingBottom: 110,
+    paddingBottom: spacing.xl,
   },
   galleryButton: {
     alignItems: 'center',
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingBottom: 110,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   retakeButton: {

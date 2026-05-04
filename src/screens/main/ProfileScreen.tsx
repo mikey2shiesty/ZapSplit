@@ -94,7 +94,7 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 110 }}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
         {/* AVATAR + NAME */}
