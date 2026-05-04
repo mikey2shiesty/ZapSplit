@@ -6,118 +6,120 @@ const THEME_KEY = '@zapsplit_theme';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-// Light theme colors
-const lightColors = {
-  // Primary Colors
-  primary: '#3B9EFF',
-  primaryDark: '#2B7FD9',
-  primaryLight: '#6BB4FF',
+// ZapSplit 2026 — Friendly Fintech palettes.
+// Reference: Coinbase × Public × Uber. Saturated brand blue used heavily,
+// soft cards on warm grey canvas, soft-blue tinted icon circles.
 
-  // Background Colors
-  background: '#F5F7FA',
-  surface: '#FFFFFF',
+const lightColors = {
+  // Primary — saturated, used everywhere
+  primary: '#2D7EF7',
+  primaryDark: '#1F5FCC',
+  primaryLight: '#EAF1FE',
+
+  // Backgrounds
+  background: '#F4F6FB',     // Warm pale grey-blue canvas
+  surface: '#FFFFFF',         // Cards
   surfaceElevated: '#FFFFFF',
 
-  // Text Colors
-  text: '#111827',
-  textSecondary: '#6B7280',
-  textTertiary: '#9CA3AF',
+  // Text
+  text: '#0F1830',            // Near-black with navy undertone
+  textSecondary: '#5C6779',
+  textTertiary: '#9098A8',
   textInverse: '#FFFFFF',
 
-  // Accent & Highlight
-  accent: '#E8EEF9',
-  highlight: '#FFF9E6',
+  // Accent / highlight
+  accent: '#EAF1FE',          // Soft-blue tint — icon circles, secondary pills
+  highlight: '#FEF1DA',
 
-  // Status Colors
-  success: '#34C759',
-  successLight: '#E8F8ED',
-  warning: '#FF9500',
-  warningLight: '#FFF4E6',
-  error: '#FF3B30',
-  errorLight: '#FFE8E6',
-  info: '#3B9EFF',
-  infoLight: '#E8F4FF',
+  // Status — saturated, friendly
+  success: '#00B86B',
+  successLight: '#E1F7EC',
+  warning: '#F5A524',
+  warningLight: '#FEF1DA',
+  error: '#EF4856',
+  errorLight: '#FCE7E9',
+  info: '#2D7EF7',
+  infoLight: '#EAF1FE',
 
-  // Semantic Colors
-  paid: '#34C759',
-  pending: '#FF9500',
-  owed: '#FF3B30',
+  // Semantic
+  paid: '#00B86B',
+  pending: '#F5A524',
+  owed: '#EF4856',
 
-  // Neutral Grays
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
-  gray700: '#374151',
-  gray800: '#1F2937',
-  gray900: '#111827',
+  // Neutral grays — collapsed onto the new canvas
+  gray50: '#F4F6FB',
+  gray100: '#EFF2F8',
+  gray200: '#E5E9F2',
+  gray300: '#D6DCE7',
+  gray400: '#9098A8',
+  gray500: '#5C6779',
+  gray600: '#4A5466',
+  gray700: '#343C4D',
+  gray800: '#1F2638',
+  gray900: '#0F1830',
 
-  // Overlay & Borders
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  overlayLight: 'rgba(0, 0, 0, 0.2)',
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
-  divider: '#E5E7EB',
+  // Overlay & borders
+  overlay: 'rgba(15, 24, 48, 0.55)',
+  overlayLight: 'rgba(15, 24, 48, 0.18)',
+  border: '#E5E9F2',
+  borderLight: '#E5E9F2',
+  divider: '#E5E9F2',
 };
 
-// Dark theme colors - True black, pristine like Apple/Twitter dark mode
 const darkColors = {
-  // Primary Colors
-  primary: '#3B9EFF',
-  primaryDark: '#2B7FD9',
-  primaryLight: 'rgba(59, 158, 255, 0.15)',
+  // Primary
+  primary: '#5B9DFF',
+  primaryDark: '#2D7EF7',
+  primaryLight: 'rgba(45, 126, 247, 0.16)',
 
-  // Background Colors - TRUE BLACK
-  background: '#000000',
-  surface: '#1C1C1E',
-  surfaceElevated: '#2C2C2E',
+  // Backgrounds
+  background: '#0B0F1A',
+  surface: '#161B2A',
+  surfaceElevated: '#1E2436',
 
-  // Text Colors - Clean white
+  // Text
   text: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  textTertiary: '#636366',
-  textInverse: '#000000',
+  textSecondary: '#9098A8',
+  textTertiary: '#5C6779',
+  textInverse: '#0F1830',
 
-  // Accent & Highlight
-  accent: '#1C1C1E',
-  highlight: '#2C2C2E',
+  // Accent / highlight
+  accent: 'rgba(45, 126, 247, 0.16)',
+  highlight: 'rgba(245, 165, 36, 0.16)',
 
-  // Status Colors - Vibrant on dark
-  success: '#30D158',
-  successLight: 'rgba(48, 209, 88, 0.15)',
-  warning: '#FFD60A',
-  warningLight: 'rgba(255, 214, 10, 0.15)',
-  error: '#FF453A',
-  errorLight: 'rgba(255, 69, 58, 0.15)',
-  info: '#3B9EFF',
-  infoLight: 'rgba(59, 158, 255, 0.15)',
+  // Status
+  success: '#3FCB85',
+  successLight: 'rgba(63, 203, 133, 0.16)',
+  warning: '#F5BB55',
+  warningLight: 'rgba(245, 187, 85, 0.16)',
+  error: '#FF6B75',
+  errorLight: 'rgba(255, 107, 117, 0.16)',
+  info: '#5B9DFF',
+  infoLight: 'rgba(91, 157, 255, 0.16)',
 
-  // Semantic Colors
-  paid: '#30D158',
-  pending: '#FFD60A',
-  owed: '#FF453A',
+  // Semantic
+  paid: '#3FCB85',
+  pending: '#F5BB55',
+  owed: '#FF6B75',
 
-  // Neutral Grays - Apple-style dark grays
-  gray50: '#000000',
-  gray100: '#1C1C1E',
-  gray200: '#2C2C2E',
-  gray300: '#3A3A3C',
-  gray400: '#48484A',
-  gray500: '#636366',
-  gray600: '#8E8E93',
-  gray700: '#AEAEB2',
-  gray800: '#C7C7CC',
+  // Neutral grays
+  gray50: '#0B0F1A',
+  gray100: '#161B2A',
+  gray200: '#222838',
+  gray300: '#2E3548',
+  gray400: '#5C6779',
+  gray500: '#9098A8',
+  gray600: '#B5BCCB',
+  gray700: '#CDD3DE',
+  gray800: '#E5E9F2',
   gray900: '#FFFFFF',
 
-  // Overlay & Borders
-  overlay: 'rgba(0, 0, 0, 0.8)',
-  overlayLight: 'rgba(0, 0, 0, 0.5)',
-  border: '#3A3A3C',
-  borderLight: '#2C2C2E',
-  divider: '#3A3A3C',
+  // Overlay & borders
+  overlay: 'rgba(0, 0, 0, 0.72)',
+  overlayLight: 'rgba(0, 0, 0, 0.45)',
+  border: '#222838',
+  borderLight: '#222838',
+  divider: '#222838',
 };
 
 export type ThemeColors = typeof lightColors;
@@ -136,7 +138,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load saved theme preference
   useEffect(() => {
     loadTheme();
   }, []);
@@ -163,13 +164,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Determine if we should use dark mode
-  const isDark = themeMode === 'dark' || (themeMode === 'system' && systemColorScheme === 'dark');
+  // ZapSplit 2026 — locked to dark mode.
+  // The brand glows brighter against near-black, and a single canvas keeps the
+  // visual language coherent. Light tokens are kept in the file in case the
+  // decision ever reverses, but the runtime selection is fixed.
+  const isDark = true;
+  const colors = darkColors;
 
-  // Get the appropriate colors
-  const colors = isDark ? darkColors : lightColors;
-
-  // Don't render children until theme is loaded to prevent flash
   if (!isLoaded) {
     return null;
   }
@@ -189,5 +190,4 @@ export function useTheme() {
   return context;
 }
 
-// Export colors for backwards compatibility (light theme as default)
 export { lightColors, darkColors };

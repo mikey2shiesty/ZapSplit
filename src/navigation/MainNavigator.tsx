@@ -1,7 +1,13 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
+import {
+  createBottomTabNavigator,
+  BottomTabBarProps,
+} from '@react-navigation/bottom-tabs';
+import { Platform, View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
@@ -43,89 +49,161 @@ import { useTheme } from '../contexts/ThemeContext';
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Tab Navigator Component
-function MainTabs() {
-  const { colors } = useTheme();
+// ZapSplit 2026 Friendly Fintech tab bar.
+// Standard label-under-icon layout. Active icon sits inside a 36pt soft-blue
+// circle (Coinbase pattern). On iOS, the bar's background is a Liquid Glass
+// BlurView so the canvas peeks through — that's the only iOS 26 signal here.
+
+type TabIconName = keyof typeof Ionicons.glyphMap;
+
+const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName }> = {
+  Home: { active: 'home', inactive: 'home-outline' },
+  Scan: { active: 'camera', inactive: 'camera-outline' },
+  Splits: { active: 'receipt', inactive: 'receipt-outline' },
+  Profile: { active: 'person', inactive: 'person-outline' },
+};
+
+function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const baseHeight = 56;
+  const totalHeight = baseHeight + (Platform.OS === 'ios' ? insets.bottom : 12);
 
   return (
+    <View style={[styles.tabBarWrapper, { height: totalHeight }]}>
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          intensity={90}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: colors.surface },
+          ]}
+        />
+      )}
+      <View
+        style={[
+          styles.tabBarTopBorder,
+          { backgroundColor: colors.border },
+        ]}
+      />
+
+      <View style={[styles.tabBarRow, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 12 }]}>
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const focused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!focused && !event.defaultPrevented) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              navigation.navigate(route.name as never);
+            }
+          };
+
+          const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Home;
+          const iconName = focused ? icons.active : icons.inactive;
+          const iconColor = focused ? colors.primary : colors.textSecondary;
+          const labelColor = focused ? colors.primary : colors.textSecondary;
+          const label =
+            options.tabBarLabel !== undefined
+              ? (options.tabBarLabel as string)
+              : options.title !== undefined
+              ? options.title
+              : route.name;
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              style={({ pressed }) => [
+                styles.tabItem,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <View
+                style={[
+                  styles.tabIconCircle,
+                  focused && { backgroundColor: colors.primaryLight },
+                ]}
+              >
+                <Ionicons name={iconName} size={20} color={iconColor} />
+              </View>
+              <Text style={[styles.tabLabel, { color: labelColor }]}>
+                {String(label)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Tab Navigator Component
+function MainTabs() {
+  return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.gray500,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.gray200,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-          height: Platform.OS === 'ios' ? 88 : 64,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: -4,
-        },
-        tabBarIconStyle: {
-          marginTop: 4,
-        },
-      }}
+      tabBar={(props) => <FriendlyTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Scan"
-        component={ScanScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'camera' : 'camera-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Splits"
-        component={SplitsScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'receipt' : 'receipt-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'person' : 'person-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Scan" component={ScanScreen} />
+      <Tab.Screen name="Splits" component={SplitsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarWrapper: {
+    overflow: 'hidden',
+  },
+  tabBarTopBorder: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: StyleSheet.hairlineWidth,
+  },
+  tabBarRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingTop: 8,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  tabIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+});
 
 // Main Navigator with Modal Stack
 export default function MainNavigator() {

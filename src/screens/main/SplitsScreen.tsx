@@ -7,18 +7,25 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { format } from 'date-fns';
+
 import { useAuth } from '../../hooks/useAuth';
 import { useSplits } from '../../hooks/useSplits';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
 import { SplitWithParticipants } from '../../services/splitService';
-import { format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
+import Card from '../../components/common/Card';
+import { SearchInput } from '../../components/common/Input';
+import IconCircle from '../../components/common/IconCircle';
+import MoneyText from '../../components/common/MoneyText';
+
+// Friendly Fintech Splits screen.
+// Header → search → filter chips → summary stat → splits as rows in one card.
 
 function getDisplayTitle(split: SplitWithParticipants, userId?: string): string {
   if (split.creator_id !== userId && split.title?.startsWith('Request to ')) {
@@ -27,7 +34,7 @@ function getDisplayTitle(split: SplitWithParticipants, userId?: string): string 
   return split.title;
 }
 
-type FilterType = 'all' | 'pending' | 'paid';
+type FilterType = 'all' | 'open' | 'settled';
 
 export default function SplitsScreen() {
   const navigation = useNavigation<any>();
@@ -37,6 +44,7 @@ export default function SplitsScreen() {
   const { splits, loading, refresh } = useSplits();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [search, setSearch] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -51,231 +59,242 @@ export default function SplitsScreen() {
     setRefreshing(false);
   };
 
-  // Filter splits based on status
-  const filteredSplits = splits.filter((split) => {
-    if (filter === 'all') return true;
-
+  const isSettled = (split: SplitWithParticipants) => {
     const isCreator = split.creator_id === user?.id;
-    const userParticipant = split.participants.find(p => p.user_id === user?.id);
-
-    if (filter === 'pending') {
-      if (isCreator) {
-        // Show creator's splits that have unpaid participants
-        return split.participants.some(p => p.status === 'pending');
-      } else if (userParticipant) {
-        // Show splits where user hasn't paid
-        return userParticipant.status === 'pending';
-      }
-      return false;
-    }
-
-    if (filter === 'paid') {
-      if (isCreator) {
-        // Show creator's splits where all participants paid
-        return split.participants.every(p => p.status === 'paid');
-      } else if (userParticipant) {
-        // Show splits where user has paid
-        return userParticipant.status === 'paid';
-      }
-      return false;
-    }
-
-    return true;
-  });
-
-  const getStatusColor = (split: any) => {
-    const isCreator = split.creator_id === user?.id;
-    const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
-
+    const userParticipant = split.participants.find((p) => p.user_id === user?.id);
     if (isCreator) {
-      // For creator: green if all paid, orange if pending
-      const allPaid = split.participants.every((p: any) => p.status === 'paid');
-      return allPaid ? colors.success : colors.warning;
+      return split.participants.every((p) => p.status === 'paid');
     }
-
-    if (userParticipant?.status === 'paid') return colors.success;
-    return colors.warning;
+    return userParticipant?.status === 'paid';
   };
 
-  const getStatusText = (split: any) => {
+  const getUserAmount = (split: SplitWithParticipants) => {
     const isCreator = split.creator_id === user?.id;
-    const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
-
+    const userParticipant = split.participants.find((p) => p.user_id === user?.id);
     if (isCreator) {
-      // For creator: use paid_count which includes web payments
-      const paidCount = split.paid_count ?? split.participants.filter((p: any) => p.status === 'paid').length;
-      const totalCount = split.participant_count ?? split.participants.length;
-      if (paidCount === totalCount && totalCount > 0) return 'All paid';
-      return `${paidCount}/${totalCount} paid`;
+      return (
+        split.amount_owed_by_others ||
+        split.participants.reduce((sum, p) => sum + (p.amount_owed || 0), 0)
+      );
     }
-
-    if (userParticipant?.status === 'paid') return 'Paid';
-    return 'Pending';
-  };
-
-  const getUserAmount = (split: any) => {
-    const isCreator = split.creator_id === user?.id;
-    const userParticipant = split.participants.find((p: any) => p.user_id === user?.id);
-
-    if (isCreator) {
-      // For creator: show total amount owed by others (includes web payments)
-      return split.amount_owed_by_others || split.participants.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0);
-    }
-
     return userParticipant?.amount_owed || 0;
   };
 
+  const filtered = splits
+    .filter((s) => {
+      if (filter === 'all') return true;
+      if (filter === 'open') return !isSettled(s);
+      if (filter === 'settled') return isSettled(s);
+      return true;
+    })
+    .filter((s) =>
+      search.trim()
+        ? s.title.toLowerCase().includes(search.toLowerCase())
+        : true
+    );
+
+  const totalAmount = filtered.reduce((sum, s) => sum + getUserAmount(s), 0);
+
+  const FILTERS: Array<{ key: FilterType; label: string }> = [
+    { key: 'all', label: 'All' },
+    { key: 'open', label: 'Open' },
+    { key: 'settled', label: 'Settled' },
+  ];
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
-        <View style={styles.placeholder} />
-        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Your Splits</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* HEADER */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={styles.headerSlot} />
+        <Text style={[styles.title, { color: colors.text }]}>Splits</Text>
         <TouchableOpacity
-          style={[styles.newSplitButton, { backgroundColor: colors.primary + '15' }]}
+          style={[styles.newButton, { backgroundColor: colors.primaryLight }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             navigation.navigate('SplitFlow');
           }}
+          activeOpacity={0.7}
         >
-          <Ionicons name="add" size={24} color={colors.primary} />
+          <Ionicons name="add" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        {(['all', 'pending', 'paid'] as FilterType[]).map((filterType) => (
-          <TouchableOpacity
-            key={filterType}
-            style={[
-              styles.filterTab,
-              filter === filterType && { backgroundColor: colors.primary },
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFilter(filterType);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterTabText,
-                { color: colors.gray500 },
-                filter === filterType && { color: '#FFFFFF' },
-              ]}
-            >
-              {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Splits List */}
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingBottom: spacing.xxl }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
-            colors={[colors.primary]}
           />
         }
       >
-        {loading && !refreshing ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        ) : filteredSplits.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color={colors.gray300} />
-            <Text style={[styles.emptyTitle, { color: colors.gray700 }]}>
-              {filter === 'all' ? 'No splits yet' : `No ${filter} splits`}
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.gray500 }]}>
-              {filter === 'all'
-                ? 'Create your first split to get started'
-                : `You don't have any ${filter} splits`}
-            </Text>
-            {filter === 'all' && (
+        {/* SEARCH */}
+        <View style={styles.section}>
+          <SearchInput
+            placeholder="Search splits"
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+        </View>
+
+        {/* FILTER CHIPS */}
+        <View style={[styles.section, styles.filterRow]}>
+          {FILTERS.map(({ key, label }) => {
+            const active = filter === key;
+            return (
               <TouchableOpacity
-                style={[styles.createButton, { backgroundColor: colors.primary }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  navigation.navigate('SplitFlow');
-                }}
-              >
-                <Ionicons name="add-circle" size={20} color={colors.textInverse} />
-                <Text style={[styles.createButtonText, { color: colors.textInverse }]}>Create Split</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <View style={styles.splitsList}>
-            {filteredSplits.map((split) => (
-              <TouchableOpacity
-                key={split.id}
-                style={[styles.splitCard, { backgroundColor: colors.surface }]}
+                key={key}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate('SplitFlow', {
-                    screen: 'SplitDetail',
-                    params: { splitId: split.id },
-                  } as any);
+                  setFilter(key);
                 }}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: active ? colors.primary : colors.primaryLight,
+                  },
+                ]}
+                activeOpacity={0.85}
               >
-                <View style={styles.splitCardLeft}>
-                  <View style={[styles.splitIcon, { backgroundColor: getStatusColor(split) + '20' }]}>
-                    <Ionicons
-                      name={split.creator_id === user?.id ? 'arrow-down-circle' : 'arrow-up-circle'}
-                      size={24}
-                      color={getStatusColor(split)}
-                    />
-                  </View>
-                  <View style={styles.splitInfo}>
-                    <Text style={[styles.splitTitle, { color: colors.gray900 }]} numberOfLines={1}>
-                      {getDisplayTitle(split, user?.id)}
-                    </Text>
-                    <Text style={[styles.splitMeta, { color: colors.gray500 }]}>
-                      {format(new Date(split.created_at), 'MMM d, yyyy')} • {split.participant_count} people
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.splitCardRight}>
-                  <Text style={[styles.splitAmount, { color: getStatusColor(split) }]}>
-                    {split.creator_id === user?.id ? '+' : '-'}${getUserAmount(split).toFixed(2)}
-                  </Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(split) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(split) }]}>
-                      {getStatusText(split)}
-                    </Text>
-                  </View>
-                </View>
+                <Text
+                  style={[
+                    styles.chipLabel,
+                    { color: active ? colors.textInverse : colors.primary },
+                  ]}
+                >
+                  {label}
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
+            );
+          })}
+        </View>
 
-        {/* Summary Card */}
-        {filteredSplits.length > 0 && (
-          <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>Summary</Text>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray600 }]}>Total Splits</Text>
-              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{filteredSplits.length}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray600 }]}>Total Amount</Text>
-              <Text style={[styles.summaryValue, { color: colors.gray900 }]}>
-                ${filteredSplits.reduce((sum, s) => sum + getUserAmount(s), 0).toFixed(2)}
+        {/* SUMMARY STAT */}
+        {filtered.length > 0 && (
+          <View style={styles.section}>
+            <Card>
+              <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
+                {filter === 'all'
+                  ? 'Total outstanding'
+                  : filter === 'open'
+                  ? 'Open splits'
+                  : 'Settled splits'}
               </Text>
-            </View>
+              <View style={styles.summaryRow}>
+                <MoneyText amount={totalAmount} size="large" tone="default" />
+                <View style={[styles.countBadge, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.countLabel, { color: colors.primary }]}>
+                    {filtered.length} {filtered.length === 1 ? 'split' : 'splits'}
+                  </Text>
+                </View>
+              </View>
+            </Card>
           </View>
         )}
 
-        <View style={styles.bottomSpacer} />
+        {/* SPLITS LIST */}
+        <View style={styles.section}>
+          {loading && filtered.length === 0 ? (
+            <Card>
+              <ActivityIndicator color={colors.primary} />
+            </Card>
+          ) : filtered.length === 0 ? (
+            <Card>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                {filter === 'all'
+                  ? 'No splits yet'
+                  : filter === 'open'
+                  ? 'Nothing open'
+                  : 'Nothing settled'}
+              </Text>
+              <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+                {filter === 'all'
+                  ? 'Create your first split to get started.'
+                  : `You don't have any ${filter} splits.`}
+              </Text>
+              {filter === 'all' && (
+                <TouchableOpacity
+                  style={[styles.primaryPill, { backgroundColor: colors.primary }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    navigation.navigate('SplitFlow');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                    Create a split
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </Card>
+          ) : (
+            <Card padding="sm">
+              {filtered.map((split, i) => {
+                const isCreator = split.creator_id === user?.id;
+                const settled = isSettled(split);
+                const amount = getUserAmount(split);
+                const isLast = i === filtered.length - 1;
+
+                return (
+                  <TouchableOpacity
+                    key={split.id}
+                    style={[
+                      styles.row,
+                      !isLast && {
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      navigation.navigate('SplitFlow', {
+                        screen: 'SplitDetail',
+                        params: { splitId: split.id },
+                      });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <IconCircle
+                      name={settled ? 'checkmark' : isCreator ? 'arrow-down' : 'arrow-up'}
+                      tone={settled ? 'success' : 'info'}
+                    />
+                    <View style={styles.rowMain}>
+                      <Text
+                        style={[styles.rowTitle, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {getDisplayTitle(split, user?.id)}
+                      </Text>
+                      <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
+                        {format(new Date(split.created_at), 'MMM d')}
+                        {' · '}
+                        {split.participant_count}{' '}
+                        {split.participant_count === 1 ? 'person' : 'people'}
+                        {' · '}
+                        {settled ? 'Paid' : 'Open'}
+                      </Text>
+                    </View>
+                    <MoneyText
+                      amount={amount}
+                      size="row"
+                      tone={isCreator ? 'positive' : 'negative'}
+                      showSign
+                    />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.textTertiary}
+                      style={{ marginLeft: spacing.sm }}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </Card>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -285,169 +304,110 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: 10,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+  headerSlot: {
+    width: 40,
+    height: 40,
   },
-  placeholder: {
-    width: 44,
-  },
-  newSplitButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    gap: 10,
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.lg,
-  },
-  loadingContainer: {
-    paddingVertical: spacing.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xxxl,
-    gap: spacing.md,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  emptySubtitle: {
-    fontSize: 15,
+  title: {
+    ...typography.displayLarge,
     textAlign: 'center',
-  },
-  createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    marginTop: spacing.md,
-  },
-  createButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  splitsList: {
-    gap: spacing.md,
-  },
-  splitCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  splitCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
-    gap: spacing.md,
   },
-  splitIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
+  newButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  splitInfo: {
-    flex: 1,
-    gap: 4,
+
+  section: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
-  splitTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+
+  // Filter chips
+  filterRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'center',
   },
-  splitMeta: {
-    fontSize: 13,
-  },
-  splitCardRight: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  splitAmount: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  chip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
     borderRadius: radius.pill,
   },
-  statusText: {
-    fontSize: 11,
+  chipLabel: {
+    ...typography.chip,
+  },
+
+  // Card label
+  cardLabel: {
+    ...typography.bodySmall,
     fontWeight: '600',
-  },
-  summaryCard: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: spacing.md,
   },
   summaryRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
-  summaryLabel: {
-    fontSize: 14,
+  countBadge: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
   },
-  summaryValue: {
-    fontSize: 15,
-    fontWeight: '600',
+  countLabel: {
+    ...typography.chip,
   },
-  bottomSpacer: {
-    height: 100,
+
+  // Empty
+  emptyTitle: {
+    ...typography.displayMedium,
+  },
+  emptyBody: {
+    ...typography.body,
+    marginTop: spacing.xs,
+  },
+  primaryPill: {
+    height: 48,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    alignSelf: 'flex-start',
+    marginTop: spacing.md,
+  },
+  primaryPillLabel: {
+    ...typography.button,
+  },
+
+  // Row
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md + 6,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.md,
+    minHeight: 76,
+  },
+  rowMain: {
+    flex: 1,
+    gap: 4,
+  },
+  rowTitle: {
+    ...typography.bodyLarge,
+  },
+  rowMeta: {
+    ...typography.bodySmall,
   },
 });

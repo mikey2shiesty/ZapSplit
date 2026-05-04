@@ -5,17 +5,19 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Platform,
+  Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
-import Avatar from '../../components/common/Avatar';
+import { spacing, typography, radius } from '../../constants/theme';
+import Card from '../../components/common/Card';
+import IconCircle from '../../components/common/IconCircle';
 
 interface Profile {
   id: string;
@@ -24,6 +26,10 @@ interface Profile {
   email: string;
 }
 
+// Friendly Fintech Profile screen.
+// Avatar header with name + email, edit pill. Settings rows in a card with
+// soft-blue icon circles (Coinbase pattern). Sign out as soft-red pill at bottom.
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<any>();
@@ -31,7 +37,6 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<Profile | null>(null);
 
-  // Fetch profile when screen focuses (to get updated avatar after editing)
   useFocusEffect(
     React.useCallback(() => {
       if (user?.id) {
@@ -42,132 +47,170 @@ export default function ProfileScreen() {
 
   const fetchProfile = async () => {
     if (!user?.id) return;
-
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
       .eq('id', user.id)
       .single();
-
-    if (data && !error) {
-      setProfile(data);
-    }
+    if (data && !error) setProfile(data);
   };
 
-  const MenuItem = ({
-    icon,
-    label,
-    onPress,
-  }: {
-    icon: keyof typeof Ionicons.glyphMap;
+  const initial = (profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?').toUpperCase();
+
+  type IconName = keyof typeof Ionicons.glyphMap;
+  type Tone = 'info' | 'success' | 'warning' | 'error' | 'neutral';
+  interface RowProps {
+    icon: IconName;
     label: string;
     onPress: () => void;
-  }) => (
+    tone?: Tone;
+    isLast?: boolean;
+  }
+  const Row = ({ icon, label, onPress, tone = 'info', isLast }: RowProps) => (
     <TouchableOpacity
-      style={[styles.menuItem, { backgroundColor: colors.surface }]}
-      onPress={onPress}
+      style={[
+        styles.row,
+        !isLast && {
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+      ]}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
       activeOpacity={0.7}
     >
-      <Ionicons name={icon} size={22} color={colors.gray600} />
-      <Text style={[styles.menuItemText, { color: colors.gray900 }]}>{label}</Text>
-      <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+      <IconCircle name={icon} tone={tone} />
+      <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, paddingTop: insets.top + 10 }]}>
-        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Profile</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
       </View>
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingBottom: spacing.xxl }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Card */}
-        <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-          <Avatar
-            uri={profile?.avatar_url ?? undefined}
-            name={profile?.full_name || user?.email || 'User'}
-            size="xl"
-            showBorder
-          />
-          <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: colors.gray900 }]}>
-              {profile?.full_name || 'User'}
-            </Text>
-            <Text style={[styles.profileEmail, { color: colors.gray500 }]}>
-              {profile?.email || user?.email}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: colors.gray100 }]}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Profile</Text>
-          </TouchableOpacity>
+        {/* AVATAR + NAME */}
+        <View style={styles.section}>
+          <Card>
+            <View style={styles.avatarRow}>
+              {profile?.avatar_url ? (
+                <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.avatarInitial, { color: colors.textInverse }]}>
+                    {initial}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.avatarInfo}>
+                <Text
+                  style={[styles.profileName, { color: colors.text }]}
+                  numberOfLines={1}
+                >
+                  {profile?.full_name || 'Add your name'}
+                </Text>
+                <Text
+                  style={[styles.profileEmail, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {profile?.email || user?.email}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.editPill, { backgroundColor: colors.primaryLight }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate('EditProfile');
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.editPillLabel, { color: colors.primary }]}>
+                Edit profile
+              </Text>
+            </TouchableOpacity>
+          </Card>
         </View>
 
-        {/* Payments Section */}
+        {/* PAYMENTS */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>PAYMENTS</Text>
-          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
-            <MenuItem
-              icon="time-outline"
-              label="Payment History"
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Payments
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="time"
+              label="Payment history"
               onPress={() => navigation.navigate('PaymentHistory')}
+              isLast
             />
-          </View>
+          </Card>
         </View>
 
-        {/* Social Section */}
+        {/* SOCIAL */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>SOCIAL</Text>
-          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
-            <MenuItem
-              icon="people-outline"
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Social
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="people"
               label="Friends"
               onPress={() => navigation.navigate('Friends')}
             />
-            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
-            <MenuItem
-              icon="people-circle-outline"
+            <Row
+              icon="people-circle"
               label="Groups"
               onPress={() => navigation.navigate('Groups')}
+              isLast
             />
-          </View>
+          </Card>
         </View>
 
-        {/* Account Section */}
+        {/* ACCOUNT */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>ACCOUNT</Text>
-          <View style={[styles.menuGroup, { backgroundColor: colors.surface }]}>
-            <MenuItem
-              icon="settings-outline"
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Account
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="settings"
               label="Settings"
               onPress={() => navigation.navigate('Settings')}
             />
-            <View style={[styles.menuDivider, { backgroundColor: colors.gray200 }]} />
-            <MenuItem
-              icon="help-circle-outline"
-              label="Help & Support"
+            <Row
+              icon="help-circle"
+              label="Help & support"
               onPress={() => navigation.navigate('HelpSupport')}
+              isLast
             />
-          </View>
+          </Card>
         </View>
 
-        {/* Log Out Button */}
-        <TouchableOpacity
-          style={[styles.logoutButton, { borderColor: colors.error }]}
-          onPress={signOut}
-        >
-          <Ionicons name="log-out-outline" size={20} color={colors.error} />
-          <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
-        </TouchableOpacity>
-
-        <View style={styles.bottomSpacer} />
+        {/* SIGN OUT */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.signOutPill, { backgroundColor: colors.errorLight }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              signOut();
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="log-out" size={18} color={colors.error} />
+            <Text style={[styles.signOutLabel, { color: colors.error }]}>
+              Sign out
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -177,93 +220,88 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
   header: {
-    paddingTop: 10,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
   },
-  headerTitle: {
+  title: {
+    ...typography.displayLarge,
+  },
+
+  section: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  sectionLabel: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    paddingLeft: 4,
+  },
+
+  // Avatar card
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
     fontSize: 28,
     fontWeight: '700',
   },
-  scrollView: {
+  avatarInfo: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  profileCard: {
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  profileInfo: {
-    alignItems: 'center',
-    gap: spacing.xs,
+    gap: 2,
   },
   profileName: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...typography.displayMedium,
   },
   profileEmail: {
-    fontSize: 15,
+    ...typography.body,
   },
-  editButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+  editPill: {
+    height: 44,
     borderRadius: radius.pill,
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
   },
-  editButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+  editPillLabel: {
+    ...typography.button,
   },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    paddingHorizontal: spacing.sm,
-  },
-  menuGroup: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  menuItem: {
+
+  // Settings rows
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     gap: spacing.md,
+    minHeight: 60,
   },
-  menuItemText: {
+  rowLabel: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.bodyLarge,
   },
-  menuDivider: {
-    height: 1,
-    marginLeft: spacing.md + 22 + spacing.md,
-  },
-  logoutButton: {
+
+  // Sign out
+  signOutPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    marginTop: spacing.md,
+    height: 52,
+    borderRadius: radius.pill,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bottomSpacer: {
-    height: 100,
+  signOutLabel: {
+    ...typography.button,
   },
 });

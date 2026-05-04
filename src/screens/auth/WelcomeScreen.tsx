@@ -1,17 +1,31 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
 
 interface WelcomeScreenProps {
   navigation: any;
 }
 
+// Friendly Fintech Welcome.
+// Logo top, big bold display heading + soft subtitle, two pill CTAs at bottom.
 export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top + spacing.xl,
+          paddingBottom: insets.bottom + spacing.xl,
+        },
+      ]}
+    >
       <View style={styles.content}>
         <Image
           source={require('../../assets/images/logo.png')}
@@ -19,27 +33,38 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           resizeMode="contain"
         />
 
-        <Text style={[styles.title, { color: colors.gray900 }]}>Welcome to ZapSplit</Text>
-        <Text style={[styles.subtitle, { color: colors.gray500 }]}>
-          Split bills instantly with friends.{'\n'}
-          Scan receipts, split costs, get paid fast.
+        <Text style={[styles.title, { color: colors.text }]}>
+          Splits made simple.
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Scan receipts, split costs with friends, and get paid fast.
         </Text>
       </View>
 
-      <View style={styles.buttonContainer}>
+      <View style={styles.buttonStack}>
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('Signup')}
+          style={[styles.primaryPill, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigation.navigate('Signup');
+          }}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.primaryButtonText, { color: colors.surface }]}>Get Started</Text>
+          <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+            Get started
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('Login')}
+          style={[styles.softPill, { backgroundColor: colors.primaryLight }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            navigation.navigate('Login');
+          }}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.secondaryButtonText, { color: colors.gray500 }]}>
-            Already have an account? <Text style={[styles.linkText, { color: colors.primary }]}>Log in</Text>
+          <Text style={[styles.softPillLabel, { color: colors.primary }]}>
+            I already have an account
           </Text>
         </TouchableOpacity>
       </View>
@@ -50,51 +75,51 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   logo: {
-    width: 180,
-    height: 180,
+    width: 64,
+    height: 64,
     marginBottom: spacing.xl,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.displayLarge,
+    fontSize: 40,
+    lineHeight: 46,
+    letterSpacing: -0.8,
     marginBottom: spacing.md,
-    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: spacing.lg,
+    ...typography.bodyLarge,
+    fontWeight: '500',
+    paddingRight: spacing.lg,
   },
-  buttonContainer: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+  buttonStack: {
+    gap: spacing.sm,
   },
-  primaryButton: {
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
+  primaryPill: {
+    height: 56,
+    borderRadius: radius.pill,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  primaryButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
+  primaryPillLabel: {
+    ...typography.button,
+    fontSize: 17,
   },
-  secondaryButton: {
-    paddingVertical: spacing.sm,
+  softPill: {
+    height: 56,
+    borderRadius: radius.pill,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  secondaryButtonText: {
-    fontSize: 16,
-  },
-  linkText: {
-    fontWeight: '600',
+  softPillLabel: {
+    ...typography.button,
+    fontSize: 17,
   },
 });

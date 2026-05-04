@@ -1,180 +1,239 @@
 // src/constants/theme.ts
-// Premium Design System - Billion Dollar App Quality
+// ZapSplit 2026 — Friendly Fintech design system.
+// Reference: Coinbase × Public × Uber. Bold rounded sans, soft cards on warm grey,
+// saturated brand blue everywhere, pill buttons. Palette derived from the logo.
+
+import { Platform } from 'react-native';
 
 // ========================================
-// COLORS - Based on ZapSplit Logo Branding
+// FONT STACKS — bold rounded sans, no mono
 // ========================================
+// iOS uses SF Pro Rounded (free, native). Android uses the system sans
+// (Roboto on most builds). Söhne / Inter Display can drop in later via expo-font
+// without changing any consumer code — just point `fonts.sans` at the loaded family.
+export const fonts = {
+  sans: Platform.select({ ios: 'SF Pro Rounded', android: 'sans-serif', default: 'System' })!,
+  // sansItalic / sansMono kept undefined for now; we don't use them in this language.
+};
+
+// ========================================
+// PALETTE — locked, derived from logo, used heavily
+// ========================================
+const palette = {
+  // Canvas + surfaces
+  canvas: '#F4F6FB',          // Warm pale grey-blue, the soft canvas Coinbase uses
+  canvasDark: '#0B0F1A',
+  surface: '#FFFFFF',
+  surfaceDark: '#161B2A',
+  surfaceTint: '#EAF1FE',     // Soft-blue — secondary pill fill, tab active circle, icon circles
+  surfaceTintDark: 'rgba(45, 126, 247, 0.12)',
+
+  // Borders
+  border: '#E5E9F2',
+  borderDark: '#222838',
+
+  // Ink
+  ink: '#0F1830',             // Primary text — near-black with navy undertone
+  inkDark: '#FFFFFF',
+  inkMuted: '#5C6779',        // Body labels, subtitles
+  inkMutedDark: '#9098A8',
+  inkSubtle: '#9098A8',       // Tertiary — timestamps, helper text
+  inkSubtleDark: '#5C6779',
+
+  // Accent — used heavily, not sparingly
+  accent: '#2D7EF7',
+  accentDeep: '#1F5FCC',      // Pressed
+  accentSoft: '#EAF1FE',
+  accentInk: '#FFFFFF',
+
+  // Status — saturated, friendly
+  positive: '#00B86B',
+  positiveSoft: '#E1F7EC',
+  negative: '#EF4856',
+  negativeSoft: '#FCE7E9',
+  warning: '#F5A524',
+  warningSoft: '#FEF1DA',
+};
+
+// ========================================
+// COLORS — back-compat surface for older imports
+// ========================================
+// Existing screens import { colors } from this file. We keep the same keys but
+// point them at the Friendly Fintech palette so the screen-by-screen migration
+// can happen without breaking the tree.
 export const colors = {
-  // Primary Colors
-  primary: '#3B9EFF',        // Bright blue - lightning bolt color
-  primaryDark: '#2B7FD9',    // Darker blue for hover/press states
-  primaryLight: '#6BB4FF',   // Lighter blue for backgrounds
+  primary: palette.accent,
+  primaryDark: palette.accentDeep,
+  primaryLight: palette.accentSoft,
 
-  // Background Colors
-  background: '#F5F7FA',     // Light gray-blue - clean modern background
-  surface: '#FFFFFF',        // White - cards and surfaces
-  surfaceElevated: '#FFFFFF', // Elevated surfaces (cards on cards)
+  background: palette.canvas,
+  surface: palette.surface,
+  surfaceElevated: palette.surface,
 
-  // Text Colors
-  text: '#2C5F8D',           // Dark blue - main text (logo text color)
-  textSecondary: '#6B7B8C',  // Gray - secondary text
-  textTertiary: '#9BA5B0',   // Lighter gray - hints and labels
-  textInverse: '#FFFFFF',    // White text for dark backgrounds
+  text: palette.ink,
+  textSecondary: palette.inkMuted,
+  textTertiary: palette.inkSubtle,
+  textInverse: palette.accentInk,
 
-  // Accent & Highlight
-  accent: '#E8EEF9',         // Light blue - logo background color
-  highlight: '#FFF9E6',      // Yellow highlight for important items
+  accent: palette.accentSoft,
+  highlight: palette.warningSoft,
 
-  // Status Colors
-  success: '#34C759',        // Green - success states
-  successLight: '#E8F8ED',   // Light green background
-  warning: '#FF9500',        // Orange - warning states
-  warningLight: '#FFF4E6',   // Light orange background
-  error: '#FF3B30',          // Red - error states
-  errorLight: '#FFE8E6',     // Light red background
-  info: '#3B9EFF',           // Blue - info states
-  infoLight: '#E8F4FF',      // Light blue background
+  success: palette.positive,
+  successLight: palette.positiveSoft,
+  warning: palette.warning,
+  warningLight: palette.warningSoft,
+  error: palette.negative,
+  errorLight: palette.negativeSoft,
+  info: palette.accent,
+  infoLight: palette.accentSoft,
 
-  // Semantic Colors
-  paid: '#34C759',           // Green - paid status
-  pending: '#FF9500',        // Orange - pending status
-  owed: '#FF3B30',           // Red - owed status
+  paid: palette.positive,
+  pending: palette.warning,
+  owed: palette.negative,
 
-  // Neutral Grays
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
-  gray700: '#374151',
-  gray800: '#1F2937',
-  gray900: '#111827',
+  gray50: palette.canvas,
+  gray100: '#EFF2F8',
+  gray200: palette.border,
+  gray300: '#D6DCE7',
+  gray400: palette.inkSubtle,
+  gray500: palette.inkMuted,
+  gray600: '#4A5466',
+  gray700: '#343C4D',
+  gray800: '#1F2638',
+  gray900: palette.ink,
 
-  // Overlay & Borders
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  overlayLight: 'rgba(0, 0, 0, 0.2)',
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
-  divider: '#E5E7EB',
+  overlay: 'rgba(15, 24, 48, 0.55)',
+  overlayLight: 'rgba(15, 24, 48, 0.18)',
+  border: palette.border,
+  borderLight: palette.border,
+  divider: palette.border,
 };
 
+// Surface the raw palette for new code that wants to use the friendly names.
+export const brand = palette;
+
 // ========================================
-// GRADIENTS - Premium Look
+// GRADIENTS — kept for back-compat, flattened to solid accent
 // ========================================
+// The Friendly Fintech language is solid colour, not gradients. Old callers
+// still reach for these; map them all to flat accent so nothing renders wrong.
 export const gradients = {
-  primary: ['#3B9EFF', '#2B7FD9'],           // Blue gradient
-  primaryVertical: ['#6BB4FF', '#3B9EFF'],   // Light to dark blue
-  success: ['#5EDC70', '#34C759'],           // Green gradient
-  warning: ['#FFB84D', '#FF9500'],           // Orange gradient
-  error: ['#FF6B64', '#FF3B30'],             // Red gradient
-  surface: ['#FFFFFF', '#F9FAFB'],           // Subtle white gradient
-  premium: ['#3B9EFF', '#8B5CF6', '#EC4899'], // Multi-color premium
-  gold: ['#FCD34D', '#F59E0B'],              // Gold gradient for premium features
+  primary: [palette.accent, palette.accent],
+  primaryVertical: [palette.accent, palette.accent],
+  success: [palette.positive, palette.positive],
+  warning: [palette.warning, palette.warning],
+  error: [palette.negative, palette.negative],
+  surface: [palette.surface, palette.surface],
+  premium: [palette.accent, palette.accent, palette.accent],
+  gold: [palette.warning, palette.warning],
 };
 
 // ========================================
-// TYPOGRAPHY - Professional Scale
+// TYPOGRAPHY — bold rounded sans
 // ========================================
+// Three weights of one family: 700 (display), 600 (titles + buttons), 500 (body).
+// Money is bold display sans, NOT mono. Title case throughout.
 export const typography = {
-  // Headings
-  h1: {
+  // Display — hero numbers, page titles, card headlines
+  displayHero: {
+    fontFamily: fonts.sans,
+    fontSize: 44,
+    fontWeight: '700' as const,
+    lineHeight: 50,
+    letterSpacing: -0.8,
+  },
+  displayLarge: {
+    fontFamily: fonts.sans,
     fontSize: 32,
     fontWeight: '700' as const,
-    lineHeight: 40,
+    lineHeight: 38,
     letterSpacing: -0.5,
   },
-  h2: {
-    fontSize: 28,
+  displayMedium: {
+    fontFamily: fonts.sans,
+    fontSize: 22,
     fontWeight: '700' as const,
-    lineHeight: 36,
+    lineHeight: 28,
     letterSpacing: -0.3,
   },
-  h3: {
-    fontSize: 24,
-    fontWeight: '600' as const,
-    lineHeight: 32,
-    letterSpacing: -0.2,
-  },
-  h4: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    lineHeight: 28,
-    letterSpacing: 0,
-  },
-  h5: {
-    fontSize: 18,
+
+  // Body
+  bodyLarge: {
+    fontFamily: fonts.sans,
+    fontSize: 17,
     fontWeight: '600' as const,
     lineHeight: 24,
-    letterSpacing: 0,
+    letterSpacing: -0.1,
   },
-  h6: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+  body: {
+    fontFamily: fonts.sans,
+    fontSize: 15,
+    fontWeight: '500' as const,
     lineHeight: 22,
     letterSpacing: 0,
   },
-
-  // Body Text
-  body: {
-    fontSize: 16,
-    fontWeight: '400' as const,
-    lineHeight: 24,
-    letterSpacing: 0,
-  },
-  bodyLarge: {
-    fontSize: 18,
-    fontWeight: '400' as const,
-    lineHeight: 28,
-    letterSpacing: 0,
-  },
   bodySmall: {
-    fontSize: 14,
-    fontWeight: '400' as const,
-    lineHeight: 20,
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    fontWeight: '500' as const,
+    lineHeight: 18,
+    letterSpacing: 0,
+  },
+  caption: {
+    fontFamily: fonts.sans,
+    fontSize: 12,
+    fontWeight: '500' as const,
+    lineHeight: 16,
     letterSpacing: 0,
   },
 
-  // Special Text
-  caption: {
-    fontSize: 12,
-    fontWeight: '400' as const,
-    lineHeight: 16,
-    letterSpacing: 0.3,
-  },
-  overline: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    lineHeight: 16,
-    letterSpacing: 1,
-    textTransform: 'uppercase' as const,
-  },
+  // Buttons + chips
   button: {
+    fontFamily: fonts.sans,
     fontSize: 16,
     fontWeight: '600' as const,
     lineHeight: 20,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
+  },
+  chip: {
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    lineHeight: 16,
+    letterSpacing: 0,
   },
 
-  // Number Display (for amounts)
-  number: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    lineHeight: 32,
-    letterSpacing: -0.5,
-  },
-  numberLarge: {
-    fontSize: 36,
-    fontWeight: '700' as const,
-    lineHeight: 44,
-    letterSpacing: -1,
-  },
+  // ===== Legacy aliases — kept so older imports keep compiling =====
+  h1: { fontFamily: fonts.sans, fontSize: 32, fontWeight: '700' as const, lineHeight: 38, letterSpacing: -0.5 },
+  h2: { fontFamily: fonts.sans, fontSize: 28, fontWeight: '700' as const, lineHeight: 34, letterSpacing: -0.4 },
+  h3: { fontFamily: fonts.sans, fontSize: 22, fontWeight: '700' as const, lineHeight: 28, letterSpacing: -0.3 },
+  h4: { fontFamily: fonts.sans, fontSize: 19, fontWeight: '600' as const, lineHeight: 24, letterSpacing: -0.2 },
+  h5: { fontFamily: fonts.sans, fontSize: 17, fontWeight: '600' as const, lineHeight: 22, letterSpacing: -0.1 },
+  h6: { fontFamily: fonts.sans, fontSize: 15, fontWeight: '600' as const, lineHeight: 20, letterSpacing: 0 },
+  overline: { fontFamily: fonts.sans, fontSize: 12, fontWeight: '600' as const, lineHeight: 16, letterSpacing: 0.5 },
+  number: { fontFamily: fonts.sans, fontSize: 22, fontWeight: '700' as const, lineHeight: 28, letterSpacing: -0.3 },
+  numberLarge: { fontFamily: fonts.sans, fontSize: 32, fontWeight: '700' as const, lineHeight: 38, letterSpacing: -0.5 },
 };
 
 // ========================================
-// SHADOWS & ELEVATION
+// SHADOWS — subtle card lift, single level
 // ========================================
+// Coinbase / Public / Uber all use a barely-there shadow under cards. One level,
+// applied uniformly. Keep legacy keys so older imports compile.
+const cardShadow = {
+  shadowColor: '#0F1830',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.04,
+  shadowRadius: 3,
+  elevation: 1,
+};
+const liftShadow = {
+  shadowColor: '#0F1830',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 4,
+};
 export const shadows = {
   none: {
     shadowColor: '#000',
@@ -183,39 +242,17 @@ export const shadows = {
     shadowRadius: 0,
     elevation: 0,
   },
-  low: {
-    shadowColor: '#2C5F8D',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  medium: {
-    shadowColor: '#2C5F8D',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  high: {
-    shadowColor: '#2C5F8D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  premium: {
-    shadowColor: '#3B9EFF',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 12,
-  },
+  low: cardShadow,
+  card: cardShadow,
+  medium: liftShadow,
+  high: liftShadow,
+  premium: liftShadow,
 };
 
 // ========================================
-// BORDER RADIUS
+// RADIUS — soft corners
 // ========================================
+// 16 on cards, 12 on inputs, 9999 on every pill (button / search / chip / icon circle).
 export const radius = {
   none: 0,
   xs: 4,
@@ -224,12 +261,12 @@ export const radius = {
   lg: 16,
   xl: 20,
   xxl: 24,
-  pill: 9999,  // Fully rounded
+  pill: 9999,
   circle: '50%' as const,
 };
 
 // ========================================
-// SPACING
+// SPACING — 8pt grid
 // ========================================
 export const spacing = {
   xxs: 2,
@@ -239,17 +276,17 @@ export const spacing = {
   lg: 24,
   xl: 32,
   xxl: 48,
-  xxxl: 64,
+  xxxl: 72,
 };
 
 // ========================================
-// ANIMATION TIMINGS
+// ANIMATION
 // ========================================
 export const animation = {
-  fast: 150,
-  normal: 250,
-  slow: 350,
-  slower: 500,
+  fast: 120,
+  normal: 200,
+  slow: 320,
+  slower: 480,
 };
 
 // ========================================
@@ -258,8 +295,17 @@ export const animation = {
 export const iconSizes = {
   xs: 12,
   sm: 16,
-  md: 20,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  md: 18,
+  lg: 22,
+  xl: 24,
+  xxl: 28,
+};
+
+// ========================================
+// LAYOUT — tab bar, padding
+// ========================================
+export const layout = {
+  tabBarHeight: 56,
+  cardPaddingV: 20,
+  cardPaddingH: 16,
 };

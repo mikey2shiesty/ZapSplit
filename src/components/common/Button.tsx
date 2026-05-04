@@ -6,18 +6,27 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
-  ColorValue,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { gradients, radius, spacing, typography, shadows } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
+
+// Friendly Fintech Button — pill-shaped, saturated.
+// Primary    → filled accent + white label (Coinbase "Buy")
+// Secondary  → soft-blue tint + accent label (Coinbase "Deposit")
+// Tertiary   → text-only accent (used for "View all", "Add Friends")
+// Destructive→ soft-red tint + negative label
+// Outline / Ghost remain as aliases for back-compat — both map to tertiary.
+
+type Variant = 'primary' | 'secondary' | 'tertiary' | 'destructive' | 'outline' | 'ghost';
+type Size = 'small' | 'medium' | 'large';
 
 interface ButtonProps {
   children: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'small' | 'medium' | 'large';
+  variant?: Variant;
+  size?: Size;
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
@@ -47,139 +56,85 @@ export default function Button({
     }
   };
 
-  const buttonStyle = [
-    styles.base,
-    styles[size],
-    fullWidth && styles.fullWidth,
-    variant === 'secondary' && [styles.secondary, { backgroundColor: colors.accent }],
-    variant === 'outline' && [styles.outline, { borderColor: colors.primary }],
-    variant === 'ghost' && styles.ghost,
-    (disabled || loading) && styles.disabled,
-    style,
-  ];
+  // Map back-compat aliases.
+  const v: Variant =
+    variant === 'outline' || variant === 'ghost' ? 'tertiary' : variant;
 
-  const textStyles = [
-    styles.text,
-    styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}` as keyof typeof styles],
-    variant === 'primary' && { color: colors.textInverse },
-    variant === 'secondary' && { color: colors.primary },
-    variant === 'outline' && { color: colors.primary },
-    variant === 'ghost' && { color: colors.primary },
-    (disabled || loading) && { color: colors.textSecondary },
-    textStyle,
-  ];
+  const heights: Record<Size, number> = { small: 40, medium: 52, large: 56 };
+  const horizontalPad: Record<Size, number> = { small: spacing.md, medium: spacing.lg, large: spacing.lg };
 
-  const content = (
-    <>
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? colors.textInverse : colors.primary}
-          style={styles.loader}
-        />
-      ) : (
-        <>
-          {icon}
-          <Text style={textStyles}>{children}</Text>
-        </>
-      )}
-    </>
-  );
+  const fills: Record<Variant, string> = {
+    primary: colors.primary,
+    secondary: colors.primaryLight,
+    tertiary: 'transparent',
+    destructive: colors.errorLight,
+    outline: 'transparent',
+    ghost: 'transparent',
+  };
+  const labels: Record<Variant, string> = {
+    primary: colors.textInverse,
+    secondary: colors.primary,
+    tertiary: colors.primary,
+    destructive: colors.error,
+    outline: colors.primary,
+    ghost: colors.primary,
+  };
 
-  if (variant === 'primary' && !disabled && !loading) {
-    return (
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [pressed && styles.pressed]}
-      >
-        <LinearGradient
-          colors={gradients.primary as [ColorValue, ColorValue]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[buttonStyle, shadows.low]}
-        >
-          {content}
-        </LinearGradient>
-      </Pressable>
-    );
-  }
+  const isPill = v === 'primary' || v === 'secondary' || v === 'destructive';
 
   return (
     <Pressable
       onPress={handlePress}
+      disabled={disabled || loading}
       style={({ pressed }) => [
-        buttonStyle,
+        styles.base,
+        {
+          minHeight: heights[size],
+          paddingHorizontal: horizontalPad[size],
+          backgroundColor: fills[v],
+          borderRadius: isPill ? radius.pill : 0,
+        },
+        fullWidth && styles.fullWidth,
+        (disabled || loading) && styles.disabled,
         pressed && !disabled && !loading && styles.pressed,
+        style,
       ]}
     >
-      {content}
+      {loading ? (
+        <ActivityIndicator color={labels[v]} />
+      ) : (
+        <View style={styles.row}>
+          {icon}
+          <Text style={[styles.label, { color: labels[v] }, textStyle]}>
+            {children}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
-  small: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    minHeight: 36,
-  },
-  medium: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    minHeight: 48,
-  },
-  large: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    minHeight: 56,
-  },
   fullWidth: {
-    width: '100%',
-  },
-
-  // Variants
-  secondary: {},
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
+    alignSelf: 'stretch',
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.88,
     transform: [{ scale: 0.98 }],
   },
-
-  // Text styles
-  text: {
+  label: {
     ...typography.button,
-    textAlign: 'center',
-  },
-  textSmall: {
-    fontSize: 14,
-  },
-  textMedium: {
-    fontSize: 16,
-  },
-  textLarge: {
-    fontSize: 18,
-  },
-  textPrimary: {},
-  textSecondary: {},
-  textOutline: {},
-  textGhost: {},
-  textDisabled: {},
-  loader: {
-    marginRight: spacing.xs,
   },
 });

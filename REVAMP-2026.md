@@ -1,100 +1,110 @@
-# ZapSplit — 2026 Fintech Revamp Plan
+# ZapSplit — 2026 Fintech Revamp Plan (v2)
 
-**Branch:** `revamp-2026` (new — branched off `main`, not `github-revamp2`)
-**Direction:** Hyper-minimal mono / editorial fintech — Mercury × Ramp × iOS 26
-**Goal:** Make ZapSplit look like a 2026 fintech, not a 2019 Splitwise clone.
-
----
-
-## The Problem (brutally honest)
-
-The current app looks generic. Stock Tailwind blue, rounded white cards on grey, outlined icons in tinted squares — it could be Splitwise, Tab, Beem It, or any of 50 other split apps. There is no visual identity. No one would describe ZapSplit's design in one sentence.
-
-Modern fintechs **own a visual language**:
-- Mercury → off-white + serif headlines + mono numerals
-- Ramp → near-black + electric green accent + monospace data
-- Cash App → saturated brand green floods the screen
-- Linear → off-white + perfect spacing + zero ornament
-- Robinhood → pure black + neon green + glass
-- Revolut → gradients + bold type
-
-ZapSplit needs its own lane. Pick one and commit.
+**Branch:** `revamp-2026`
+**Direction:** Friendly Fintech — Coinbase × Public × Uber
+**Goal:** Make ZapSplit feel like a saturated, confident, modern consumer fintech — bold rounded type, blue brand floods, soft cards on warm grey, pill buttons, iOS 26 native blur where it earns its keep.
 
 ---
 
-## The Direction — "Editorial Mono"
+## Why we pivoted
 
-A hybrid lane that sits between **Mercury's editorial calm** and **Ramp's data-dense seriousness**, with **iOS 26's Liquid Glass** for native polish. The result reads as:
+The first revamp pass tried "Editorial Mono" — Mercury × Ramp × Bugatti. Wrong lane. The reference set the user actually wants ZapSplit to look like is **Coinbase, Public, Uber, Spotify** — apps that share a completely different design language:
 
-> *Serious about money, friendly to humans, native to iOS 26.*
+- Bold **sans display** numbers, not mono.
+- **Cards are the language** — soft borders, rounded corners, sit on a faint grey canvas.
+- The brand colour **floods the screen** — chart fills, button pills, tinted icon circles.
+- **Pill shapes everywhere** — search bars, CTAs, time-range chips, filter chips.
+- **Standard tab bar** with the active icon in a soft-tinted circle, label below.
 
-### Why this lane
+Editorial Mono was correct for an enterprise B2B tool. It is wrong for a consumer money app trying to feel friendly and trustworthy.
 
-- **Bill splitting is emotional** — friends, debts, awkwardness. Pure editorial (Bugatti) feels too cold. Pure Cash App feels too playful.
-- **Australian market is conservative-cool** — they trust Up, Wise, Macquarie. Not Robinhood-loud.
-- **It scales to features we don't have yet** — analytics, business splits, group treasuries — without redesign.
+---
+
+## The Direction — "Friendly Fintech"
+
+> *Confident, saturated, soft on the eyes. Money should feel approachable, not editorial.*
+
+The visual signal is: **bold blue numbers on a warm grey canvas, bordered white cards holding the data, blue-tinted icon circles, pill buttons, generous spacing.** A user opening ZapSplit should feel they're in the same neighbourhood as Coinbase or Public, not Mercury or Stripe Dashboard.
 
 ---
 
 ## Brand Tokens — locked from the ZapSplit logo
 
-The logo is non-negotiable, so the entire palette is **derived from it**. Three blues do all the work: the **electric blue from the lightning bolt** (energy), the **deep navy from the wordmark** (trust), and a **pale lavender** that informs the canvas. One brand, one feeling — logo and app speak the same language.
+The logo is non-negotiable, so the palette still derives from it. The accent gets used **heavily, not sparingly** — that was the v1 mistake.
 
 ### Color palette
 
 | Token | Hex | Use |
 |---|---|---|
-| `canvas` | `#FAFAFE` | Primary background — warm off-white with a hint of blue undertone |
-| `canvas.dark` | `#0A0E1A` | Dark mode background — near-black with navy undertone |
-| `surface` | `#FFFFFF` | Elevated surface (only when truly elevated) |
-| `surface.dark` | `#141826` | Dark mode surface |
-| `ink` | `#1A3F6E` | **Primary text — your logo's deep navy wordmark** |
-| `ink.dark` | `#FAFAFE` | Dark mode text |
-| `ink.muted` | `#6B7280` | Secondary text — muted blue-grey |
-| `ink.subtle` | `#9AA3B5` | Tertiary / metadata |
-| `hairline` | `#E5E9F2` | All dividers, borders — 1px pale blue-grey only |
-| `accent` | **`#2D7EF7`** | **The signature — your logo's electric lightning blue** |
-| `accent.ink` | `#FFFFFF` | Text on accent buttons (white on blue) |
-| `positive` | `#0A6E2A` | "Owed to you" — deep emerald, no clash with blue |
-| `negative` | `#A8232C` | "You owe" — burgundy, no clash with blue |
-| `warning` | `#B8860B` | Pending / waiting — antique gold |
+| `canvas` | `#F4F6FB` | Primary background — warm pale grey-blue, the soft canvas Coinbase uses |
+| `canvas.dark` | `#0B0F1A` | Dark mode background |
+| `surface` | `#FFFFFF` | Card surface — every card sits on canvas with this fill |
+| `surface.dark` | `#161B2A` | Dark mode card surface |
+| `surfaceTint` | `#EAF1FE` | Soft-blue tinted surface — for icon circles, secondary pill buttons, active tab circle |
+| `border` | `#E5E9F2` | 1px card borders — barely-there but present |
+| `border.dark` | `#222838` | Dark mode card border |
+| `ink` | `#0F1830` | Primary text — near-black with navy undertone |
+| `ink.dark` | `#FFFFFF` | Dark mode text |
+| `ink.muted` | `#5C6779` | Secondary text — body labels, subtitles |
+| `ink.subtle` | `#9098A8` | Tertiary — timestamps, helper text |
+| `accent` | **`#2D7EF7`** | The signature blue — pulled from the logo lightning bolt |
+| `accent.deep` | `#1F5FCC` | Pressed states |
+| `accent.ink` | `#FFFFFF` | Text on accent buttons |
+| `accent.soft` | `#EAF1FE` | Soft fill for secondary pill buttons (matches `surfaceTint`) |
+| `positive` | `#00B86B` | Owed-to-you, paid status |
+| `positive.soft` | `#E1F7EC` | |
+| `negative` | `#EF4856` | You-owe, unpaid |
+| `negative.soft` | `#FCE7E9` | |
+| `warning` | `#F5A524` | Pending |
+| `warning.soft` | `#FEF1DA` | |
 
-**The accent (`#2D7EF7`)** is the single signature. It appears on:
-- Primary CTA buttons (filled, not outlined)
-- Active tab indicator
-- Progress bars on completed splits
-- Selection highlights
-- Notification dots
-- Active form field underlines
+### Where the brand blue lives
 
-That's it. **One accent. Used sparingly. Owned aggressively.**
+Saturated, **everywhere it can be**:
 
-**The ink (`#1A3F6E` navy)** is the secret weapon. Every body label, every heading, every list item title is rendered in your logo's navy. That means *the brand color is on every screen, every word* — the way Stripe makes purple feel inevitable.
+- All primary CTA pills (filled `accent`)
+- Active tab — icon sits inside a 36pt `surfaceTint` circle
+- Active filter chip and tab indicator
+- Receipt/document icon in every activity row (icon in `surfaceTint` circle, accent-coloured glyph)
+- Notification badge dots
+- Form field focus underline
+- Progress bars
+- Selection highlights, link text
 
-### Why this palette works
-
-- **Brand coherence** — the logo, the app, the marketing site, the social posts all live in the same blue family. No mismatch.
-- **Trust + Energy** — navy ink says "we handle money seriously," electric accent says "we're new and fast." Both your logo, both the app.
-- **Australian fintech fit** — Up is orange, Wise is green, Macquarie is red. **Electric blue is wide open in AU fintech.** You're not fighting for a color slot.
-- **Two-blue duotone** — Mercury, Stripe Dashboard, and Linear all use a deep ink + bright accent of the same family. It's a proven 2026 fintech signal.
-- **Emerald + burgundy for positive/negative** — restrained, editorial, never shouting in your face the way Splitwise's bright red/green does.
+The rule from v1 ("one accent, used sparingly") is replaced with: **drown the screen in it the way Coinbase does — but only with this specific blue.** No purples, no greens (except status), no gradients.
 
 ---
 
-## Typography — three-family system
+## Typography — bold rounded sans, mono is dead
 
-| Family | Use | Stack |
+Three weights of one system family. **No mono anywhere.** Money is bold display sans, not tabular.
+
+| Family | iOS | Android | Web |
+|---|---|---|---|
+| **Sans** | `SF Pro Rounded` (display + text) | `Inter` | `Inter` |
+
+Once licensed, swap to **Söhne** or **Inter Display** for production polish.
+
+### Scale
+
+| Token | Size / weight | Use |
 |---|---|---|
-| **Display** | Hero numbers, large balances | `Söhne` / `Inter Display` / `SF Pro Display` |
-| **Text** | Body copy, friendly UI labels | `Söhne` / `Inter` / `SF Pro Text` |
-| **Mono** | All numerals over $X, captions, metadata, timestamps | `Berkeley Mono` / `JetBrains Mono` / `SF Mono` |
+| `display.hero` | 44pt / 700 | Big balance numbers, like Coinbase's `S$16.58` |
+| `display.large` | 32pt / 700 | Page titles ("Get started", "Activity") |
+| `display.medium` | 22pt / 700 | Card titles ("Fund your account") |
+| `body.large` | 17pt / 600 | List row titles ("Crypto", "Cash") |
+| `body` | 15pt / 500 | Default body |
+| `body.small` | 13pt / 500 | Card subtitles, metadata |
+| `caption` | 12pt / 500 | Timestamps, "2/4" progress text |
+| `button` | 16pt / 600 | Pill button labels |
+| `chip` | 13pt / 600 | Pill chips, filter labels |
 
 **Rules:**
-- Money is ALWAYS mono. `$2,639.25` is mono everywhere it appears.
-- Display sizes: 56pt (hero balance), 32pt (page titles), 22pt (section heads)
-- Text sizes: 17pt (body), 15pt (label), 13pt (button label)
-- Mono caption: 11pt with 1.5px letter-spacing, UPPERCASE for category labels
-- One weight per family — Display 500, Text 400, Mono 400. **No 600/700/800/900 anywhere.**
+
+- Money is **bold sans display**, not mono. `$2,639.25` at 44pt weight 700 — like Coinbase, not like a Bloomberg terminal.
+- Headings always 700, body 500–600, never 400.
+- Title case for headings (`Get started`, not `GET STARTED`). UPPERCASE was an Editorial Mono affectation; consumer fintech doesn't shout.
+- Letter spacing: tight (-0.4 to -0.6) on hero numbers, neutral elsewhere.
 
 ---
 
@@ -103,47 +113,63 @@ That's it. **One accent. Used sparingly. Owned aggressively.**
 ### Spacing — 8pt grid
 
 ```
-4   xs   – tight inline spacing
-8   sm   – inside compact rows
-16  md   – default padding
-24  lg   – between unrelated blocks
-40  xl   – section breaks
-72  2xl  – top-of-page breathing room
+4   xs   inline gaps
+8   sm   inside compact rows
+12  base padding inside cards (top/bottom)
+16  md   default screen padding, padding inside cards (sides)
+20  card vertical padding
+24  lg   between cards
+32  between sections
+48  xl   page-level breathing room
 ```
 
-### Corners
+### Corners — soft, not square
 
-- `0px` on most elements (cards, rows, inputs)
-- `12px` on the floating tab bar pills and primary buttons
-- `9999px` (pill) on small chip elements (filters, status dots)
+| Element | Radius |
+|---|---|
+| Cards | `16pt` |
+| Pill buttons | `9999pt` (fully rounded) |
+| Pill search bars | `9999pt` |
+| Pill filter chips | `9999pt` |
+| Soft icon circles | `9999pt` |
+| Inputs (non-pill) | `12pt` |
+| Sheet modals | `20pt` (top corners only) |
 
-### No more
+**Hairline dividers are out.** A 1px dividing line is fine inside a card to separate rows, but the structural layout is **white cards on warm grey** — not edge-to-edge hairline rows.
 
-- ❌ Cards everywhere — replaced with full-bleed sections + hairline dividers
-- ❌ Drop shadows — replaced with hairline borders or nothing
-- ❌ Tinted icon squares — replaced with bare 24pt monoline icons
-- ❌ Outlined buttons as primary — primary is filled accent, secondary is text-only
-- ❌ Progress bars at 4-8px — replaced with 1px hairline progress
+### Shadows — barely there, but present
+
+Coinbase, Public, Uber all use **subtle shadows** to lift cards off the canvas — typically `0 1px 2px rgba(0,0,0,0.03)` plus a 1px border. Editorial Mono killed shadows entirely; that was wrong. We bring back **one** card shadow level and use it on every card.
+
+```
+shadow.card = {
+  shadowColor: '#0F1830',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.04,
+  shadowRadius: 3,
+  elevation: 1,
+}
+```
+
+### Icons
+
+- Switch from outlined Ionicons to **Phosphor Regular** (preferred) or stay on **Ionicons filled variant**.
+- Icons inside soft-tinted circles for activity-row leaders (Coinbase pattern):
+  - 36pt circle, fill `surfaceTint` (`#EAF1FE`)
+  - 18pt accent-coloured glyph centred
+- Standalone icons in nav and headers: 22pt, ink colour, no fill.
 
 ---
 
-## iOS 26 Liquid Glass Tab Bar
+## iOS 26 integration — Liquid Glass where it earns its place
 
-**Yes, implementing it.** This is the single biggest "looks like 2026" signal we can ship.
+iOS 26 is the runtime, not a visual signature. The reference apps don't use floating glass tab bars — they use the standard tab bar. So Liquid Glass shows up only where iOS 26 native already does it:
 
-### Specs
-- **Floating** — 16pt inset from screen edges, 28pt from bottom
-- **Pill-shaped** — fully rounded (`borderRadius: 9999`)
-- **Translucent BlurView** — iOS native blur at intensity 80, dark/light tint follows theme
-- **Hairline border** — `StyleSheet.hairlineWidth` for the glass edge
-- **64pt height** — compact, doesn't dominate
-- **Icons** — Phosphor Duotone or SF Symbols at 22pt
-- **Labels** — UPPERCASE mono caption, 9pt, 1.5px tracking
-- **Active state** — accent blue pill behind the icon (subtle), label switches to `ink` navy
-- **Haptic** — light impact on tab change
+1. **Top nav blur on scroll** — when the user scrolls past the top safe area, the nav bar acquires a `BlurView` background (intensity 90, `prominent` tint). Native iOS 26 behaviour.
+2. **Modal sheet backdrop** — when a sheet rises, the dimmed background is a `BlurView` instead of a flat `rgba(0,0,0,0.5)` overlay. Subtle, expensive-feeling.
+3. **Bottom tab bar background** — the tab bar is the standard layout (label-under-icon, active icon in tinted circle), but its background is a `BlurView` on iOS 26 so the canvas peeks through. This is the *only* iOS 26 signal in the tab bar — no pill, no float.
 
-### Content respects the bar
-Every screen gets `paddingBottom: 120` on its scroll content so the floating bar never covers data. Implemented via a `<TabBarSafeArea>` wrapper component once, applied everywhere.
+**No floating Liquid Glass pill tab bar.** That contradicts every reference app.
 
 ---
 
@@ -151,46 +177,75 @@ Every screen gets `paddingBottom: 120` on its scroll content so the floating bar
 
 ### Buttons
 
+| Variant | Look |
+|---|---|
+| **Primary** | Filled `accent` blue pill, white text, 52pt height, weight 600, `radius 9999` |
+| **Secondary** | `accent.soft` filled pill, accent-blue text, 52pt height — Coinbase's "Deposit" style |
+| **Tertiary** | Text-only, accent blue, weight 600 (used sparingly — "View all", "Add Friends") |
+| **Destructive** | `negative.soft` filled pill, negative-coloured text |
+
+Pressed state: scale to 0.98, opacity 0.9. Haptic light on every press.
+
+### Cards
+
+The fundamental container. Every card is:
+
 ```
-Primary    → filled accent (#2D7EF7 electric blue) + white text + 12px corners + 52pt height
-Secondary  → text-only navy ink with hairline underline on press
-Tertiary   → mono caption with chevron, no border
-Destructive → text-only in burgundy negative, no fill
+backgroundColor: surface (#FFFFFF)
+borderRadius: 16
+borderWidth: 1
+borderColor: border (#E5E9F2)
+shadow: shadow.card
+padding: 20 (vertical) / 16 (horizontal)
 ```
 
-**Gone:** outlined buttons, ghost buttons, icon buttons in circles.
+Variants:
 
-### Cards / Rows
+- **Default** — the spec above
+- **Tinted** — `surfaceTint` background instead of white (used for the "Get started" card on home)
+- **Pressable** — same look + scale-to-0.98 on press
 
-Cards are **mostly deleted**. What replaces them:
+### Activity rows
 
-- **Section blocks** — full-bleed, separated by 40pt vertical space + optional hairline
-- **List rows** — 64pt tall, hairline divider between, no surrounding card
-- **Hero blocks** — full-bleed colored sections (rare, only for the home balance)
+Inside a card. Each row:
 
-Only thing that stays a card: **payment confirmation cards** (Stripe receipt feel).
+- Leading: 36pt circle, `surfaceTint` fill, accent-blue 18pt icon centred
+- Title: 17pt weight 600 ink
+- Subtitle: 13pt weight 500 muted
+- Trailing: amount in 17pt weight 700 (positive green / negative red), then 16pt chevron in subtle ink
+
+Rows separated by a 1px `border` divider inside the card (NOT edge-to-edge hairlines on the canvas).
 
 ### Inputs
 
-- Underline-only — 1px hairline border-bottom, no fill
-- Label sits above in mono caption UPPERCASE
-- Active state — underline thickens to 2px in electric blue accent
-- Error state — underline turns burgundy, helper text in mono
+- Non-pill: 12pt corners, white fill on canvas, 1px `border`, 48pt height
+- Pill search: 44pt height, `radius 9999`, fill `surfaceTint`, search glyph at left
+
+### Tab bar
+
+Standard React Navigation. **Not floating.** Specs:
+
+- Background: `BlurView intensity={90}` on iOS, white with 1px top border on Android
+- Height: 56pt + bottom safe-area inset
+- Each tab: icon 24pt + label 11pt weight 600
+- **Active tab: icon sits inside a 36pt `surfaceTint` circle**, icon coloured `accent`, label `accent`
+- Inactive tab: icon `ink.subtle`, label `ink.muted`
+- 4 tabs: Home, Splits, Scan, Profile
 
 ### Numbers
 
-Every dollar amount becomes:
-```
-$2,639.25
-^^ Mono ^^
-```
-With tabular figures so digits don't dance when balance updates.
+Bold sans display, sized by context:
 
-### Icons
+- Hero balance: 44pt / 700
+- Card-level totals: 28pt / 700
+- Row amounts: 17pt / 700
+- Inline metadata: 13pt / 600
 
-- Switch from Ionicons (rounded, generic) to **Phosphor Duotone** or **Lucide**
-- All icons 24pt monoline, weight 1.5px stroke
-- No tinted square backgrounds — icons sit bare on canvas
+`MoneyText` component:
+- `Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' })`
+- Tones: `default | positive | negative | inverse`
+- Sizes: `hero | large | row | caption`
+- **No `fontVariant: tabular-nums`** — that was a mono affectation; bold sans display reads better proportional.
 
 ---
 
@@ -198,121 +253,128 @@ With tabular figures so digits don't dance when balance updates.
 
 ### 1. Home
 
-- Kill the search bar at top (move to Splits screen where it belongs)
-- Top bar: just notification bell + analytics chart icon, both bare 22pt
-- Hero: full-bleed balance section with NO card
-  - Mono `$2,639.25` at 56pt
-  - Below: two-column "YOU OWE / OWED TO YOU" in mono caption + mono numbers, separated by hairline
-- CTAs: filled accent "Split Bill" + text-only "Request" — same row
-- Recent splits: flat rows with hairline dividers, no cards, no tinted icon squares
-  - Title in Text 17pt
-  - Metadata in Mono caption (`APR 30 · $0.60 OF $31.50`)
-  - 1px progress hairline at bottom of row
-  - Right side: mono amount + chevron
+Top → bottom:
+
+1. **Header**: ZapSplit avatar/initials + pill search bar + gift icon + bell icon. iOS 26 blur appears here on scroll.
+2. **Hero balance card** (or directly on canvas like Public's `$46.00` if the balance is the only number there): `Net balance` label, big 44pt bold number, `+$2,639.25` style with sign and tone colour.
+3. **Get started card** (only for new users): tinted background, `Unlock trading`-style accent label + bold heading + thin progress bar + 2/4 caption + illustrated icon top-right. Tappable, navigates to onboarding flow.
+4. **Quick actions row**: two pills side-by-side — `Split a bill` (filled accent) + `Request` (soft-blue secondary).
+5. **Activity card**: card title `Activity` weight 700 + `View all` text-tertiary on right, then a list of activity rows separated by inner 1px dividers. Each row: tinted circle + receipt icon, title, `Apr 30 · 4 people · Paid` subtitle, amount, chevron.
+6. **Bottom CTA banner** (optional, can come later): "Earn rewards" or referral, in a tinted card with illustration.
+
+The vibe should match Coinbase's home (image 308): pill search at top, big bold heading sections ("Get started", "Explore Coinbase"), bordered cards holding everything.
 
 ### 2. Splits
 
-- Search bar moves here, full-width, underline-only
-- Filter pills: mono caption, hairline border, accent fill on active
-- Rows match Home rows
-- Top: summary block (TOTAL OWED / TOTAL OWING / NET) in mono, hairline above + below
+- Pill search at top, full-width, fill `surfaceTint`
+- Pill filter chips below: `All / Open / Settled`, accent-filled when active
+- Splits in a single card: rows separated by inner dividers
+- Top of card: small caption `12 SPLITS · A$2,639.25 OUTSTANDING`
 
-### 3. Scan (camera receipt)
+### 3. Scan (Receipt)
 
-- Full-screen near-black canvas (`#0A0E1A`)
-- Capture button: 76pt electric blue accent circle, mono "CAPTURE" label in white
-- Detected items: drawer that slides up, mono prices in navy
+- Standard camera screen, not editorial dark
+- Capture button: 76pt accent-blue circle, white camera icon, lift shadow
+- Detected items appear in a sheet at the bottom — bordered card with rows
 
 ### 4. Profile
 
-- Avatar at top, name in Display 32pt, email in Mono caption
-- Settings list: hairline-divided rows, no cards, mono caption labels
-- Sign out: text-only at bottom in mono
+- Avatar 80pt + name in display.large + email in body.small muted
+- Account settings list: in a card, rows separated by dividers, leading tinted icon circle for each row (Coinbase pattern)
+- Sign out button: soft red `negative.soft` pill at bottom
 
 ### 5. Auth (Welcome / Login / Signup)
 
-- ZapSplit logo top-left at proper size (no recolouring — the existing blue logo on `#FAFAFE` canvas)
-- Editorial copy: *"Splits made simple."* in Display, navy ink
-- Inputs underline-only, navy ink, blue accent on focus
-- Primary CTA filled electric blue with white text
-- Apple/Google buttons: text-only with platform glyph at left, hairline divider between
+- Logo top-left at proper size, no recolouring
+- Heading: `Splits made simple.` in display.large weight 700
+- Inputs: 12pt-corner boxes (NOT underline-only)
+- Apple/Google sign-in: pill buttons with platform logo at left, white fill, 1px border
 
 ---
 
 ## What we're NOT changing
 
-- Web app (`zapsplit-web/`) — separate concern, can revisit later
-- Backend / Supabase / Stripe integration — UI only
-- Feature set — no new features in this revamp, just the visual language
-- App architecture — same screens, same navigation, same hooks
+- Web app — separate concern
+- Backend, Supabase, Stripe — UI only
+- Feature set
+- App architecture, navigation graph, hooks
 
 ---
 
 ## Execution plan
 
 ### Phase 1 — Tokens & primitives (~1 hour)
-1. Update `src/constants/theme.ts` with new color palette, typography, spacing
-2. Update `src/contexts/ThemeContext.tsx` with light/dark editorial-mono palettes
-3. Rewrite core components: `Button`, `Card` (mostly delete), `Input`, `Header`, `Badge`
-4. Add `MoneyText` component — automatically mono, tabular, currency-formatted
-5. Add `TabBarSafeArea` wrapper for floating tab bar clearance
+1. Rewrite `src/constants/theme.ts` for the Friendly Fintech palette + bold sans + soft shadows + 16pt corners
+2. Rewrite `src/contexts/ThemeContext.tsx` light/dark palettes
+3. Rewrite primitives:
+   - `Button.tsx` — pill primary + soft-blue secondary + tertiary text + destructive
+   - `Card.tsx` — bring it back: 16pt corners, 1px border, soft shadow, white fill
+   - `Input.tsx` — 12pt corner box (not underline), pill `SearchInput` variant
+   - `Header.tsx` — title left, actions right, BlurView background on scroll
+   - `Badge.tsx` — soft-fill pills with weight-600 inline text (not uppercase)
+   - `MoneyText.tsx` — bold sans display, drop tabular-nums
+   - `IconCircle.tsx` (new) — 36pt tinted circle wrapping an icon
+4. Add `useScrollBlur` hook for iOS 26 nav-bar blur on scroll
 
 ### Phase 2 — Tab bar (~30 min)
-6. Implement iOS 26 Liquid Glass tab bar in `MainNavigator.tsx`
-7. Replace tab icons with Phosphor / Lucide
-8. Apply `TabBarSafeArea` to all screens
+5. Rewrite `MainNavigator.tsx`: standard tab bar with `BlurView` background (iOS 26), active icon inside 36pt `surfaceTint` circle, label below, NOT floating
+6. Replace tab icons with Phosphor Regular (or Ionicons filled)
+7. Remove the `TabBarSafeArea` 120pt clearance (no longer floating, standard inset is enough)
 
 ### Phase 3 — Core screens (~2 hours)
-9. Home — full editorial rewrite
-10. Splits — full editorial rewrite
-11. Profile — full editorial rewrite
-12. Auth flow — full editorial rewrite
+8. Home — full Friendly Fintech rewrite per spec above
+9. Splits — pill search + filter chips + card-of-rows
+10. Profile — avatar header + settings card with tinted icon circles
+11. Auth flow — display.large headings + boxed inputs + pill social buttons
 
 ### Phase 4 — Secondary screens (~2 hours)
-13. Settings + sub-screens
-14. Friends + Groups screens
-15. Split flow (Create, Review, Pay, Success)
-16. Notifications, Analytics, Help
+12. Settings + sub-screens
+13. Friends + Groups
+14. Split flow (Create, Review, Pay, Success)
+15. Notifications, Analytics, Help
+16. Re-skin request modal as a proper bottom sheet with `BlurView` backdrop
 
 ### Phase 5 — Polish (~1 hour)
-17. Haptics on every primary interaction
-18. Subtle motion: 200ms ease-out on tab change, 150ms on press states
-19. Empty states with editorial copy
-20. Loading states (mono skeleton lines, not spinning circles)
+17. Haptics on every primary interaction (light press / medium for nav / success notification)
+18. Pressed states: scale to 0.98 + opacity 0.9 on every pressable
+19. Empty states: tinted card with illustration + heading + subtext + CTA pill
+20. Loading states: subtle shimmer skeletons matching card shape
 
-**Total estimate:** ~6.5 hours of focused work. Achievable in one session.
+**Total estimate:** ~6.5 hours focused.
 
 ---
 
 ## Success criteria
 
-After the revamp, ZapSplit should pass these tests:
+✅ **The Coinbase test** — strip the logo, would a friend mistake the home screen for Coinbase / Public / Uber's home? It should feel like it lives in that neighbourhood.
 
-✅ **The blink test** — strip the logo, would someone confuse this with Splitwise / Tab / Beem? If yes, we failed.
+✅ **The blue test** — does the brand blue appear on every screen, in saturation, drowning the canvas the way Coinbase's blue does? If you can squint and see "blue, blue, blue" — pass.
 
-✅ **The accent test** — does the electric blue accent feel inevitable (because it lives in the logo), or bolted on? If it could be swapped for any other color without changing the feel, we failed.
+✅ **The card test** — does every information cluster sit in a soft-bordered, soft-shadowed white card on a warm grey canvas?
 
-✅ **The logo coherence test** — open the App Store screenshot, then open the app. Do they feel like the same brand? If the app feels like a different product than the logo, we failed.
+✅ **The bold-number test** — does every dollar amount render in bold sans display, never mono? If anything looks like a Bloomberg terminal, fail.
 
-✅ **The 2026 test** — does the floating glass tab bar make this feel native to iOS 26? Does it pair well with the editorial type?
+✅ **The pill test** — are CTAs, search, and filter chips all pill-shaped (`radius 9999`)? Are tab bar's active icons in soft circles? Pass = yes.
 
-✅ **The Mercury test** — does the Home screen feel as calm and considered as Mercury's dashboard? If it feels busier, simplify.
-
-✅ **The mono numerals test** — does every dollar amount in the entire app render in mono? No exceptions.
+✅ **The iOS 26 test** — when scrolled, does the top nav blur? Do modal backdrops use `BlurView`? Does the tab bar background blur? These are the only places Liquid Glass should appear.
 
 ---
 
 ## Decisions locked
 
-✅ **Accent color** — `#2D7EF7` electric blue (pulled directly from the logo lightning bolt)
-✅ **Ink color** — `#1A3F6E` deep navy (pulled directly from the logo wordmark)
-✅ **Logo** — non-negotiable, stays exactly as-is. The whole palette is derived from it.
-✅ **Branch strategy** — fresh branch `revamp-2026` off `main`. Bugatti work stays preserved on `github-revamp2` as a reference.
+✅ **Reference set** — Coinbase + Public + Uber primarily; Spotify and Cash App as secondary signal.
+✅ **Accent blue** — `#2D7EF7`, used heavily, not sparingly.
+✅ **Type** — bold rounded sans (SF Pro Rounded / Inter), weights 500/600/700. Mono is dead.
+✅ **Layout** — soft cards on warm grey canvas. Hairlines are out.
+✅ **Tab bar** — standard label-under-icon with active icon in tinted circle. No floating pill.
+✅ **iOS 26** — Liquid Glass on nav scroll-blur, modal backdrops, tab bar background only.
+✅ **Logo** — non-negotiable, stays as-is.
 
 ## Still to confirm
 
-- **Fonts** — system fallbacks (SF Pro / SF Mono — free, ships immediately) for v1, or licensed `Söhne` / `Berkeley Mono` (~$800 one-time total) for production? Recommendation: ship v1 with system fonts, license the custom fonts only once revenue starts coming in.
+- **Fonts** — ship v1 on `SF Pro Rounded` (free, native) for iOS and `Inter` for Android. License `Söhne` later when revenue justifies it.
+- **Icon set** — Phosphor Regular for the friendlier rounded look, or stay on Ionicons filled? Recommend Phosphor.
 
 ---
 
-**Greenlight given. Starting Phase 1: create `revamp-2026` branch off `main`, rewrite tokens + core primitives, then mock up the Home screen so you can see the direction in 30 minutes before I touch any other screens.**
+**Next move:** rip out the Editorial Mono primitives I just shipped, rewrite Phase 1 in the Friendly Fintech direction, then mock the Home screen for review before any other screen is touched.

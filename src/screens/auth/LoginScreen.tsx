@@ -14,7 +14,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from '../../constants/theme';
+import * as Haptics from 'expo-haptics';
+
+import { spacing, typography, radius } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -22,15 +24,18 @@ interface LoginScreenProps {
   navigation: any;
 }
 
+// Friendly Fintech Login.
+// Display heading + boxed inputs + filled pill primary CTA + pill social buttons.
 export default function LoginScreen({ navigation }: LoginScreenProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { signIn, signInWithApple, isAppleSignInAvailable, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const validateForm = () => {
@@ -38,31 +43,26 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       Alert.alert('Error', 'Please enter your email');
       return false;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
-
     if (!password) {
       Alert.alert('Error', 'Please enter your password');
       return false;
     }
-
     return true;
   };
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      // Navigation will be handled by auth state change
     } catch (error: any) {
       Alert.alert(
-        'Login Failed',
+        'Login failed',
         error.message === 'Invalid login credentials'
           ? 'Invalid email or password'
           : error.message || 'An error occurred during login'
@@ -73,18 +73,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   const handleAppleSignIn = async () => {
-    setAppleLoading(true);
     try {
       await signInWithApple();
     } catch (error: any) {
       if (error.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert(
-          'Sign In Failed',
-          error.message || 'An error occurred during Apple Sign In'
-        );
+        Alert.alert('Sign in failed', error.message || 'Apple Sign In error');
       }
-    } finally {
-      setAppleLoading(false);
     }
   };
 
@@ -94,53 +88,89 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code !== 'SIGN_IN_CANCELLED' && error.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert(
-          'Sign In Failed',
-          error.message || 'An error occurred during Google Sign In'
-        );
+        Alert.alert('Sign in failed', error.message || 'Google Sign In error');
       }
     } finally {
       setGoogleLoading(false);
     }
   };
 
+  const inputBorder = (focused: boolean) =>
+    focused ? colors.primary : colors.border;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.gray50 }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 40 }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.gray900 }]}>Welcome Back</Text>
-          <Text style={[styles.subtitle, { color: colors.gray500 }]}>
-            Log in to continue splitting bills
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* BACK */}
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        </TouchableOpacity>
 
+        {/* HEADING */}
+        <Text style={[styles.title, { color: colors.text }]}>Welcome back.</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Log in to keep splitting.
+        </Text>
+
+        {/* FORM */}
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.gray600 }]}>Email</Text>
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: inputBorder(emailFocused),
+                  borderWidth: emailFocused ? 2 : 1,
+                  color: colors.text,
+                },
+              ]}
               placeholder="you@example.com"
-              placeholderTextColor={colors.gray500}
+              placeholderTextColor={colors.textTertiary}
               value={email}
               onChangeText={setEmail}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
               keyboardType="email-address"
               autoCapitalize="none"
               returnKeyType="next"
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.gray600 }]}>Password</Text>
-            <View style={[styles.passwordContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
+            <View
+              style={[
+                styles.passwordRow,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: inputBorder(passwordFocused),
+                  borderWidth: passwordFocused ? 2 : 1,
+                },
+              ]}
+            >
               <TextInput
-                style={[styles.passwordInput, { color: colors.gray900 }]}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.gray500}
+                style={[styles.passwordInput, { color: colors.text }]}
+                placeholder="Your password"
+                placeholderTextColor={colors.textTertiary}
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 returnKeyType="done"
@@ -149,66 +179,96 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
+                hitSlop={8}
               >
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.gray500} />
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.textSecondary}
+                />
               </TouchableOpacity>
             </View>
           </View>
 
+          {/* PRIMARY CTA */}
           <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            style={[
+              styles.primaryPill,
+              { backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleLogin();
+            }}
             disabled={loading}
+            activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.textInverse} />
             ) : (
-              <Text style={styles.loginButtonText}>Log In</Text>
+              <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                Log in
+              </Text>
             )}
           </TouchableOpacity>
 
-          {/* Social Sign In */}
-          <View style={styles.dividerContainer}>
-            <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
-            <Text style={[styles.dividerText, { color: colors.gray500 }]}>or</Text>
-            <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+          {/* DIVIDER */}
+          <View style={styles.dividerRow}>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerLabel, { color: colors.textTertiary }]}>or</Text>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
           </View>
 
-          {/* Apple Sign In - iOS only (official Apple button) */}
+          {/* APPLE */}
           {isAppleSignInAvailable && (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={14}
+              buttonStyle={
+                isDark
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={9999}
               style={styles.appleButton}
               onPress={handleAppleSignIn}
             />
           )}
 
-          {/* Google Sign In - All platforms */}
+          {/* GOOGLE */}
           <TouchableOpacity
-            style={[styles.googleButton, googleLoading && styles.socialButtonDisabled]}
+            style={[
+              styles.socialPill,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                opacity: googleLoading ? 0.6 : 1,
+              },
+            ]}
             onPress={handleGoogleSignIn}
             disabled={googleLoading}
-            activeOpacity={0.7}
+            activeOpacity={0.85}
           >
             {googleLoading ? (
-              <ActivityIndicator color="#4285F4" />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <>
-                <Ionicons name="logo-google" size={18} color="#4285F4" />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Ionicons name="logo-google" size={18} color={colors.text} />
+                <Text style={[styles.socialPillLabel, { color: colors.text }]}>
+                  Continue with Google
+                </Text>
               </>
             )}
           </TouchableOpacity>
 
+          {/* SIGN UP LINK */}
           <TouchableOpacity
             style={styles.signupLink}
             onPress={() => navigation.navigate('Signup')}
+            hitSlop={8}
           >
-            <Text style={[styles.signupLinkText, { color: colors.gray500 }]}>
+            <Text style={[styles.signupLinkText, { color: colors.textSecondary }]}>
               Don't have an account?{' '}
-              <Text style={[styles.linkText, { color: colors.primary }]}>Sign up</Text>
+              <Text style={{ color: colors.primary, fontWeight: '700' }}>Sign up</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -221,126 +281,109 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
+  scroll: {
     flexGrow: 1,
-    padding: spacing.xl,
-    paddingTop: 40,
+    paddingHorizontal: spacing.lg,
   },
-  header: {
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    marginBottom: spacing.xl + spacing.md,
+    justifyContent: 'center',
+    marginBottom: spacing.xl,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-    letterSpacing: -0.5,
+    ...typography.displayLarge,
+    fontSize: 36,
+    lineHeight: 42,
+    letterSpacing: -0.7,
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
+    ...typography.bodyLarge,
+    fontWeight: '500',
+    marginTop: 4,
+    marginBottom: spacing.xl,
   },
   form: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
-  inputGroup: {
+  field: {
     gap: spacing.xs,
   },
   label: {
-    fontSize: 14,
+    ...typography.bodySmall,
     fontWeight: '600',
-    marginLeft: spacing.xs,
+    paddingLeft: 4,
   },
   input: {
-    borderWidth: 1.5,
-    borderRadius: 14,
-    padding: spacing.md,
-    fontSize: 16,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    ...typography.bodyLarge,
   },
-  passwordContainer: {
+  passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: radius.md,
   },
   passwordInput: {
     flex: 1,
-    padding: spacing.md,
-    fontSize: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    ...typography.bodyLarge,
   },
   eyeButton: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
   },
-  loginButton: {
-    paddingVertical: spacing.md + 2,
-    borderRadius: 14,
+  primaryPill: {
+    height: 56,
+    borderRadius: radius.pill,
     alignItems: 'center',
-    marginTop: spacing.md,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
   },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
+  primaryPillLabel: {
+    ...typography.button,
     fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: 0.3,
   },
-  dividerContainer: {
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.md,
+    marginVertical: spacing.sm,
+    gap: spacing.md,
   },
   divider: {
     flex: 1,
     height: 1,
   },
-  dividerText: {
-    paddingHorizontal: spacing.md,
-    fontSize: 14,
+  dividerLabel: {
+    ...typography.bodySmall,
+    fontWeight: '500',
   },
   appleButton: {
-    height: 50,
+    height: 56,
     width: '100%',
   },
-  googleButton: {
+  socialPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    height: 50,
-    borderRadius: 14,
-    gap: 10,
+    height: 56,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: '#DADCE0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.sm,
   },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1F1F1F',
-    letterSpacing: 0.1,
-  },
-  socialButtonDisabled: {
-    opacity: 0.6,
+  socialPillLabel: {
+    ...typography.button,
+    fontSize: 17,
   },
   signupLink: {
-    paddingVertical: spacing.md,
     alignItems: 'center',
+    paddingVertical: spacing.md,
   },
   signupLinkText: {
-    fontSize: 15,
-  },
-  linkText: {
-    fontWeight: '600',
+    ...typography.body,
   },
 });
