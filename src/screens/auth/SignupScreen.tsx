@@ -156,11 +156,13 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
           >
             <Ionicons name="chevron-back" size={20} color={colors.text} />
           </TouchableOpacity>
-          <Image
-            source={require('../../assets/images/brand-icon.png')}
-            style={styles.brandIcon}
-            resizeMode="contain"
-          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            hitSlop={12}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.topLink, { color: colors.primary }]}>Log in</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={[styles.kicker, { color: colors.primary }]}>Sign up</Text>
@@ -392,16 +394,6 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={() => navigation.navigate('Login')}
-            hitSlop={8}
-          >
-            <Text style={[styles.loginLinkText, { color: colors.textSecondary }]}>
-              Already have an account?{' '}
-              <Text style={{ color: colors.primary, fontWeight: '700' }}>Log in</Text>
-            </Text>
-          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -432,6 +424,10 @@ const styles = StyleSheet.create({
   brandIcon: {
     width: 40,
     height: 44,
+  },
+  topLink: {
+    ...typography.bodyLarge,
+    fontWeight: '700',
   },
   kicker: {
     ...typography.bodyLarge,

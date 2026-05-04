@@ -126,7 +126,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* TOP ROW — back + brand logo */}
+        {/* TOP ROW — back + always-visible alternate-path link */}
         <View style={styles.topRow}>
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
@@ -135,11 +135,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           >
             <Ionicons name="chevron-back" size={20} color={colors.text} />
           </TouchableOpacity>
-          <Image
-            source={require('../../assets/images/brand-icon.png')}
-            style={styles.brandIcon}
-            resizeMode="contain"
-          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Signup')}
+            hitSlop={12}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.topLink, { color: colors.primary }]}>Sign up</Text>
+          </TouchableOpacity>
         </View>
 
         {/* HEADING */}
@@ -307,17 +309,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             )}
           </TouchableOpacity>
 
-          {/* SIGN UP LINK */}
-          <TouchableOpacity
-            style={styles.signupLink}
-            onPress={() => navigation.navigate('Signup')}
-            hitSlop={8}
-          >
-            <Text style={[styles.signupLinkText, { color: colors.textSecondary }]}>
-              Don't have an account?{' '}
-              <Text style={{ color: colors.primary, fontWeight: '700' }}>Sign up</Text>
-            </Text>
-          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -348,6 +339,10 @@ const styles = StyleSheet.create({
   brandIcon: {
     width: 40,
     height: 44,
+  },
+  topLink: {
+    ...typography.bodyLarge,
+    fontWeight: '700',
   },
   kicker: {
     ...typography.bodyLarge,

@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
 
   buttonStack: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   primaryPill: {
     flexDirection: 'row',

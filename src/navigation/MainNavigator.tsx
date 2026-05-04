@@ -49,10 +49,11 @@ import { useTheme } from '../contexts/ThemeContext';
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// ZapSplit 2026 Friendly Fintech tab bar.
-// Standard label-under-icon layout. Active icon sits inside a 36pt soft-blue
-// circle (Coinbase pattern). On iOS, the bar's background is a Liquid Glass
-// BlurView so the canvas peeks through — that's the only iOS 26 signal here.
+// JS-side iOS 26-inspired tab bar. The "real" iOS 26 Liquid Glass needs the
+// native bottom tab navigator (`createNativeBottomTabNavigator`), which only
+// works in a dev build that includes the matching native module — Expo Go and
+// our current dev build don't have it. Switch to native once the next EAS
+// build with Xcode 26 is on the device.
 
 type TabIconName = keyof typeof Ionicons.glyphMap;
 
@@ -66,34 +67,14 @@ const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName }> 
 function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-
-  const baseHeight = 56;
-  const totalHeight = baseHeight + (Platform.OS === 'ios' ? insets.bottom : 12);
+  const bottomInset = Math.max(insets.bottom, 12);
 
   return (
-    <View style={[styles.tabBarWrapper, { height: totalHeight }]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView
-          intensity={90}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: colors.surface },
-          ]}
-        />
-      )}
-      <View
-        style={[
-          styles.tabBarTopBorder,
-          { backgroundColor: colors.border },
-        ]}
-      />
-
-      <View style={[styles.tabBarRow, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 12 }]}>
+    <View
+      style={[styles.tabBarWrapper, { paddingBottom: bottomInset }]}
+      pointerEvents="box-none"
+    >
+      <View style={styles.row}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const focused = state.index === index;
@@ -112,8 +93,7 @@ function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           const icons = TAB_ICONS[route.name] ?? TAB_ICONS.Home;
           const iconName = focused ? icons.active : icons.inactive;
-          const iconColor = focused ? colors.primary : colors.textSecondary;
-          const labelColor = focused ? colors.primary : colors.textSecondary;
+          const tone = focused ? colors.primary : colors.textSecondary;
           const label =
             options.tabBarLabel !== undefined
               ? (options.tabBarLabel as string)
@@ -128,22 +108,68 @@ function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityRole="button"
               accessibilityState={focused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
+              hitSlop={6}
               style={({ pressed }) => [
-                styles.tabItem,
-                pressed && { opacity: 0.7 },
+                styles.item,
+                pressed && { opacity: 0.6 },
               ]}
             >
-              <View
-                style={[
-                  styles.tabIconCircle,
-                  focused && { backgroundColor: colors.primaryLight },
-                ]}
-              >
-                <Ionicons name={iconName} size={20} color={iconColor} />
+              {focused && (
+                <View
+                  style={[
+                    styles.activeCapsule,
+                    {
+                      borderColor: isDark
+                        ? 'rgba(255,255,255,0.14)'
+                        : 'rgba(15,24,48,0.10)',
+                    },
+                  ]}
+                  pointerEvents="none"
+                >
+                  {Platform.OS === 'ios' && (
+                    <BlurView
+                      intensity={50}
+                      tint={isDark ? 'dark' : 'light'}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  )}
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(40,48,68,0.62)'
+                          : 'rgba(255,255,255,0.72)',
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.activeTopHighlight,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255,255,255,0.08)'
+                          : 'rgba(255,255,255,0.55)',
+                      },
+                    ]}
+                  />
+                </View>
+              )}
+
+              <View style={styles.itemContent}>
+                <Ionicons name={iconName} size={24} color={tone} />
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      color: tone,
+                      fontWeight: focused ? '600' : '500',
+                    },
+                  ]}
+                >
+                  {String(label)}
+                </Text>
               </View>
-              <Text style={[styles.tabLabel, { color: labelColor }]}>
-                {String(label)}
-              </Text>
             </Pressable>
           );
         })}
@@ -152,7 +178,6 @@ function FriendlyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
-// Tab Navigator Component
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -169,39 +194,52 @@ function MainTabs() {
 
 const styles = StyleSheet.create({
   tabBarWrapper: {
-    overflow: 'hidden',
-  },
-  tabBarTopBorder: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 0,
-    height: StyleSheet.hairlineWidth,
+    bottom: 0,
+    paddingHorizontal: 8,
+    paddingTop: 6,
   },
-  tabBarRow: {
-    flex: 1,
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-around',
-    paddingTop: 8,
   },
-  tabItem: {
+  item: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    minHeight: 56,
+    position: 'relative',
+  },
+  itemContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
-  tabIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  activeCapsule: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 6,
+    right: 6,
+    borderRadius: 22,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0,
+  activeTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+  },
+  label: {
+    fontSize: 10,
+    letterSpacing: 0.1,
   },
 });
 

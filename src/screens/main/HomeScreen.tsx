@@ -199,7 +199,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: spacing.xxl }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
