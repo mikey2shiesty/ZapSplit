@@ -1,11 +1,9 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { createStackNavigator } from '@react-navigation/stack';
-// `@react-navigation/bottom-tabs/unstable` exposes the native bottom tab
-// navigator that wraps UITabBarController on iOS — the only path to the real
-// iOS 26 Liquid Glass tab bar (per Apple HIG: items rest on a Liquid Glass
-// background that the system controls). Falls back to a JS implementation on
-// Android / older iOS automatically.
+// `/unstable` is the real native UITabBarController. The default export at
+// the package root is the JS-side tab bar — that one will NOT render iOS 26
+// Liquid Glass, no matter how it's styled. Do not switch this import.
 import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable';
 import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
@@ -47,67 +45,62 @@ import { useTheme } from '../contexts/ThemeContext';
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createNativeBottomTabNavigator<MainTabParamList>();
 
-// MainTabs — uses the official `createNativeBottomTabNavigator`. iOS gets
-// UITabBarController (real iOS 26 Liquid Glass on iOS 26+ / Xcode 26 builds,
-// real native iOS 18-style bar otherwise). Android gets BottomNavigationView.
-// SF Symbols on iOS, materialSymbol equivalents on Android. The system handles
-// content insets, blur, fill/outline icon transitions, and minimize-on-scroll.
+// MainTabs — real iOS 26 native tab bar via UITabBarController.
+//
+// Critical config (do not "improve" any of this):
+//   • tabBarMinimizeBehavior: 'onScrollDown'
+//       → iOS 26 morph-into-pill on scroll-down, expand on scroll-up.
+//   • popToTopOnBlur: true
+//       → standard iOS UX (tab pop-to-top when blurred).
+//   • SF Symbol tabBarIcons via { type: 'sfSymbol', name: '...' }.
+//   • NO tabBarStyle / tabBarBackground / tabBarActiveTintColor / etc —
+//     the system styles the bar with the proper Liquid Glass material; any
+//     overrides break it.
+//   • tabPress haptic via screenListeners.
 function MainTabs() {
-  const { colors } = useTheme();
-
   return (
     <Tab.Navigator
+      screenListeners={{
+        tabPress: () => {
+          Haptics.selectionAsync().catch(() => {});
+        },
+      }}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        // iOS 26: bar minimizes to the active tab when scrolling down (Music
-        // app behaviour). Auto-falls back to no-op on iOS 18.
         tabBarMinimizeBehavior: 'onScrollDown',
+        popToTopOnBlur: true,
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: Platform.select({
-            ios: { type: 'sfSymbol', name: 'house' },
-            android: { type: 'materialSymbol', name: 'home' },
-            default: undefined,
-          }) as any,
+          title: 'Home',
+          tabBarIcon: { type: 'sfSymbol', name: 'house' as any },
         }}
       />
       <Tab.Screen
         name="Scan"
         component={ScanScreen}
         options={{
-          tabBarIcon: Platform.select({
-            ios: { type: 'sfSymbol', name: 'camera' },
-            android: { type: 'materialSymbol', name: 'photo_camera' },
-            default: undefined,
-          }) as any,
+          title: 'Scan',
+          tabBarIcon: { type: 'sfSymbol', name: 'camera' as any },
         }}
       />
       <Tab.Screen
         name="Splits"
         component={SplitsScreen}
         options={{
-          tabBarIcon: Platform.select({
-            ios: { type: 'sfSymbol', name: 'list.bullet.rectangle' },
-            android: { type: 'materialSymbol', name: 'receipt_long' },
-            default: undefined,
-          }) as any,
+          title: 'Splits',
+          tabBarIcon: { type: 'sfSymbol', name: 'list.bullet.rectangle' as any },
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: Platform.select({
-            ios: { type: 'sfSymbol', name: 'person.crop.circle' },
-            android: { type: 'materialSymbol', name: 'person' },
-            default: undefined,
-          }) as any,
+          title: 'Profile',
+          tabBarIcon: { type: 'sfSymbol', name: 'person.crop.circle' as any },
         }}
       />
     </Tab.Navigator>

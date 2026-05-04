@@ -18,7 +18,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, typography, radius } from '../../constants/theme';
 import Card from '../../components/common/Card';
 import IconCircle from '../../components/common/IconCircle';
-import SwipeableTabScreen from '../../components/common/SwipeableTabScreen';
 
 interface Profile {
   id: string;
@@ -89,7 +88,6 @@ export default function ProfileScreen() {
   );
 
   return (
-    <SwipeableTabScreen>
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
@@ -215,7 +213,6 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
     </View>
-    </SwipeableTabScreen>
   );
 }
 
