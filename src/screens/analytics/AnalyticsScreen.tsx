@@ -98,7 +98,7 @@ export default function AnalyticsScreen() {
     backgroundGradientTo: colors.surface,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-    labelColor: () => colors.gray500,
+    labelColor: () => colors.textSecondary,
     style: {
       borderRadius: 16,
     },
@@ -120,14 +120,14 @@ export default function AnalyticsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Header
         title="Analytics"
@@ -159,51 +159,51 @@ export default function AnalyticsScreen() {
         }
       >
         {/* Monthly Stats */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>This Month</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>This Month</Text>
         <View style={styles.statsGrid}>
           <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="arrow-up-circle" size={24} color={colors.error} />
             </View>
-            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
+            <Text style={[styles.statAmount, { color: colors.text }]}>
               {formatCurrency(analytics?.monthlyStats.totalSpent || 0)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Spent</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Spent</Text>
           </Card>
 
           <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="arrow-down-circle" size={24} color={colors.success} />
             </View>
-            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
+            <Text style={[styles.statAmount, { color: colors.text }]}>
               {formatCurrency(analytics?.monthlyStats.totalReceived || 0)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Received</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Received</Text>
           </Card>
 
           <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="receipt" size={24} color={colors.primary} />
             </View>
-            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
+            <Text style={[styles.statAmount, { color: colors.text }]}>
               {analytics?.monthlyStats.totalSplits || 0}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Splits</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Splits</Text>
           </Card>
 
           <Card variant="default" style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statIconContainer}>
               <Ionicons name="calculator" size={24} color={colors.warning} />
             </View>
-            <Text style={[styles.statAmount, { color: colors.gray900 }]}>
+            <Text style={[styles.statAmount, { color: colors.text }]}>
               {formatCurrency(analytics?.monthlyStats.averageSplitAmount || 0)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.gray500 }]}>Avg Split</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Split</Text>
           </Card>
         </View>
 
         {/* Spending Over Time Chart */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Spending Over Time</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Spending Over Time</Text>
         <Card variant="default" style={[styles.chartCard, { backgroundColor: colors.surface }]}>
           {analytics?.spendingByMonth && analytics.spendingByMonth.some(m => m.amount > 0) ? (
             <LineChart
@@ -226,14 +226,14 @@ export default function AnalyticsScreen() {
             />
           ) : (
             <View style={styles.emptyChart}>
-              <Ionicons name="analytics-outline" size={48} color={colors.gray300} />
-              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No spending data yet</Text>
+              <Ionicons name="analytics-outline" size={48} color={colors.border} />
+              <Text style={[styles.emptyChartText, { color: colors.textTertiary }]}>No spending data yet</Text>
             </View>
           )}
         </Card>
 
         {/* Split Breakdown - Modern horizontal bars */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Spending by Category</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Spending by Category</Text>
         <Card variant="default" style={[styles.categoryCard, { backgroundColor: colors.surface }]}>
           {analytics?.splitBreakdown && analytics.splitBreakdown.length > 0 ? (
             <View style={styles.categoryList}>
@@ -247,13 +247,13 @@ export default function AnalyticsScreen() {
                           { backgroundColor: pieColors[index % pieColors.length] },
                         ]}
                       />
-                      <Text style={[styles.categoryName, { color: colors.gray800 }]}>{item.category}</Text>
+                      <Text style={[styles.categoryName, { color: colors.text }]}>{item.category}</Text>
                     </View>
-                    <Text style={[styles.categoryAmount, { color: colors.gray900 }]}>
+                    <Text style={[styles.categoryAmount, { color: colors.text }]}>
                       {formatCurrency(item.amount)}
                     </Text>
                   </View>
-                  <View style={[styles.progressBarContainer, { backgroundColor: colors.gray100 }]}>
+                  <View style={[styles.progressBarContainer, { backgroundColor: colors.surface }]}>
                     <View
                       style={[
                         styles.progressBar,
@@ -264,7 +264,7 @@ export default function AnalyticsScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={[styles.categoryPercentage, { color: colors.gray500 }]}>
+                  <Text style={[styles.categoryPercentage, { color: colors.textSecondary }]}>
                     {item.percentage < 1
                       ? item.percentage.toFixed(1)
                       : item.percentage.toFixed(0)}% of total
@@ -274,14 +274,14 @@ export default function AnalyticsScreen() {
             </View>
           ) : (
             <View style={styles.emptyChart}>
-              <Ionicons name="pie-chart-outline" size={48} color={colors.gray300} />
-              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No category data yet</Text>
+              <Ionicons name="pie-chart-outline" size={48} color={colors.border} />
+              <Text style={[styles.emptyChartText, { color: colors.textTertiary }]}>No category data yet</Text>
             </View>
           )}
         </Card>
 
         {/* Top Split Partners */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Top Split Partners</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Top Split Partners</Text>
         <Card variant="default" style={[styles.partnersCard, { backgroundColor: colors.surface }]}>
           {analytics?.topPartners && analytics.topPartners.length > 0 ? (
             analytics.topPartners.map((partner, index) => (
@@ -289,11 +289,11 @@ export default function AnalyticsScreen() {
                 key={partner.userId}
                 style={[
                   styles.partnerItem,
-                  index < analytics.topPartners.length - 1 && [styles.partnerBorder, { borderBottomColor: colors.gray100 }],
+                  index < analytics.topPartners.length - 1 && [styles.partnerBorder, { borderBottomColor: colors.surface }],
                 ]}
               >
-                <View style={[styles.partnerRank, { backgroundColor: colors.gray100 }]}>
-                  <Text style={[styles.partnerRankText, { color: colors.gray600 }]}>#{index + 1}</Text>
+                <View style={[styles.partnerRank, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.partnerRankText, { color: colors.textSecondary }]}>#{index + 1}</Text>
                 </View>
                 <Avatar
                   name={partner.name}
@@ -301,8 +301,8 @@ export default function AnalyticsScreen() {
                   size="md"
                 />
                 <View style={styles.partnerInfo}>
-                  <Text style={[styles.partnerName, { color: colors.gray900 }]}>{partner.name}</Text>
-                  <Text style={[styles.partnerSplits, { color: colors.gray500 }]}>
+                  <Text style={[styles.partnerName, { color: colors.text }]}>{partner.name}</Text>
+                  <Text style={[styles.partnerSplits, { color: colors.textSecondary }]}>
                     {partner.splitCount} split{partner.splitCount !== 1 ? 's' : ''}
                   </Text>
                 </View>
@@ -313,8 +313,8 @@ export default function AnalyticsScreen() {
             ))
           ) : (
             <View style={styles.emptyPartners}>
-              <Ionicons name="people-outline" size={48} color={colors.gray300} />
-              <Text style={[styles.emptyChartText, { color: colors.gray400 }]}>No split partners yet</Text>
+              <Ionicons name="people-outline" size={48} color={colors.border} />
+              <Text style={[styles.emptyChartText, { color: colors.textTertiary }]}>No split partners yet</Text>
             </View>
           )}
         </Card>
@@ -330,15 +330,15 @@ export default function AnalyticsScreen() {
               <Ionicons name="document-text-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.exportInfo}>
-              <Text style={[styles.exportTitle, { color: colors.gray900 }]}>Export to CSV</Text>
-              <Text style={[styles.exportDescription, { color: colors.gray500 }]}>
+              <Text style={[styles.exportTitle, { color: colors.text }]}>Export to CSV</Text>
+              <Text style={[styles.exportDescription, { color: colors.textSecondary }]}>
                 Download all your split data as a spreadsheet
               </Text>
             </View>
             {exporting ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
-              <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
             )}
           </TouchableOpacity>
         </Card>

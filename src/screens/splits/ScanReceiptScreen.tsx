@@ -35,7 +35,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
   // Request camera permission
   if (!permission) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -43,9 +43,9 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
   if (!permission.granted) {
     return (
-      <View style={[styles.permissionContainer, { backgroundColor: colors.gray50 }]}>
-        <Ionicons name="camera-outline" size={80} color={colors.gray400} />
-        <Text style={[styles.permissionTitle, { color: colors.gray900 }]}>Camera Access Required</Text>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="camera-outline" size={80} color={colors.textTertiary} />
+        <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera Access Required</Text>
         <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>
           ZapSplit needs camera access to scan receipts and automatically split bills.
         </Text>
@@ -121,7 +121,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
   // If image is captured, show preview
   if (capturedImage) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <StatusBar barStyle="light-content" />
 
         {/* Header */}
@@ -134,13 +134,13 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         </View>
 
         {/* Image Preview */}
-        <View style={[styles.previewContainer, { backgroundColor: colors.gray50 }]}>
+        <View style={[styles.previewContainer, { backgroundColor: colors.background }]}>
           <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="contain" />
         </View>
 
         {/* Instructions */}
         <View style={styles.instructionsContainer}>
-          <Text style={[styles.instructionsText, { color: colors.gray400 }]}>
+          <Text style={[styles.instructionsText, { color: colors.textTertiary }]}>
             Make sure the receipt is clear and all items are visible
           </Text>
         </View>
@@ -148,7 +148,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={[styles.retakeButton, { backgroundColor: colors.gray800 }]}
+            style={[styles.retakeButton, { backgroundColor: colors.text }]}
             onPress={handleRetake}
             activeOpacity={0.7}
           >
@@ -171,7 +171,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
   // Camera view
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Header */}
@@ -199,8 +199,8 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 
       {/* Instructions */}
       <View style={styles.instructionsContainer}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.gray400} />
-        <Text style={[styles.instructionsText, { color: colors.gray400 }]}>
+        <Ionicons name="information-circle-outline" size={20} color={colors.textTertiary} />
+        <Text style={[styles.instructionsText, { color: colors.textTertiary }]}>
           Position the entire receipt within the frame
         </Text>
       </View>
@@ -217,13 +217,13 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.captureButton, { backgroundColor: colors.surface, borderColor: colors.gray700 }, isProcessing && styles.captureButtonDisabled]}
+          style={[styles.captureButton, { backgroundColor: colors.surface, borderColor: colors.text }, isProcessing && styles.captureButtonDisabled]}
           onPress={handleTakePhoto}
           disabled={isProcessing}
           activeOpacity={0.8}
         >
           {isProcessing ? (
-            <ActivityIndicator size="large" color={colors.gray50} />
+            <ActivityIndicator size="large" color={colors.background} />
           ) : (
             <View style={[styles.captureButtonInner, { backgroundColor: colors.surface }]} />
           )}

@@ -107,13 +107,13 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Request Payment</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Request Payment</Text>
           </View>
           <View style={{ width: 24 }} />
         </View>
@@ -125,14 +125,14 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Request Payment</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Request Payment</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Share your payment details</Text>
         </View>
         <View style={{ width: 24 }} />
@@ -148,7 +148,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Quick Pay with Card Option */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Pay Instantly</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Pay Instantly</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Pay now with your credit or debit card</Text>
 
           <TouchableOpacity
@@ -192,7 +192,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Payment Method Selector */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Choose Payment Method</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Choose Payment Method</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>How do you want to receive payment?</Text>
 
           {/* PayID Option */}
@@ -208,7 +208,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.surface }]}>
               <Ionicons
                 name="phone-portrait-outline"
                 size={24}
@@ -218,7 +218,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             <View style={styles.methodContent}>
               <Text style={[
                 styles.methodTitle,
-                { color: colors.gray900 },
+                { color: colors.text },
                 selectedMethod === 'payid' && { color: colors.primary },
               ]}>
                 PayID
@@ -245,7 +245,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.surface }]}>
               <Ionicons
                 name="business-outline"
                 size={24}
@@ -255,7 +255,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             <View style={styles.methodContent}>
               <Text style={[
                 styles.methodTitle,
-                { color: colors.gray900 },
+                { color: colors.text },
                 selectedMethod === 'bank_transfer' && { color: colors.primary },
               ]}>
                 Bank Transfer
@@ -282,7 +282,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.methodIcon, { backgroundColor: colors.gray100 }]}>
+            <View style={[styles.methodIcon, { backgroundColor: colors.surface }]}>
               <Ionicons
                 name="logo-paypal"
                 size={24}
@@ -292,7 +292,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             <View style={styles.methodContent}>
               <Text style={[
                 styles.methodTitle,
-                { color: colors.gray900 },
+                { color: colors.text },
                 selectedMethod === 'paypal' && { color: colors.primary },
               ]}>
                 PayPal
@@ -307,7 +307,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Payment Details Preview */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Payment Details</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Details</Text>
           <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
             {selectedMethod === 'payid' && hasPaymentDetails && (
               <>
@@ -318,23 +318,23 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
             {selectedMethod === 'payid' && !hasPaymentDetails && (
               <View style={styles.noPaymentDetails}>
                 <Ionicons name="alert-circle-outline" size={24} color={colors.warning} />
-                <Text style={[styles.noPaymentText, { color: colors.gray700 }]}>
+                <Text style={[styles.noPaymentText, { color: colors.text }]}>
                   Add your phone number in Profile to receive payments via PayID
                 </Text>
               </View>
             )}
             {selectedMethod === 'bank_transfer' && (
               <View style={styles.noPaymentDetails}>
-                <Ionicons name="construct-outline" size={24} color={colors.gray400} />
-                <Text style={[styles.noPaymentText, { color: colors.gray600 }]}>
+                <Ionicons name="construct-outline" size={24} color={colors.textTertiary} />
+                <Text style={[styles.noPaymentText, { color: colors.textSecondary }]}>
                   Bank transfer coming soon
                 </Text>
               </View>
             )}
             {selectedMethod === 'paypal' && (
               <View style={styles.noPaymentDetails}>
-                <Ionicons name="construct-outline" size={24} color={colors.gray400} />
-                <Text style={[styles.noPaymentText, { color: colors.gray600 }]}>
+                <Ionicons name="construct-outline" size={24} color={colors.textTertiary} />
+                <Text style={[styles.noPaymentText, { color: colors.textSecondary }]}>
                   PayPal integration coming soon
                 </Text>
               </View>
@@ -349,7 +349,7 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
 
         {/* Share Buttons */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Share Payment Request</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Share Payment Request</Text>
 
           <TouchableOpacity style={[styles.shareButton, { backgroundColor: colors.primary }]} onPress={handleShare} activeOpacity={0.8}>
             <Ionicons name="share-outline" size={20} color={colors.surface} />
@@ -368,14 +368,14 @@ export default function PaymentRequestScreen({ navigation, route }: PaymentReque
       {/* Footer */}
       <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.doneButton, { backgroundColor: colors.gray200 }]}
+          style={[styles.doneButton, { backgroundColor: colors.border }]}
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             navigation.navigate('CreateSplit'); // Navigate back to home
           }}
           activeOpacity={0.8}
         >
-          <Text style={[styles.doneButtonText, { color: colors.gray900 }]}>Done</Text>
+          <Text style={[styles.doneButtonText, { color: colors.text }]}>Done</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -387,7 +387,7 @@ function DetailRow({ label, value, colors }: { label: string; value: string; col
   return (
     <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.detailValue, { color: colors.gray900 }]}>{value}</Text>
+      <Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     alignItems: 'center',
   },
   doneButtonText: {

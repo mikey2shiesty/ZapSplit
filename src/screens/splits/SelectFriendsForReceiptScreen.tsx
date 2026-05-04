@@ -337,7 +337,7 @@ export default function SelectFriendsForReceiptScreen({
 
             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Name *</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              style={[styles.modalInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Their name"
               placeholderTextColor={colors.textTertiary}
               value={externalName}
@@ -347,7 +347,7 @@ export default function SelectFriendsForReceiptScreen({
 
             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Email (optional)</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              style={[styles.modalInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Their email"
               placeholderTextColor={colors.textTertiary}
               value={externalEmail}
@@ -358,7 +358,7 @@ export default function SelectFriendsForReceiptScreen({
 
             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Phone (optional)</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray100, color: colors.text, borderColor: colors.border }]}
+              style={[styles.modalInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Their phone number"
               placeholderTextColor={colors.textTertiary}
               value={externalPhone}
@@ -367,7 +367,7 @@ export default function SelectFriendsForReceiptScreen({
             />
 
             <TouchableOpacity
-              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.gray200 }]}
+              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.border }]}
               onPress={handleAddExternalPerson}
               disabled={!externalName.trim()}
               activeOpacity={0.7}
@@ -391,7 +391,7 @@ export default function SelectFriendsForReceiptScreen({
         <TouchableOpacity
           style={[
             styles.continueButton,
-            { backgroundColor: isValid && !saving ? colors.primary : colors.gray200 }
+            { backgroundColor: isValid && !saving ? colors.primary : colors.border }
           ]}
           onPress={handleContinue}
           disabled={!isValid || saving}
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   continueButton: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',

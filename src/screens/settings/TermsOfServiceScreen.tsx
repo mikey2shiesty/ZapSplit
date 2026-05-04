@@ -8,10 +8,10 @@ import {
   Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
+import { spacing, radius, typography } from '../../constants/theme';
+import Header from '../../components/common/Header';
 
 const CONTACT_EMAIL = 'zapsplit@gmail.com';
 const EFFECTIVE_DATE = '18 February 2026';
@@ -19,39 +19,31 @@ const EFFECTIVE_DATE = '18 February 2026';
 export default function TermsOfServiceScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const openEmail = () => {
     Linking.openURL(`mailto:${CONTACT_EMAIL}`);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.gray50 }]}>
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Terms of Service</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header title="Terms of service" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Effective Date */}
-        <Text style={[styles.effectiveDate, { color: colors.gray500 }]}>
+        <Text style={[styles.effectiveDate, { color: colors.textSecondary }]}>
           Effective Date: {EFFECTIVE_DATE}
         </Text>
 
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           Please read these Terms of Service ("Terms") carefully before using the ZapSplit mobile application and website (collectively, the "Service") operated by ZapSplit ("we", "us", or "our").
         </Text>
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           By accessing or using the Service, you agree to be bound by these Terms. If you do not agree, do not use the Service.
         </Text>
 
         {/* 1. Eligibility */}
         <SectionHeader title="1. Eligibility" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           You must be at least 18 years of age to use ZapSplit. By creating an account, you represent and warrant that:
         </Text>
         <Bullet colors={colors} text="You are at least 18 years old." />
@@ -60,7 +52,7 @@ export default function TermsOfServiceScreen() {
 
         {/* 2. Description of Service */}
         <SectionHeader title="2. Description of Service" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           ZapSplit is a bill-splitting platform that allows users to:
         </Text>
         <Bullet colors={colors} text="Create and manage shared expenses with friends and other people." />
@@ -68,20 +60,20 @@ export default function TermsOfServiceScreen() {
         <Bullet colors={colors} text="Share payment links with anyone, including people who do not have a ZapSplit account." />
         <Bullet colors={colors} text="Request and collect payments via Stripe." />
         <Bullet colors={colors} text="Track payment history, balances, and settlement status." />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           ZapSplit is not a bank, financial institution, or licensed payment facility. We facilitate payments through third-party payment processors.
         </Text>
 
         {/* 3. Account Registration */}
         <SectionHeader title="3. Account Registration" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           To use certain features of the Service, you must create an account. You agree to:
         </Text>
         <Bullet colors={colors} text="Provide accurate, current, and complete information during registration." />
         <Bullet colors={colors} text="Maintain and promptly update your account information." />
         <Bullet colors={colors} text="Keep your login credentials secure and confidential." />
         <Bullet colors={colors} text="Accept responsibility for all activity that occurs under your account." />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           You must notify us immediately if you suspect any unauthorised access to your account.
         </Text>
 
@@ -122,7 +114,7 @@ export default function TermsOfServiceScreen() {
 
         {/* 6. User Conduct */}
         <SectionHeader title="6. User Conduct" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           You agree not to use the Service to:
         </Text>
         <Bullet colors={colors} text="Engage in any illegal, fraudulent, or deceptive activity." />
@@ -132,25 +124,25 @@ export default function TermsOfServiceScreen() {
         <Bullet colors={colors} text="Attempt to gain unauthorised access to the Service or other users' accounts." />
         <Bullet colors={colors} text="Use the Service for money laundering, terrorism financing, or any activity that violates applicable anti-money laundering laws." />
         <Bullet colors={colors} text="Interfere with or disrupt the integrity or performance of the Service." />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           We reserve the right to suspend or terminate accounts that violate these terms without prior notice.
         </Text>
 
         {/* 7. Intellectual Property */}
         <SectionHeader title="7. Intellectual Property" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           The Service, including its design, code, features, logos, and content, is owned by ZapSplit and protected by Australian and international copyright, trademark, and intellectual property laws. You may not copy, modify, distribute, sell, or create derivative works based on the Service without our prior written consent.
         </Text>
 
         {/* 8. User Content */}
         <SectionHeader title="8. User Content" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           You retain ownership of any content you upload to the Service (such as receipt images and profile photos). By uploading content, you grant us a limited, non-exclusive licence to use, process, and store that content solely for the purpose of providing the Service to you.
         </Text>
 
         {/* 9. Third-Party Services */}
         <SectionHeader title="9. Third-Party Services" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           The Service integrates with third-party services including Stripe (payments), Supabase (infrastructure), OpenAI (receipt scanning), and Apple/Google (authentication). Your use of these services is subject to their respective terms and conditions. We are not responsible for the actions, content, or policies of any third-party service.
         </Text>
 
@@ -169,7 +161,7 @@ export default function TermsOfServiceScreen() {
 
         {/* 11. Limitation of Liability */}
         <SectionHeader title="11. Limitation of Liability" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           To the maximum extent permitted by the Australian Consumer Law and other applicable legislation:
         </Text>
         <Bullet colors={colors} text="ZapSplit shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to your use of the Service." />
@@ -178,7 +170,7 @@ export default function TermsOfServiceScreen() {
 
         {/* 12. Indemnification */}
         <SectionHeader title="12. Indemnification" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           You agree to indemnify, defend, and hold harmless ZapSplit and its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, or expenses (including reasonable legal fees) arising out of or in any way connected with your use of the Service, your violation of these Terms, or your violation of any rights of another person.
         </Text>
 
@@ -197,25 +189,25 @@ export default function TermsOfServiceScreen() {
 
         {/* 14. Governing Law */}
         <SectionHeader title="14. Governing Law and Dispute Resolution" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           These Terms are governed by and construed in accordance with the laws of Western Australia. Any disputes arising from these Terms or the Service shall be subject to the exclusive jurisdiction of the courts of Western Australia.
         </Text>
 
         {/* 15. Changes to Terms */}
         <SectionHeader title="15. Changes to These Terms" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           We reserve the right to modify these Terms at any time. We will notify you of material changes by updating the "Effective Date" at the top and, where appropriate, through an in-app notification. Your continued use of the Service after changes are posted constitutes your acceptance of the revised Terms. If you do not agree with the changes, you must stop using the Service.
         </Text>
 
         {/* 16. Severability */}
         <SectionHeader title="16. Severability" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           If any provision of these Terms is found to be invalid or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect.
         </Text>
 
         {/* 17. Contact */}
         <SectionHeader title="17. Contact Us" colors={colors} />
-        <Text style={[styles.bodyText, { color: colors.gray700 }]}>
+        <Text style={[styles.bodyText, { color: colors.text }]}>
           If you have any questions about these Terms of Service, please contact us:
         </Text>
 
@@ -227,8 +219,8 @@ export default function TermsOfServiceScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="location-outline" size={18} color={colors.gray500} />
-            <Text style={[styles.contactText, { color: colors.gray700 }]}>Perth, Western Australia</Text>
+            <Ionicons name="location-outline" size={18} color={colors.textSecondary} />
+            <Text style={[styles.contactText, { color: colors.text }]}>Perth, Western Australia</Text>
           </View>
         </View>
 
@@ -242,14 +234,14 @@ export default function TermsOfServiceScreen() {
 
 function SectionHeader({ title, colors }: { title: string; colors: any }) {
   return (
-    <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
   );
 }
 
 function SubSection({ number, children, colors }: { number: string; children: React.ReactNode; colors: any }) {
   return (
-    <Text style={[styles.bodyText, { color: colors.gray700 }]}>
-      <Text style={{ fontWeight: '600', color: colors.gray900 }}>{number} </Text>
+    <Text style={[styles.bodyText, { color: colors.text }]}>
+      <Text style={{ fontWeight: '600', color: colors.text }}>{number} </Text>
       {children}
     </Text>
   );
@@ -259,8 +251,8 @@ function Bullet({ colors, text, bold }: { colors: any; text: string; bold?: stri
   return (
     <View style={styles.bulletRow}>
       <Text style={[styles.bulletDot, { color: colors.gray400 }]}>{'\u2022'}</Text>
-      <Text style={[styles.bulletText, { color: colors.gray700 }]}>
-        {bold && <Text style={{ fontWeight: '600', color: colors.gray900 }}>{bold}</Text>}
+      <Text style={[styles.bulletText, { color: colors.text }]}>
+        {bold && <Text style={{ fontWeight: '600', color: colors.text }}>{bold}</Text>}
         {text}
       </Text>
     </View>

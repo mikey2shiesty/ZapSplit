@@ -167,7 +167,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
   const isValid = totalSelected > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <ScrollView
@@ -178,7 +178,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       >
         {/* Split Details Badge */}
         <View style={[styles.splitBadge, { backgroundColor: colors.infoLight }]}>
-          <Text style={[styles.splitBadgeTitle, { color: colors.gray900 }]}>{title}</Text>
+          <Text style={[styles.splitBadgeTitle, { color: colors.text }]}>{title}</Text>
           <Text style={[styles.splitBadgeAmount, { color: colors.primary }]}>
             ${amount.toFixed(2)}
           </Text>
@@ -187,7 +187,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {/* Groups Quick Select */}
         {!loadingGroups && groups.length > 0 && (
           <View style={styles.groupsSection}>
-            <Text style={[styles.groupsSectionTitle, { color: colors.gray500 }]}>
+            <Text style={[styles.groupsSectionTitle, { color: colors.textSecondary }]}>
               Quick select from group
             </Text>
             <ScrollView
@@ -203,7 +203,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
                     key={group.id}
                     style={[
                       styles.groupChip,
-                      { backgroundColor: isActive ? colors.primary : colors.surface, borderColor: isActive ? colors.primary : colors.gray200 },
+                      { backgroundColor: isActive ? colors.primary : colors.surface, borderColor: isActive ? colors.primary : colors.border },
                     ]}
                     onPress={() => handleGroupSelect(group)}
                     activeOpacity={0.7}
@@ -211,12 +211,12 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
                     <Ionicons
                       name={icon as any}
                       size={16}
-                      color={isActive ? colors.surface : colors.gray600}
+                      color={isActive ? colors.surface : colors.textSecondary}
                     />
                     <Text
                       style={[
                         styles.groupChipName,
-                        { color: isActive ? colors.surface : colors.gray900 },
+                        { color: isActive ? colors.surface : colors.text },
                       ]}
                       numberOfLines={1}
                     >
@@ -225,7 +225,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
                     <Text
                       style={[
                         styles.groupChipCount,
-                        { color: isActive ? colors.surface : colors.gray400 },
+                        { color: isActive ? colors.surface : colors.textTertiary },
                       ]}
                     >
                       {group.member_count}
@@ -241,7 +241,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.gray500 }]}>Loading friends...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading friends...</Text>
           </View>
         )}
 
@@ -249,7 +249,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {error && !loading && (
           <View style={styles.errorContainer}>
             <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-            <Text style={[styles.errorHint, { color: colors.gray500 }]}>
+            <Text style={[styles.errorHint, { color: colors.textSecondary }]}>
               Try adding friends from your profile first
             </Text>
           </View>
@@ -267,8 +267,8 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {/* Empty State - Only show when no friends and no external people */}
         {!loading && !error && friends.length === 0 && externalPeople.length === 0 && (
           <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: colors.gray900 }]}>No friends yet</Text>
-            <Text style={[styles.emptyHint, { color: colors.gray500 }]}>
+            <Text style={[styles.emptyText, { color: colors.text }]}>No friends yet</Text>
+            <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
               Add friends or tap below to add someone without the app
             </Text>
           </View>
@@ -277,22 +277,22 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         {/* External People List */}
         {externalPeople.length > 0 && (
           <View style={styles.externalSection}>
-            <Text style={[styles.externalSectionTitle, { color: colors.gray500 }]}>
+            <Text style={[styles.externalSectionTitle, { color: colors.textSecondary }]}>
               People without the app
             </Text>
             {externalPeople.map(person => (
-              <View key={person.id} style={[styles.externalPersonCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+              <View key={person.id} style={[styles.externalPersonCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={[styles.externalAvatar, { backgroundColor: '#FFF3E0' }]}>
                   <Ionicons name="link" size={18} color="#F57C00" />
                 </View>
                 <View style={styles.externalPersonInfo}>
-                  <Text style={[styles.externalPersonName, { color: colors.gray900 }]}>{person.name}</Text>
+                  <Text style={[styles.externalPersonName, { color: colors.text }]}>{person.name}</Text>
                   {person.email && (
-                    <Text style={[styles.externalPersonDetail, { color: colors.gray500 }]}>{person.email}</Text>
+                    <Text style={[styles.externalPersonDetail, { color: colors.textSecondary }]}>{person.email}</Text>
                   )}
                 </View>
                 <TouchableOpacity onPress={() => handleRemoveExternal(person.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Ionicons name="close-circle" size={22} color={colors.gray400} />
+                  <Ionicons name="close-circle" size={22} color={colors.textTertiary} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -319,50 +319,50 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.gray900 }]}>Add Person</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Person</Text>
               <TouchableOpacity onPress={() => { setShowAddExternal(false); setExternalName(''); setExternalEmail(''); setExternalPhone(''); }}>
-                <Ionicons name="close" size={24} color={colors.gray500} />
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Name *</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Name *</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              style={[styles.modalInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Their name"
-              placeholderTextColor={colors.gray400}
+              placeholderTextColor={colors.textTertiary}
               value={externalName}
               onChangeText={setExternalName}
               autoFocus
             />
 
-            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Email (optional)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Email (optional)</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              style={[styles.modalInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Their email"
-              placeholderTextColor={colors.gray400}
+              placeholderTextColor={colors.textTertiary}
               value={externalEmail}
               onChangeText={setExternalEmail}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
-            <Text style={[styles.modalLabel, { color: colors.gray500 }]}>Phone (optional)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Phone (optional)</Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.gray50, color: colors.gray900, borderColor: colors.gray200 }]}
+              style={[styles.modalInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Their phone number"
-              placeholderTextColor={colors.gray400}
+              placeholderTextColor={colors.textTertiary}
               value={externalPhone}
               onChangeText={setExternalPhone}
               keyboardType="phone-pad"
             />
 
             <TouchableOpacity
-              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.gray200 }]}
+              style={[styles.modalAddButton, { backgroundColor: externalName.trim() ? colors.primary : colors.border }]}
               onPress={handleAddExternalPerson}
               disabled={!externalName.trim()}
               activeOpacity={0.7}
             >
-              <Text style={[styles.modalAddButtonText, { color: externalName.trim() ? colors.surface : colors.gray400 }]}>
+              <Text style={[styles.modalAddButtonText, { color: externalName.trim() ? colors.surface : colors.textTertiary }]}>
                 Add Person
               </Text>
             </TouchableOpacity>
@@ -371,7 +371,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
       </Modal>
 
       {/* Continue Button - Fixed at Bottom */}
-      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {totalSelected > 0 && (
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
             {totalSelected} {totalSelected === 1 ? 'person' : 'people'} selected
@@ -381,7 +381,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           style={[
             styles.continueButton,
             { backgroundColor: colors.primary },
-            !isValid && { backgroundColor: colors.gray200 }
+            !isValid && { backgroundColor: colors.border }
           ]}
           onPress={handleContinue}
           disabled={!isValid}
@@ -390,7 +390,7 @@ export default function SelectFriendsScreen({ navigation, route }: SelectFriends
           <Text style={[
             styles.continueButtonText,
             { color: colors.surface },
-            !isValid && { color: colors.gray400 }
+            !isValid && { color: colors.textTertiary }
           ]}>
             Continue
           </Text>
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   continueButton: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',

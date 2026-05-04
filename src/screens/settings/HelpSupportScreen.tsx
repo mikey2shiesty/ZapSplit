@@ -74,7 +74,7 @@ export default function HelpSupportScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Help & Support" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -99,14 +99,14 @@ export default function HelpSupportScreen() {
         </View>
 
         {/* FAQ Section */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           FREQUENTLY ASKED QUESTIONS
         </Text>
         <View style={[styles.faqContainer, { backgroundColor: colors.surface }]}>
           {faqs.map((faq, index) => (
             <View key={index}>
               {index > 0 && (
-                <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
               )}
               <TouchableOpacity
                 style={styles.faqItem}
@@ -114,17 +114,17 @@ export default function HelpSupportScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.faqQuestion}>
-                  <Text style={[styles.faqQuestionText, { color: colors.gray900 }]}>
+                  <Text style={[styles.faqQuestionText, { color: colors.text }]}>
                     {faq.question}
                   </Text>
                   <Ionicons
                     name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
                     size={20}
-                    color={colors.gray400}
+                    color={colors.textTertiary}
                   />
                 </View>
                 {expandedIndex === index && (
-                  <Text style={[styles.faqAnswer, { color: colors.gray600 }]}>
+                  <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>
                     {faq.answer}
                   </Text>
                 )}
@@ -134,7 +134,7 @@ export default function HelpSupportScreen() {
         </View>
 
         {/* Quick Links */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           QUICK LINKS
         </Text>
         <View style={[styles.linksContainer, { backgroundColor: colors.surface }]}>
@@ -144,14 +144,14 @@ export default function HelpSupportScreen() {
             onPress={() => navigation.navigate('TermsOfService')}
             colors={colors}
           />
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <QuickLink
             icon="lock-closed-outline"
             label="Privacy Policy"
             onPress={() => navigation.navigate('PrivacyPolicy')}
             colors={colors}
           />
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <QuickLink
             icon="mail-outline"
             label="Contact Support"
@@ -182,18 +182,18 @@ function QuickLink({
 }) {
   return (
     <TouchableOpacity style={styles.quickLink} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.quickLinkIcon, { backgroundColor: colors.gray100 }]}>
-        <Ionicons name={icon as any} size={20} color={colors.gray700} />
+      <View style={[styles.quickLinkIcon, { backgroundColor: colors.border }]}>
+        <Ionicons name={icon as any} size={20} color={colors.text} />
       </View>
       <View style={styles.quickLinkContent}>
-        <Text style={[styles.quickLinkLabel, { color: colors.gray900 }]}>{label}</Text>
+        <Text style={[styles.quickLinkLabel, { color: colors.text }]}>{label}</Text>
         {subtitle && (
-          <Text style={[styles.quickLinkSubtitle, { color: colors.gray500 }]}>
+          <Text style={[styles.quickLinkSubtitle, { color: colors.textSecondary }]}>
             {subtitle}
           </Text>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+      <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
     </TouchableOpacity>
   );
 }

@@ -279,10 +279,10 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.gray500 }]}>Loading split...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading split...</Text>
         </View>
       </View>
     );
@@ -290,7 +290,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
 
   if (!split) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.errorText, { color: colors.error }]}>Split not found</Text>
         </View>
@@ -337,13 +337,13 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.gray50 }]}>
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Split Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Split Details</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -358,7 +358,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
         {/* Summary Card */}
         <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
           <View style={styles.summaryHeader}>
-            <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>
+            <Text style={[styles.summaryTitle, { color: colors.text }]}>
               {!isCreator && split.title?.startsWith('Request to ')
                 ? `Request from ${split.creator?.full_name || 'someone'}`
                 : split.title}
@@ -371,23 +371,23 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             )}
           </View>
 
-          {split.description && <Text style={[styles.summaryDescription, { color: colors.gray500 }]}>{split.description}</Text>}
+          {split.description && <Text style={[styles.summaryDescription, { color: colors.textSecondary }]}>{split.description}</Text>}
 
           <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Total Amount</Text>
-            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>${split.total_amount.toFixed(2)} AUD</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Total Amount</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>${split.total_amount.toFixed(2)} AUD</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Split Method</Text>
-            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{getSplitMethodLabel(split.split_type || 'equal')}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Split Method</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>{getSplitMethodLabel(split.split_type || 'equal')}</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Created</Text>
-            <Text style={[styles.summaryValue, { color: colors.gray900 }]}>{formatDate(split.created_at)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Created</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>{formatDate(split.created_at)}</Text>
           </View>
 
           {/* Payment Progress */}
@@ -396,7 +396,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           {/* Your Share — shows different value for creator vs participant */}
           {yourShare > 0.01 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Your Share</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Your Share</Text>
               <Text style={[styles.summaryValue, { color: colors.primary }]}>
                 ${yourShare.toFixed(2)}
               </Text>
@@ -425,7 +425,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
               const isPaid = userParticipant?.status === 'paid' || (userParticipant?.amount_paid && userParticipant.amount_paid > 0) || paidViaWeb;
               return (
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Status</Text>
                   <Text style={[styles.summaryValue, { color: isPaid ? colors.success : colors.warning }]}>
                     {isPaid ? 'Paid' : 'Unpaid'}
                   </Text>
@@ -446,7 +446,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             if (!hasOthersOwing) {
               return (
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Status</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Status</Text>
                   <Text style={[styles.summaryValue, { color: colors.success }]}>All yours</Text>
                 </View>
               );
@@ -455,20 +455,20 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
             return (
               <>
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Collected</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Collected</Text>
                   <Text style={[styles.summaryValue, { color: colors.success }]}>
                     ${totalPaid.toFixed(2)} of ${effectiveOwed.toFixed(2)}
                   </Text>
                 </View>
                 {remaining > 0.01 && (
                   <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: colors.gray500 }]}>Remaining</Text>
+                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Remaining</Text>
                     <Text style={[styles.summaryValue, { color: colors.warning }]}>
                       ${remaining.toFixed(2)}
                     </Text>
                   </View>
                 )}
-                <View style={[styles.progressBarContainer, { backgroundColor: colors.gray200 }]}>
+                <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
                   <View
                     style={[
                       styles.progressBar,
@@ -488,8 +488,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
         {split.web_payments && split.web_payments.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Payments Received</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Payments Received</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
                 {split.web_payments.length} payment{split.web_payments.length !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -503,10 +503,10 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                   <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                 </View>
                 <View style={styles.paymentInfo}>
-                  <Text style={[styles.paymentName, { color: colors.gray900 }]}>
+                  <Text style={[styles.paymentName, { color: colors.text }]}>
                     {payment.payer_name || payment.payer_email}
                   </Text>
-                  <Text style={[styles.paymentDate, { color: colors.gray500 }]}>
+                  <Text style={[styles.paymentDate, { color: colors.textSecondary }]}>
                     {formatDate(payment.created_at)}
                   </Text>
                 </View>
@@ -521,8 +521,8 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
         {/* Participants Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Participants</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.gray500 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Participants</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
               {(() => {
                 // Count participants who owe money (exclude creator)
                 const owingParticipants = split.participants.filter((p: any) => p.user_id !== split.creator_id);
@@ -562,7 +562,7 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                   {split.creator?.avatar_url ? (
                     <Image source={{ uri: split.creator.avatar_url }} style={styles.avatarImage} />
                   ) : (
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: isCreator ? colors.primary : colors.gray400 }]}>
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: isCreator ? colors.primary : colors.textTertiary }]}>
                       <Text style={[styles.avatarInitials, { color: colors.surface }]}>
                         {getInitials(split.creator?.full_name || 'Creator')}
                       </Text>
@@ -570,10 +570,10 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
                   )}
                 </View>
                 <View style={styles.participantDetails}>
-                  <Text style={[styles.participantName, { color: colors.gray900 }]}>
+                  <Text style={[styles.participantName, { color: colors.text }]}>
                     {isCreator ? 'You' : split.creator?.full_name || 'Creator'}
                   </Text>
-                  <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
+                  <Text style={[styles.participantAmount, { color: colors.textSecondary }]}>
                     ${creatorShare.toFixed(2)}
                   </Text>
                 </View>
@@ -715,7 +715,7 @@ function ParticipantCard({
           ) : participant.user?.avatar_url ? (
             <Image source={{ uri: participant.user.avatar_url }} style={styles.avatarImage} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: isCurrentUser ? colors.primary : colors.gray400 }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: isCurrentUser ? colors.primary : colors.textTertiary }]}>
               <Text style={[styles.avatarInitials, { color: colors.surface }]}>
                 {getInitials(participant.user?.full_name || 'U')}
               </Text>
@@ -725,8 +725,8 @@ function ParticipantCard({
 
         {/* Name and Amount */}
         <View style={styles.participantDetails}>
-          <Text style={[styles.participantName, { color: colors.gray900 }]}>{isCurrentUser ? 'You' : (participant.external_name || participant.user?.full_name || 'Unknown')}</Text>
-          <Text style={[styles.participantAmount, { color: colors.gray500 }]}>
+          <Text style={[styles.participantName, { color: colors.text }]}>{isCurrentUser ? 'You' : (participant.external_name || participant.user?.full_name || 'Unknown')}</Text>
+          <Text style={[styles.participantAmount, { color: colors.textSecondary }]}>
             ${isPaidViaWeb ? paidAmount.toFixed(2) : participant.amount_owed.toFixed(2)}
           </Text>
         </View>
@@ -754,17 +754,17 @@ function ParticipantCard({
       {claimedItems.length > 0 && (
         <View style={styles.claimedItemsContainer}>
           <View style={[styles.claimedItemsDivider, { backgroundColor: colors.border }]} />
-          <Text style={[styles.claimedItemsLabel, { color: colors.gray500 }]}>
+          <Text style={[styles.claimedItemsLabel, { color: colors.textSecondary }]}>
             Items claimed:
           </Text>
           {claimedItems.map((item, index) => (
             <View key={index} style={styles.claimedItemRow}>
-              <Text style={[styles.claimedItemName, { color: colors.gray700 }]}>
+              <Text style={[styles.claimedItemName, { color: colors.text }]}>
                 {item.quantity_claimed && item.quantity_claimed > 1
                   ? `${item.quantity_claimed}x `
                   : ''}{item.item_name}
               </Text>
-              <Text style={[styles.claimedItemPrice, { color: colors.gray600 }]}>
+              <Text style={[styles.claimedItemPrice, { color: colors.textSecondary }]}>
                 ${(Number(item.item_amount) / (item.share_count || 1)).toFixed(2)}
               </Text>
             </View>

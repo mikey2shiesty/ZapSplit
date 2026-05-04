@@ -7,16 +7,19 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { supabase } from '../../services/supabase';
-import Button from '../../components/common/Button';
-import Header from '../../components/common/Header';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
+import Card from '../../components/common/Card';
 
 export default function ChangePasswordScreen() {
   const navigation = useNavigation<any>();
@@ -25,282 +28,236 @@ export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [focused, setFocused] = useState<string | null>(null);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
-    }
-
-    if (!newPassword) {
-      newErrors.newPassword = 'New password is required';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
-    } else if (!/[A-Z]/.test(newPassword)) {
-      newErrors.newPassword = 'Password must contain an uppercase letter';
-    } else if (!/[a-z]/.test(newPassword)) {
-      newErrors.newPassword = 'Password must contain a lowercase letter';
-    } else if (!/[0-9]/.test(newPassword)) {
-      newErrors.newPassword = 'Password must contain a number';
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (currentPassword && newPassword && currentPassword === newPassword) {
-      newErrors.newPassword = 'New password must be different from current password';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: Record<string, string> = {};
+    if (!currentPassword) e.currentPassword = 'Current password is required';
+    if (!newPassword) e.newPassword = 'New password is required';
+    else if (newPassword.length < 8) e.newPassword = 'Password must be at least 8 characters';
+    else if (!/[A-Z]/.test(newPassword)) e.newPassword = 'Password must contain an uppercase letter';
+    else if (!/[a-z]/.test(newPassword)) e.newPassword = 'Password must contain a lowercase letter';
+    else if (!/[0-9]/.test(newPassword)) e.newPassword = 'Password must contain a number';
+    if (!confirmPassword) e.confirmPassword = 'Please confirm your new password';
+    else if (newPassword !== confirmPassword) e.confirmPassword = 'Passwords do not match';
+    if (currentPassword && newPassword && currentPassword === newPassword)
+      e.newPassword = 'New password must be different';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleChangePassword = async () => {
+  const handleChange = async () => {
     if (!validateForm()) return;
-
     try {
       setSaving(true);
-
-      // Update password through Supabase Auth
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
-      Alert.alert(
-        'Password Changed',
-        'Your password has been updated successfully.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Password changed', 'Your password has been updated.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (error: any) {
-      console.error('Error changing password:', error);
-
-      // Handle specific error messages
-      if (error.message?.includes('same as')) {
-        setErrors({ newPassword: 'New password must be different from current password' });
-      } else {
-        Alert.alert('Error', error.message || 'Failed to change password. Please try again.');
-      }
+      Alert.alert('Error', error.message || 'Failed to change password.');
     } finally {
       setSaving(false);
     }
   };
 
-  const getPasswordStrength = () => {
-    if (!newPassword) return { label: '', color: colors.gray300, width: '0%' };
+  const inputBorder = (field: string, hasError: boolean) =>
+    hasError ? colors.error : focused === field ? colors.primary : colors.border;
+  const inputWidth = (field: string, hasError: boolean) =>
+    hasError || focused === field ? 2 : 1;
 
-    let strength = 0;
-    if (newPassword.length >= 8) strength++;
-    if (newPassword.length >= 12) strength++;
-    if (/[A-Z]/.test(newPassword)) strength++;
-    if (/[a-z]/.test(newPassword)) strength++;
-    if (/[0-9]/.test(newPassword)) strength++;
-    if (/[^A-Za-z0-9]/.test(newPassword)) strength++;
+  type ReqProps = { ok: boolean; label: string };
+  const Req = ({ ok, label }: ReqProps) => (
+    <View style={styles.reqRow}>
+      <Ionicons
+        name={ok ? 'checkmark-circle' : 'ellipse-outline'}
+        size={16}
+        color={ok ? colors.success : colors.textTertiary}
+      />
+      <Text style={[styles.reqLabel, { color: ok ? colors.success : colors.textSecondary }]}>
+        {label}
+      </Text>
+    </View>
+  );
 
-    if (strength <= 2) return { label: 'Weak', color: colors.error, width: '33%' };
-    if (strength <= 4) return { label: 'Medium', color: colors.warning, width: '66%' };
-    return { label: 'Strong', color: colors.success, width: '100%' };
-  };
-
-  const passwordStrength = getPasswordStrength();
+  const PwField = ({
+    field,
+    value,
+    setValue,
+    show,
+    setShow,
+    placeholder,
+  }: {
+    field: string;
+    value: string;
+    setValue: (v: string) => void;
+    show: boolean;
+    setShow: (v: boolean) => void;
+    placeholder: string;
+  }) => (
+    <View
+      style={[
+        styles.passwordRow,
+        {
+          backgroundColor: colors.surface,
+          borderColor: inputBorder(field, !!errors[field]),
+          borderWidth: inputWidth(field, !!errors[field]),
+        },
+      ]}
+    >
+      <TextInput
+        style={[styles.passwordInput, { color: colors.text }]}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textTertiary}
+        value={value}
+        onChangeText={(t) => {
+          setValue(t);
+          if (errors[field]) setErrors({ ...errors, [field]: '' });
+        }}
+        onFocus={() => setFocused(field)}
+        onBlur={() => setFocused(null)}
+        secureTextEntry={!show}
+        autoCapitalize="none"
+      />
+      <TouchableOpacity
+        onPress={() => setShow(!show)}
+        style={styles.eyeButton}
+        hitSlop={8}
+      >
+        <Ionicons name={show ? 'eye-off' : 'eye'} size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
-      {/* Header */}
-      <Header title="Change Password" onBack={() => navigation.goBack()} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header title="Change password" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
+        style={{ flex: 1 }}
       >
         <ScrollView
-          style={styles.content}
+          contentContainerStyle={{ paddingBottom: spacing.xxl }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Info */}
-          <View style={[styles.infoBox, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            <Text style={[styles.infoText, { color: colors.gray700 }]}>
-              Choose a strong password that you don't use for other accounts. It should be at least 8 characters with a mix of letters, numbers, and symbols.
-            </Text>
+          <View style={styles.section}>
+            <Card variant="tinted">
+              <View style={styles.infoRow}>
+                <Ionicons name="information-circle" size={20} color={colors.primary} />
+                <Text style={[styles.infoText, { color: colors.text }]}>
+                  Choose a strong password you don't use elsewhere. At least 8 characters
+                  with letters, numbers, and symbols.
+                </Text>
+              </View>
+            </Card>
           </View>
 
-          {/* Form Fields */}
-          <View style={styles.formSection}>
-            {/* Current Password */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Current Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
-                    errors.currentPassword && { borderColor: colors.error }
-                  ]}
-                  value={currentPassword}
-                  onChangeText={(text) => {
-                    setCurrentPassword(text);
-                    if (errors.currentPassword) {
-                      setErrors({ ...errors, currentPassword: '' });
-                    }
-                  }}
-                  placeholder="Enter current password"
-                  placeholderTextColor={colors.gray400}
-                  secureTextEntry={!showCurrentPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  <Ionicons
-                    name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={22}
-                    color={colors.gray500}
-                  />
-                </TouchableOpacity>
-              </View>
+          <View style={styles.section}>
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Current password
+              </Text>
+              <PwField
+                field="currentPassword"
+                value={currentPassword}
+                setValue={setCurrentPassword}
+                show={showCurrent}
+                setShow={setShowCurrent}
+                placeholder="Current password"
+              />
               {errors.currentPassword && (
-                <Text style={[styles.errorText, { color: colors.error }]}>{errors.currentPassword}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.currentPassword}
+                </Text>
               )}
             </View>
 
-            {/* New Password */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>New Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
-                    errors.newPassword && { borderColor: colors.error }
-                  ]}
-                  value={newPassword}
-                  onChangeText={(text) => {
-                    setNewPassword(text);
-                    if (errors.newPassword) {
-                      setErrors({ ...errors, newPassword: '' });
-                    }
-                  }}
-                  placeholder="Enter new password"
-                  placeholderTextColor={colors.gray400}
-                  secureTextEntry={!showNewPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowNewPassword(!showNewPassword)}
-                >
-                  <Ionicons
-                    name={showNewPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={22}
-                    color={colors.gray500}
-                  />
-                </TouchableOpacity>
-              </View>
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>New password</Text>
+              <PwField
+                field="newPassword"
+                value={newPassword}
+                setValue={setNewPassword}
+                show={showNew}
+                setShow={setShowNew}
+                placeholder="New password"
+              />
               {errors.newPassword && (
-                <Text style={[styles.errorText, { color: colors.error }]}>{errors.newPassword}</Text>
-              )}
-
-              {/* Password Strength Indicator */}
-              {newPassword && (
-                <View style={styles.strengthContainer}>
-                  <View style={[styles.strengthBar, { backgroundColor: colors.gray200 }]}>
-                    <View
-                      style={[
-                        styles.strengthFill,
-                        { width: passwordStrength.width as any, backgroundColor: passwordStrength.color },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
-                    {passwordStrength.label}
-                  </Text>
-                </View>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.newPassword}
+                </Text>
               )}
             </View>
 
-            {/* Confirm Password */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.gray700 }]}>Confirm New Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 },
-                    errors.confirmPassword && { borderColor: colors.error }
-                  ]}
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text);
-                    if (errors.confirmPassword) {
-                      setErrors({ ...errors, confirmPassword: '' });
-                    }
-                  }}
-                  placeholder="Confirm new password"
-                  placeholderTextColor={colors.gray400}
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={22}
-                    color={colors.gray500}
-                  />
-                </TouchableOpacity>
-              </View>
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Confirm new password
+              </Text>
+              <PwField
+                field="confirmPassword"
+                value={confirmPassword}
+                setValue={setConfirmPassword}
+                show={showConfirm}
+                setShow={setShowConfirm}
+                placeholder="Confirm new password"
+              />
               {errors.confirmPassword && (
-                <Text style={[styles.errorText, { color: colors.error }]}>{errors.confirmPassword}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.confirmPassword}
+                </Text>
               )}
-              {confirmPassword && newPassword === confirmPassword && !errors.confirmPassword && (
-                <View style={styles.matchIndicator}>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                  <Text style={[styles.matchText, { color: colors.success }]}>Passwords match</Text>
+            </View>
+          </View>
+
+          {/* REQUIREMENTS */}
+          {newPassword.length > 0 && (
+            <View style={styles.section}>
+              <Card>
+                <Text style={[styles.cardLabel, { color: colors.text }]}>Requirements</Text>
+                <View style={styles.reqList}>
+                  <Req ok={newPassword.length >= 8} label="At least 8 characters" />
+                  <Req ok={/[A-Z]/.test(newPassword)} label="One uppercase letter" />
+                  <Req ok={/[a-z]/.test(newPassword)} label="One lowercase letter" />
+                  <Req ok={/[0-9]/.test(newPassword)} label="One number" />
                 </View>
-              )}
+              </Card>
             </View>
-          </View>
+          )}
 
-          {/* Password Requirements */}
-          <View style={[styles.requirementsSection, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.requirementsTitle, { color: colors.gray700 }]}>Password Requirements</Text>
-            <View style={styles.requirementsList}>
-              <RequirementItem met={newPassword.length >= 8} text="At least 8 characters" colors={colors} />
-              <RequirementItem met={/[A-Z]/.test(newPassword)} text="One uppercase letter" colors={colors} />
-              <RequirementItem met={/[a-z]/.test(newPassword)} text="One lowercase letter" colors={colors} />
-              <RequirementItem met={/[0-9]/.test(newPassword)} text="One number" colors={colors} />
-            </View>
-          </View>
-
-          {/* Save Button */}
-          <View style={styles.saveSection}>
-            <Button
-              variant="primary"
-              onPress={handleChangePassword}
-              loading={saving}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[
+                styles.primaryPill,
+                {
+                  backgroundColor: colors.primary,
+                  opacity:
+                    !currentPassword || !newPassword || !confirmPassword || saving ? 0.4 : 1,
+                },
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleChange();
+              }}
               disabled={!currentPassword || !newPassword || !confirmPassword || saving}
-              fullWidth
+              activeOpacity={0.85}
             >
-              Change Password
-            </Button>
+              {saving ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                  Change password
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -308,129 +265,75 @@ export default function ChangePasswordScreen() {
   );
 }
 
-// Requirement Item Component
-function RequirementItem({ met, text, colors }: { met: boolean; text: string; colors: any }) {
-  return (
-    <View style={styles.requirementItem}>
-      <Ionicons
-        name={met ? 'checkmark-circle' : 'ellipse-outline'}
-        size={18}
-        color={met ? colors.success : colors.gray400}
-      />
-      <Text style={[styles.requirementText, { color: met ? colors.gray700 : colors.gray500 }]}>
-        {text}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  section: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  infoBox: {
+  infoRow: {
     flexDirection: 'row',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.lg,
-    gap: spacing.sm + 4,
+    gap: spacing.sm,
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    ...typography.body,
   },
-  formSection: {
-    marginBottom: spacing.lg,
+
+  field: {
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
+  label: {
+    ...typography.bodySmall,
     fontWeight: '600',
-    marginBottom: spacing.sm,
+    paddingLeft: 4,
   },
-  passwordContainer: {
-    position: 'relative',
-  },
-  input: {
-    borderWidth: 1,
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: radius.md,
-    padding: spacing.md,
-    fontSize: 16,
   },
   passwordInput: {
-    paddingRight: 50,
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    ...typography.bodyLarge,
   },
   eyeButton: {
-    position: 'absolute',
-    right: spacing.md,
-    top: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
   },
   errorText: {
+    ...typography.bodySmall,
     fontSize: 12,
-    marginTop: 6,
+    paddingLeft: 4,
   },
-  strengthContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.sm,
-    gap: spacing.sm + 4,
+
+  cardLabel: {
+    ...typography.bodyLarge,
+    marginBottom: spacing.sm,
   },
-  strengthBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  strengthFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  strengthLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  matchIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 6,
-  },
-  matchText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  requirementsSection: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.xl,
-  },
-  requirementsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: spacing.sm + 4,
-  },
-  requirementsList: {
+  reqList: {
     gap: spacing.sm,
   },
-  requirementItem: {
+  reqRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.sm,
   },
-  requirementText: {
-    fontSize: 14,
+  reqLabel: {
+    ...typography.body,
   },
-  saveSection: {
-    marginBottom: 40,
+
+  primaryPill: {
+    height: 56,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryPillLabel: {
+    ...typography.button,
+    fontSize: 17,
   },
 });

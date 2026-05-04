@@ -157,7 +157,7 @@ export default function SplitSuccessScreen({ navigation, route }: SplitSuccessSc
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.secondaryButton, { backgroundColor: colors.gray100 }]}
+          style={[styles.secondaryButton, { backgroundColor: colors.surface }]}
           onPress={handleViewSplit}
           activeOpacity={0.7}
         >
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     flexDirection: 'row',
     backgroundColor: '#3B82F6',
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',

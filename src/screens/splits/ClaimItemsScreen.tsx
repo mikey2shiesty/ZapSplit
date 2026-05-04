@@ -473,7 +473,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                         <Ionicons
                           name="remove"
                           size={18}
-                          color={selectedQty <= 1 ? colors.gray300 : colors.primary}
+                          color={selectedQty <= 1 ? colors.border : colors.primary}
                         />
                       </TouchableOpacity>
                       <Text style={styles.qtyText}>{selectedQty} of {qtyRemaining} available</Text>
@@ -488,7 +488,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                         <Ionicons
                           name="add"
                           size={18}
-                          color={selectedQty >= qtyRemaining ? colors.gray300 : colors.primary}
+                          color={selectedQty >= qtyRemaining ? colors.border : colors.primary}
                         />
                       </TouchableOpacity>
                     </View>
@@ -639,7 +639,7 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.infoLight,
   },
   itemCardDisabled: {
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.surface,
     opacity: 0.8,
   },
   checkbox: {
@@ -745,8 +745,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: radius.sm,
     borderWidth: 2,
-    borderColor: colors.gray300,
-    backgroundColor: colors.gray100,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   summaryCard: {
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.background,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   continueButtonDisabled: {
-    backgroundColor: colors.gray300,
+    backgroundColor: colors.border,
   },
   continueButtonText: {
     fontSize: 16,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },

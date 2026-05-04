@@ -49,7 +49,7 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <KeyboardAvoidingView
@@ -64,8 +64,8 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
           keyboardShouldPersistTaps="handled"
         >
           {/* Page Title */}
-          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Create Split</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>Create Split</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
             Enter the bill amount and details, or scan a receipt
           </Text>
 
@@ -79,19 +79,19 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
               <Ionicons name="camera-outline" size={22} color={colors.primary} />
             </View>
             <View style={styles.scanTextContainer}>
-              <Text style={[styles.scanButtonTitle, { color: colors.gray900 }]}>Scan Receipt</Text>
-              <Text style={[styles.scanButtonSubtitle, { color: colors.gray500 }]}>
+              <Text style={[styles.scanButtonTitle, { color: colors.text }]}>Scan Receipt</Text>
+              <Text style={[styles.scanButtonSubtitle, { color: colors.textSecondary }]}>
                 AI extracts items and splits the bill
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.gray400} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
           </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.gray200 }]} />
-            <Text style={[styles.dividerText, { color: colors.gray400 }]}>or enter manually</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.gray200 }]} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or enter manually</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
 
           {/* Amount Input */}
@@ -105,14 +105,14 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
 
           {/* Title Input */}
           <View style={styles.section}>
-            <Text style={[styles.inputLabel, { color: colors.gray600 }]}>Split Title</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Split Title</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
               <TextInput
-                style={[styles.textInput, { color: colors.gray900 }]}
+                style={[styles.textInput, { color: colors.text }]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g., Dinner at Nobu"
-                placeholderTextColor={colors.gray400}
+                placeholderTextColor={colors.textTertiary}
                 maxLength={50}
                 autoCapitalize="words"
                 returnKeyType="next"
@@ -128,16 +128,16 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
 
           {/* Description Input (Optional) */}
           <View style={styles.section}>
-            <Text style={[styles.inputLabel, { color: colors.gray600 }]}>
-              Description <Text style={[styles.optionalLabel, { color: colors.gray400 }]}>(optional)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+              Description <Text style={[styles.optionalLabel, { color: colors.textTertiary }]}>(optional)</Text>
             </Text>
             <View style={[styles.inputContainer, styles.textAreaContainer, { backgroundColor: colors.surface }]}>
               <TextInput
-                style={[styles.textInput, styles.textArea, { color: colors.gray900 }]}
+                style={[styles.textInput, styles.textArea, { color: colors.text }]}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Add details about this split..."
-                placeholderTextColor={colors.gray400}
+                placeholderTextColor={colors.textTertiary}
                 maxLength={200}
                 multiline
                 numberOfLines={4}
@@ -145,32 +145,32 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
                 returnKeyType="done"
               />
             </View>
-            <Text style={[styles.charCount, { color: colors.gray400 }]}>
+            <Text style={[styles.charCount, { color: colors.textTertiary }]}>
               {description.length}/200
             </Text>
           </View>
 
           {/* Info note */}
           <View style={styles.infoRow}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.gray400} />
-            <Text style={[styles.infoText, { color: colors.gray400 }]}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textTertiary} />
+            <Text style={[styles.infoText, { color: colors.textTertiary }]}>
               You'll select friends and split method next
             </Text>
           </View>
         </ScrollView>
 
         {/* Continue Button - Fixed at Bottom */}
-        <View style={[styles.buttonContainer, { backgroundColor: colors.gray50 }]}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
           <TouchableOpacity
             style={[
               styles.continueButton,
-              { backgroundColor: isValid ? colors.primary : colors.gray200 },
+              { backgroundColor: isValid ? colors.primary : colors.border },
             ]}
             onPress={handleContinue}
             disabled={!isValid}
             activeOpacity={0.7}
           >
-            <Text style={[styles.continueButtonText, { color: isValid ? '#FFFFFF' : colors.gray400 }]}>
+            <Text style={[styles.continueButtonText, { color: isValid ? '#FFFFFF' : colors.textTertiary }]}>
               Continue
             </Text>
             {isValid && (
@@ -275,8 +275,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   continueButton: {
-    borderRadius: radius.md,
-    paddingVertical: 16,
+    borderRadius: radius.pill,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

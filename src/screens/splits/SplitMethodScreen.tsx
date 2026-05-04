@@ -61,7 +61,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <ScrollView
@@ -71,8 +71,8 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Split Method</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.gray900 }]}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>Split Method</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.text }]}>
             How should we split ${amount.toFixed(2)}?
           </Text>
           <Text style={[styles.participantCount, { color: colors.primary }]}>
@@ -109,7 +109,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
 
         {/* Info Section */}
         <View style={[styles.infoSection, { backgroundColor: colors.infoLight }]}>
-          <Text style={[styles.infoText, { color: colors.gray900 }]}>
+          <Text style={[styles.infoText, { color: colors.text }]}>
             {selectedMethod === 'equal'
               ? '✓ Everyone pays the same amount'
               : selectedMethod === 'custom'
@@ -120,7 +120,7 @@ export default function SplitMethodScreen({ navigation, route }: SplitMethodScre
       </ScrollView>
 
       {/* Continue Button - Fixed at Bottom */}
-      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={[styles.continueButton, { backgroundColor: colors.primary }]}
           onPress={handleContinue}
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   continueButton: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',

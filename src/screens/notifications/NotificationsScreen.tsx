@@ -175,7 +175,7 @@ export default function NotificationsScreen() {
   const renderNotification = ({ item }: { item: AppNotification }) => {
     const iconConfig = NOTIFICATION_ICONS[item.type] || {
       name: 'notifications-outline',
-      color: colors.gray500,
+      color: colors.textSecondary,
     };
 
     const timeAgo = formatDistanceToNow(new Date(item.created_at), { addSuffix: true });
@@ -199,17 +199,17 @@ export default function NotificationsScreen() {
             </View>
             <View style={styles.textContent}>
               <View style={styles.titleRow}>
-                <Text style={[styles.title, { color: colors.gray900 }, !item.read && styles.unreadTitle]}>
+                <Text style={[styles.title, { color: colors.text }, !item.read && styles.unreadTitle]}>
                   {item.title}
                 </Text>
                 {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
               </View>
-              <Text style={[styles.body, { color: colors.gray600 }]} numberOfLines={2}>
+              <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>
                 {item.body}
               </Text>
-              <Text style={[styles.time, { color: colors.gray500 }]}>{timeAgo}</Text>
+              <Text style={[styles.time, { color: colors.textSecondary }]}>{timeAgo}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </View>
         </View>
       </TouchableOpacity>
@@ -218,9 +218,9 @@ export default function NotificationsScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="notifications-off-outline" size={64} color={colors.gray300} />
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Notifications</Text>
-      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
+      <Ionicons name="notifications-off-outline" size={64} color={colors.border} />
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No Notifications</Text>
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
         You're all caught up! New notifications will appear here.
       </Text>
     </View>
@@ -229,7 +229,7 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Header
         title="Notifications"

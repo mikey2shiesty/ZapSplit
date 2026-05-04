@@ -82,7 +82,7 @@ export default function PaymentHistoryScreen() {
         <Text
           style={[
             styles.tabText,
-            { color: colors.gray500 },
+            { color: colors.textSecondary },
             isActive && { color: '#FFFFFF' },
           ]}
         >
@@ -104,7 +104,7 @@ export default function PaymentHistoryScreen() {
       case 'refunded':
         return { bg: colors.error + '18', text: colors.error };
       default:
-        return { bg: colors.gray200, text: colors.gray600 };
+        return { bg: colors.border, text: colors.textSecondary };
     }
   };
 
@@ -147,15 +147,15 @@ export default function PaymentHistoryScreen() {
 
           {/* Info */}
           <View style={styles.paymentInfo}>
-            <Text style={[styles.personName, { color: colors.gray900 }]} numberOfLines={1}>
+            <Text style={[styles.personName, { color: colors.text }]} numberOfLines={1}>
               {isSent ? 'Paid' : 'Received from'} {otherPerson?.full_name || 'Unknown'}
             </Text>
             {item.split?.title ? (
-              <Text style={[styles.splitTitle, { color: colors.gray500 }]} numberOfLines={1}>
+              <Text style={[styles.splitTitle, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.split.title}
               </Text>
             ) : null}
-            <Text style={[styles.paymentDate, { color: colors.gray400 }]}>
+            <Text style={[styles.paymentDate, { color: colors.textTertiary }]}>
               {format(new Date(item.created_at), 'MMM d, yyyy · h:mm a')}
               {hasFee ? `  ·  Fee $${item.stripe_fee_amount!.toFixed(2)}` : ''}
             </Text>
@@ -180,10 +180,10 @@ export default function PaymentHistoryScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={[styles.emptyIconCircle, { backgroundColor: colors.surface }]}>
-        <Ionicons name="receipt-outline" size={32} color={colors.gray400} />
+        <Ionicons name="receipt-outline" size={32} color={colors.textTertiary} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Payments Yet</Text>
-      <Text style={[styles.emptyText, { color: colors.gray500 }]}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No Payments Yet</Text>
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
         {activeTab === 'sent' && "You haven't sent any payments yet"}
         {activeTab === 'received' && "You haven't received any payments yet"}
         {activeTab === 'all' && 'Your payment history will appear here'}
@@ -193,7 +193,7 @@ export default function PaymentHistoryScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Payment History" onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -203,7 +203,7 @@ export default function PaymentHistoryScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Payment History" onBack={() => navigation.goBack()} />
 
       {/* Tabs */}
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },

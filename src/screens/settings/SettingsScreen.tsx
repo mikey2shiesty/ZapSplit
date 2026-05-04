@@ -10,444 +10,315 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { useAuth } from '../../hooks/useAuth';
-import { useTheme, ThemeMode } from '../../contexts/ThemeContext';
-import Avatar from '../../components/common/Avatar';
+import { useTheme } from '../../contexts/ThemeContext';
+import { spacing, typography, radius } from '../../constants/theme';
 import Header from '../../components/common/Header';
+import Card from '../../components/common/Card';
+import IconCircle from '../../components/common/IconCircle';
+
+// Friendly Fintech Settings hub.
+// Header → groups of rows in cards. Each row uses a soft-blue IconCircle.
+// Sign-out as soft-red pill at bottom. Delete account in its own danger card.
+
+type IconName = keyof typeof Ionicons.glyphMap;
+type Tone = 'info' | 'success' | 'warning' | 'error' | 'neutral';
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
-  const { user, signOut } = useAuth();
-  const { themeMode, setThemeMode, colors } = useTheme();
-
-  const handleThemeChange = (mode: ThemeMode) => {
-    setThemeMode(mode);
-  };
+  const { signOut } = useAuth();
+  const { colors } = useTheme();
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: signOut,
-        },
-      ]
-    );
+    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: signOut },
+    ]);
   };
 
-  const userName = user?.user_metadata?.full_name || 'User';
-  const userEmail = user?.email || '';
-
-  // Dynamic styles based on theme
-  const dynamicStyles = {
-    container: {
-      flex: 1,
-      backgroundColor: colors.gray50,
-    },
-    profileCard: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      backgroundColor: colors.surface,
-      padding: 16,
-      borderRadius: 16,
-      marginBottom: 24,
-    },
-    profileName: {
-      fontSize: 18,
-      fontWeight: '700' as const,
-      color: colors.gray900,
-    },
-    profileEmail: {
-      fontSize: 14,
-      color: colors.gray500,
-      marginTop: 2,
-    },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.gray500,
-      textTransform: 'uppercase' as const,
-      letterSpacing: 0.5,
-      marginBottom: 8,
-      marginTop: 8,
-      paddingHorizontal: 4,
-    },
-    section: {
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      marginBottom: 16,
-      overflow: 'hidden' as const,
-    },
-  };
+  const Row = ({
+    icon,
+    label,
+    subtitle,
+    onPress,
+    tone = 'info',
+    isLast,
+  }: {
+    icon: IconName;
+    label: string;
+    subtitle?: string;
+    onPress?: () => void;
+    tone?: Tone;
+    isLast?: boolean;
+  }) => (
+    <TouchableOpacity
+      style={[
+        styles.row,
+        !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
+      ]}
+      onPress={() => {
+        if (onPress) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }
+      }}
+      activeOpacity={0.7}
+    >
+      <IconCircle name={icon} tone={tone} />
+      <View style={styles.rowMain}>
+        <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+        {subtitle && (
+          <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={dynamicStyles.container}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Settings" onBack={() => navigation.goBack()} />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
-        <TouchableOpacity
-          style={dynamicStyles.profileCard}
-          onPress={() => navigation.navigate('EditProfile')}
-        >
-          <Avatar
-            name={userName}
-            uri={user?.user_metadata?.avatar_url}
-            size="lg"
-          />
-          <View style={styles.profileInfo}>
-            <Text style={dynamicStyles.profileName}>{userName}</Text>
-            <Text style={dynamicStyles.profileEmail}>{userEmail}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
-        </TouchableOpacity>
-
-        {/* Account Section */}
-        <Text style={dynamicStyles.sectionTitle}>Account</Text>
-        <View style={dynamicStyles.section}>
-          <SettingsItem
-            icon="person-outline"
-            label="Edit Profile"
-            onPress={() => navigation.navigate('EditProfile')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="key-outline"
-            label="Change Password"
-            onPress={() => navigation.navigate('ChangePassword')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="shield-checkmark-outline"
-            label="Privacy & Security"
-            onPress={() => navigation.navigate('PrivacySettings')}
-            colors={colors}
-          />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: spacing.xxl }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ACCOUNT */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Account
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="person"
+              label="Edit profile"
+              onPress={() => navigation.navigate('EditProfile')}
+            />
+            <Row
+              icon="key"
+              label="Change password"
+              onPress={() => navigation.navigate('ChangePassword')}
+            />
+            <Row
+              icon="shield-checkmark"
+              label="Privacy & security"
+              onPress={() => navigation.navigate('PrivacySettings')}
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Payments Section */}
-        <Text style={dynamicStyles.sectionTitle}>Payments</Text>
-        <View style={dynamicStyles.section}>
-          <SettingsItem
-            icon="card-outline"
-            label="Connect Stripe"
-            subtitle="Link your account to receive payments"
-            onPress={() => navigation.navigate('ConnectStripe')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="time-outline"
-            label="Payment History"
-            onPress={() => navigation.navigate('PaymentHistory')}
-            colors={colors}
-          />
+        {/* PAYMENTS */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Payments
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="card"
+              label="Connect Stripe"
+              subtitle="Link your account to receive payments"
+              onPress={() => navigation.navigate('ConnectStripe')}
+            />
+            <Row
+              icon="time"
+              label="Payment history"
+              onPress={() => navigation.navigate('PaymentHistory')}
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Notifications Section */}
-        <Text style={dynamicStyles.sectionTitle}>Notifications</Text>
-        <View style={dynamicStyles.section}>
-          <SettingsItem
-            icon="notifications-outline"
-            label="Notification Preferences"
-            onPress={() => navigation.navigate('NotificationSettings')}
-            colors={colors}
-          />
+        {/* NOTIFICATIONS */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Notifications
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="notifications"
+              label="Notification preferences"
+              onPress={() => navigation.navigate('NotificationSettings')}
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Appearance Section */}
-        <Text style={dynamicStyles.sectionTitle}>Appearance</Text>
-        <View style={dynamicStyles.section}>
-          <View style={styles.themeSection}>
-            <View style={styles.themeHeader}>
-              <Ionicons name="color-palette-outline" size={22} color={colors.gray700} />
-              <Text style={[styles.themeLabel, { color: colors.gray900 }]}>Theme</Text>
-            </View>
-            <View style={styles.themeOptions}>
-              <ThemeOption
-                label="Light"
-                icon="sunny-outline"
-                selected={themeMode === 'light'}
-                onPress={() => handleThemeChange('light')}
-                colors={colors}
-              />
-              <ThemeOption
-                label="Dark"
-                icon="moon-outline"
-                selected={themeMode === 'dark'}
-                onPress={() => handleThemeChange('dark')}
-                colors={colors}
-              />
-              <ThemeOption
-                label="System"
-                icon="phone-portrait-outline"
-                selected={themeMode === 'system'}
-                onPress={() => handleThemeChange('system')}
-                colors={colors}
-              />
-            </View>
-          </View>
+        {/* SOCIAL */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Social
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="people"
+              label="Friends"
+              onPress={() => navigation.navigate('Friends')}
+            />
+            <Row
+              icon="people-circle"
+              label="Groups"
+              onPress={() => navigation.navigate('Groups')}
+            />
+            <Row
+              icon="ban"
+              label="Blocked users"
+              onPress={() => navigation.navigate('BlockedUsers')}
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Social Section */}
-        <Text style={dynamicStyles.sectionTitle}>Social</Text>
-        <View style={dynamicStyles.section}>
-          <SettingsItem
-            icon="people-outline"
-            label="Friends"
-            onPress={() => navigation.navigate('Friends')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="people-circle-outline"
-            label="Groups"
-            onPress={() => navigation.navigate('Groups')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="ban-outline"
-            label="Blocked Users"
-            onPress={() => navigation.navigate('BlockedUsers')}
-            colors={colors}
-          />
+        {/* SUPPORT */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+            Support
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="help-circle"
+              label="Help & FAQ"
+              onPress={() =>
+                Alert.alert(
+                  'Need help?',
+                  'For questions or support, email us at zapsplit@gmail.com',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Email support',
+                      onPress: () =>
+                        Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Support'),
+                    },
+                  ]
+                )
+              }
+            />
+            <Row
+              icon="chatbubble"
+              label="Contact support"
+              onPress={() =>
+                Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Feedback')
+              }
+            />
+            <Row
+              icon="document-text"
+              label="Terms of service"
+              onPress={() => navigation.navigate('TermsOfService')}
+            />
+            <Row
+              icon="lock-closed"
+              label="Privacy policy"
+              onPress={() => navigation.navigate('PrivacyPolicy')}
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Support Section */}
-        <Text style={dynamicStyles.sectionTitle}>Support</Text>
-        <View style={dynamicStyles.section}>
-          <SettingsItem
-            icon="help-circle-outline"
-            label="Help & FAQ"
-            onPress={() => Alert.alert(
-              'Need Help?',
-              'For questions or support, email us at zapsplit@gmail.com',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Email Support', onPress: () => Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Support') }
-              ]
-            )}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="chatbubble-outline"
-            label="Contact Support"
-            onPress={() => Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Feedback')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="document-text-outline"
-            label="Terms of Service"
-            onPress={() => navigation.navigate('TermsOfService')}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="lock-closed-outline"
-            label="Privacy Policy"
-            onPress={() => navigation.navigate('PrivacyPolicy')}
-            colors={colors}
-          />
-        </View>
-
-        {/* App Info */}
+        {/* APP INFO */}
         <View style={styles.appInfo}>
-          <Text style={[styles.appVersion, { color: colors.gray500 }]}>ZapSplit v1.0.0</Text>
-          <Text style={[styles.appCopyright, { color: colors.gray400 }]}>Made with ⚡ in Australia</Text>
+          <Text style={[styles.appVersion, { color: colors.textSecondary }]}>
+            ZapSplit v1.0.0
+          </Text>
+          <Text style={[styles.appCopyright, { color: colors.textTertiary }]}>
+            Made in Australia
+          </Text>
         </View>
 
-        {/* Danger Zone */}
-        <Text style={[dynamicStyles.sectionTitle, { color: colors.error }]}>Danger Zone</Text>
-        <View style={[dynamicStyles.section, { borderWidth: 1, borderColor: colors.errorLight }]}>
-          <SettingsItem
-            icon="trash-outline"
-            label="Delete Account"
-            onPress={() => navigation.navigate('DeleteAccount')}
-            rightElement={<Ionicons name="chevron-forward" size={20} color={colors.error} />}
-            colors={colors}
-          />
+        {/* DANGER */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.error }]}>
+            Danger zone
+          </Text>
+          <Card padding="sm">
+            <Row
+              icon="trash"
+              label="Delete account"
+              onPress={() => navigation.navigate('DeleteAccount')}
+              tone="error"
+              isLast
+            />
+          </Card>
         </View>
 
-        {/* Sign Out Button */}
-        <TouchableOpacity
-          style={[styles.signOutButton, { backgroundColor: colors.surface, borderColor: colors.errorLight }]}
-          onPress={handleSignOut}
-        >
-          <Ionicons name="log-out-outline" size={22} color={colors.error} />
-          <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
-        </TouchableOpacity>
-
-        <View style={styles.bottomSpacer} />
+        {/* SIGN OUT */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.signOutPill, { backgroundColor: colors.errorLight }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleSignOut();
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="log-out" size={18} color={colors.error} />
+            <Text style={[styles.signOutLabel, { color: colors.error }]}>
+              Sign out
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
-// Settings Item Component
-function SettingsItem({
-  icon,
-  label,
-  subtitle,
-  onPress,
-  rightElement,
-  colors,
-}: {
-  icon: string;
-  label: string;
-  subtitle?: string;
-  onPress?: () => void;
-  rightElement?: React.ReactNode;
-  colors: any;
-}) {
-  return (
-    <TouchableOpacity
-      style={[styles.settingsItem, { borderBottomColor: colors.gray100 }]}
-      onPress={onPress}
-    >
-      <View style={[styles.settingsItemIcon, { backgroundColor: colors.gray100 }]}>
-        <Ionicons name={icon as any} size={22} color={colors.gray700} />
-      </View>
-      <View style={styles.settingsItemContent}>
-        <Text style={[styles.settingsItemLabel, { color: colors.gray900 }]}>{label}</Text>
-        {subtitle && <Text style={[styles.settingsItemSubtitle, { color: colors.gray500 }]}>{subtitle}</Text>}
-      </View>
-      {rightElement || <Ionicons name="chevron-forward" size={20} color={colors.gray400} />}
-    </TouchableOpacity>
-  );
-}
-
-// Theme Option Component
-function ThemeOption({
-  label,
-  icon,
-  selected,
-  onPress,
-  colors,
-}: {
-  label: string;
-  icon: string;
-  selected: boolean;
-  onPress: () => void;
-  colors: any;
-}) {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.themeOption,
-        { backgroundColor: selected ? colors.primaryLight : colors.gray100 },
-      ]}
-      onPress={onPress}
-    >
-      <Ionicons
-        name={icon as any}
-        size={20}
-        color={selected ? colors.primary : colors.gray500}
-      />
-      <Text
-        style={[
-          styles.themeOptionLabel,
-          { color: selected ? colors.primary : colors.gray600 },
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    padding: 16,
   },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 16,
+  section: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
-  settingsItem: {
+  sectionLabel: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    paddingLeft: 4,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.md,
+    minHeight: 60,
   },
-  settingsItemIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsItemContent: {
+  rowMain: {
     flex: 1,
-    marginLeft: 12,
+    gap: 2,
   },
-  settingsItemLabel: {
-    fontSize: 16,
-    fontWeight: '500',
+  rowLabel: {
+    ...typography.bodyLarge,
   },
-  settingsItemSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  themeSection: {
-    padding: 16,
-  },
-  themeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  themeLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  themeOptions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  themeOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  themeOptionLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+  rowSubtitle: {
+    ...typography.bodySmall,
   },
   appInfo: {
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   appVersion: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.bodySmall,
+    fontWeight: '600',
   },
   appCopyright: {
-    fontSize: 12,
-    marginTop: 4,
+    ...typography.caption,
+    marginTop: 2,
   },
-  signOutButton: {
+  signOutPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    gap: spacing.sm,
+    height: 52,
+    borderRadius: radius.pill,
   },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bottomSpacer: {
-    height: 40,
+  signOutLabel: {
+    ...typography.button,
   },
 });

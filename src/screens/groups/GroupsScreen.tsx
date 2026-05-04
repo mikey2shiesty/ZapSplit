@@ -16,6 +16,7 @@ import { getUserGroups, Group } from '../../services/groupService';
 import Card from '../../components/common/Card';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
 
 const GROUP_TYPE_ICONS: Record<string, string> = {
   household: 'home-outline',
@@ -98,23 +99,23 @@ export default function GroupsScreen() {
               <Ionicons name={iconName as any} size={24} color={iconColor} />
             </View>
             <View style={styles.groupInfo}>
-              <Text style={[styles.groupName, { color: colors.gray900 }]}>{item.name}</Text>
+              <Text style={[styles.groupName, { color: colors.text }]}>{item.name}</Text>
               <View style={styles.groupMeta}>
-                <Ionicons name="people" size={14} color={colors.gray500} />
-                <Text style={[styles.memberCount, { color: colors.gray500 }]}>{item.member_count} members</Text>
+                <Ionicons name="people" size={14} color={colors.textSecondary} />
+                <Text style={[styles.memberCount, { color: colors.textSecondary }]}>{item.member_count} members</Text>
               </View>
               {item.description && (
-                <Text style={[styles.groupDescription, { color: colors.gray400 }]} numberOfLines={1}>
+                <Text style={[styles.groupDescription, { color: colors.textTertiary }]} numberOfLines={1}>
                   {item.description}
                 </Text>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </View>
           {item.total_expenses > 0 && (
-            <View style={[styles.expensesRow, { borderTopColor: colors.gray100 }]}>
-              <Text style={[styles.expensesLabel, { color: colors.gray500 }]}>Total expenses</Text>
-              <Text style={[styles.expensesAmount, { color: colors.gray900 }]}>{formatAmount(item.total_expenses)}</Text>
+            <View style={[styles.expensesRow, { borderTopColor: colors.surface }]}>
+              <Text style={[styles.expensesLabel, { color: colors.textSecondary }]}>Total expenses</Text>
+              <Text style={[styles.expensesAmount, { color: colors.text }]}>{formatAmount(item.total_expenses)}</Text>
             </View>
           )}
         </Card>
@@ -124,9 +125,9 @@ export default function GroupsScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="people-circle-outline" size={80} color={colors.gray300} />
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Groups Yet</Text>
-      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
+      <Ionicons name="people-circle-outline" size={80} color={colors.border} />
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No Groups Yet</Text>
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
         Create a group to easily split bills with the same people
       </Text>
       <TouchableOpacity
@@ -140,22 +141,20 @@ export default function GroupsScreen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.gray900 }]}>Groups</Text>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.navigate('CreateGroup')}
-        >
-          <Ionicons name="add" size={28} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header
+        title="Groups"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <TouchableOpacity
+            style={[styles.addCircle, { backgroundColor: colors.primaryLight }]}
+            onPress={() => navigation.navigate('CreateGroup')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -296,8 +295,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 28,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     gap: spacing.sm,
+  },
+  addCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   createButtonText: {
     fontSize: 16,
