@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,172 +9,302 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+
 import { CreateSplitScreenProps } from '../../types/navigation';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
-import { AmountInput } from '../../components/splits';
+import { spacing, typography, radius } from '../../constants/theme';
+
+// Cash App / Venmo-style amount-first split creation.
+//   • Top bar: close (X) on left, scan-receipt camera icon on the right.
+//   • Hero amount centered, focus-on-mount, system numeric keyboard slides in.
+//   • Title + optional note rendered as compact rows beneath.
+//   • Continue pill at bottom — pinned, slides with keyboard.
+// Removes the old "scan card vs manual entry" tug-of-war by demoting scan to
+// an icon button instead of a competing block.
 
 export default function CreateSplitScreen({ navigation, route }: CreateSplitScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const groupId = route.params?.groupId;
+
+  // Amount stored as digits-only string; display reformats as $X.XX (cents-mode).
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [note, setNote] = useState('');
+  const [showNote, setShowNote] = useState(false);
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [noteFocused, setNoteFocused] = useState(false);
 
-  // Validation
-  const amountValue = parseFloat(amount) / 100 || 0;
+  const amountRef = useRef<TextInput>(null);
+  const titleRef = useRef<TextInput>(null);
+  const noteRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    // Focus the amount on mount so the keypad is up immediately.
+    const t = setTimeout(() => amountRef.current?.focus(), 250);
+    return () => clearTimeout(t);
+  }, []);
+
+  const amountValue = parseFloat(amount || '0') / 100;
   const isValid = amountValue > 0 && title.trim().length >= 3;
+
+  // Format digits string → "$1,234.56"
+  const formatted = (() => {
+    const cents = parseInt(amount || '0', 10) || 0;
+    const dollars = cents / 100;
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(dollars);
+  })();
+
+  const handleAmountChange = (text: string) => {
+    // Strip non-digits, cap at reasonable length (1 billion).
+    const digits = text.replace(/\D/g, '').slice(0, 11);
+    setAmount(digits);
+    if (digits.length > (amount?.length ?? 0)) {
+      Haptics.selectionAsync();
+    }
+  };
 
   const handleContinue = () => {
     if (!isValid) return;
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
     navigation.navigate('SelectFriends', {
       amount: amountValue,
       title: title.trim(),
-      description: description.trim() || undefined,
+      description: note.trim() || undefined,
       groupId,
     });
   };
 
-  const handleScanReceipt = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleScan = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate('ScanReceipt');
   };
 
+  const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Dismiss the entire SplitFlow modal stack and return to tabs.
+    const parent = navigation.getParent();
+    if (parent) {
+      parent.goBack();
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const titleBorder = titleFocused ? colors.primary : colors.border;
+  const titleWidth = titleFocused ? 2 : 1;
+  const noteBorder = noteFocused ? colors.primary : colors.border;
+  const noteWidth = noteFocused ? 2 : 1;
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <KeyboardAvoidingView
-        style={styles.keyboardView}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={0}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Page Title */}
-          <Text style={[styles.pageTitle, { color: colors.text }]}>Create Split</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
-            Enter the bill amount and details, or scan a receipt
-          </Text>
-
-          {/* Scan Receipt Button */}
+        {/* TOP BAR — close + scan icon */}
+        <View style={[styles.topBar, { paddingTop: insets.top + 6 }]}>
           <TouchableOpacity
-            style={[styles.scanReceiptButton, { backgroundColor: colors.surface }]}
-            onPress={handleScanReceipt}
+            onPress={handleClose}
+            style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}
             activeOpacity={0.7}
+            hitSlop={6}
           >
-            <View style={[styles.scanIconContainer, { backgroundColor: colors.primary + '12' }]}>
-              <Ionicons name="camera-outline" size={22} color={colors.primary} />
-            </View>
-            <View style={styles.scanTextContainer}>
-              <Text style={[styles.scanButtonTitle, { color: colors.text }]}>Scan Receipt</Text>
-              <Text style={[styles.scanButtonSubtitle, { color: colors.textSecondary }]}>
-                AI extracts items and splits the bill
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+            <Ionicons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or enter manually</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          </View>
+          <TouchableOpacity
+            onPress={handleScan}
+            style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}
+            activeOpacity={0.7}
+            hitSlop={6}
+          >
+            <Ionicons name="camera" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Amount Input */}
-          <View style={styles.amountSection}>
-            <AmountInput
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HERO AMOUNT — Cash App-style centered focus input */}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => amountRef.current?.focus()}
+            style={styles.amountBlock}
+          >
+            <Text
+              style={[
+                styles.amountKicker,
+                { color: colors.textSecondary },
+              ]}
+            >
+              How much?
+            </Text>
+            <Text
+              style={[
+                styles.amountValue,
+                {
+                  color: amountValue > 0 ? colors.text : colors.textTertiary,
+                },
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {formatted}
+            </Text>
+            {/* Hidden text input that drives the amount + summons keypad. */}
+            <TextInput
+              ref={amountRef}
               value={amount}
-              onChangeValue={setAmount}
-              currency="$"
+              onChangeText={handleAmountChange}
+              keyboardType="number-pad"
+              style={styles.hiddenInput}
+              caretHidden
+              autoFocus
+              maxLength={11}
+            />
+          </TouchableOpacity>
+
+          {/* TITLE ROW */}
+          <View style={styles.section}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+              What's this for?
+            </Text>
+            <TextInput
+              ref={titleRef}
+              value={title}
+              onChangeText={setTitle}
+              onFocus={() => setTitleFocused(true)}
+              onBlur={() => setTitleFocused(false)}
+              placeholder="Dinner at Nobu"
+              placeholderTextColor={colors.textTertiary}
+              autoCapitalize="words"
+              maxLength={50}
+              returnKeyType="next"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: titleBorder,
+                  borderWidth: titleWidth,
+                  color: colors.text,
+                },
+              ]}
             />
           </View>
 
-          {/* Title Input */}
-          <View style={styles.section}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Split Title</Text>
-            <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-              <TextInput
-                style={[styles.textInput, { color: colors.text }]}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g., Dinner at Nobu"
-                placeholderTextColor={colors.textTertiary}
-                maxLength={50}
-                autoCapitalize="words"
-                returnKeyType="next"
-                onSubmitEditing={() => {}}
-              />
-            </View>
-            {title.trim().length > 0 && title.trim().length < 3 && (
-              <Text style={[styles.errorText, { color: colors.error }]}>
-                Title must be at least 3 characters
+          {/* NOTE — collapsible. Pill row to expand, then a textarea slides in. */}
+          {!showNote ? (
+            <TouchableOpacity
+              onPress={() => {
+                setShowNote(true);
+                Haptics.selectionAsync();
+                setTimeout(() => noteRef.current?.focus(), 100);
+              }}
+              activeOpacity={0.7}
+              style={[
+                styles.addNoteRow,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="add" size={18} color={colors.primary} />
+              <Text style={[styles.addNoteLabel, { color: colors.primary }]}>
+                Add a note
               </Text>
-            )}
-          </View>
-
-          {/* Description Input (Optional) */}
-          <View style={styles.section}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-              Description <Text style={[styles.optionalLabel, { color: colors.textTertiary }]}>(optional)</Text>
-            </Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer, { backgroundColor: colors.surface }]}>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.section}>
+              <View style={styles.noteHeader}>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+                  Note
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowNote(false);
+                    setNote('');
+                  }}
+                  hitSlop={8}
+                >
+                  <Text style={[styles.removeLabel, { color: colors.textTertiary }]}>
+                    Remove
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <TextInput
-                style={[styles.textInput, styles.textArea, { color: colors.text }]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Add details about this split..."
+                ref={noteRef}
+                value={note}
+                onChangeText={setNote}
+                onFocus={() => setNoteFocused(true)}
+                onBlur={() => setNoteFocused(false)}
+                placeholder="Birthday dinner, paid the whole bill…"
                 placeholderTextColor={colors.textTertiary}
-                maxLength={200}
                 multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                returnKeyType="done"
+                maxLength={200}
+                style={[
+                  styles.input,
+                  styles.noteInput,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: noteBorder,
+                    borderWidth: noteWidth,
+                    color: colors.text,
+                  },
+                ]}
               />
+              <Text style={[styles.charCount, { color: colors.textTertiary }]}>
+                {note.length}/200
+              </Text>
             </View>
-            <Text style={[styles.charCount, { color: colors.textTertiary }]}>
-              {description.length}/200
-            </Text>
-          </View>
-
-          {/* Info note */}
-          <View style={styles.infoRow}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.textTertiary} />
-            <Text style={[styles.infoText, { color: colors.textTertiary }]}>
-              You'll select friends and split method next
-            </Text>
-          </View>
+          )}
         </ScrollView>
 
-        {/* Continue Button - Fixed at Bottom */}
-        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
+        {/* CONTINUE PILL — pinned bottom, lives above keyboard via KAV */}
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: colors.background,
+              paddingBottom: Math.max(insets.bottom, 12),
+            },
+          ]}
+        >
           <TouchableOpacity
             style={[
-              styles.continueButton,
-              { backgroundColor: isValid ? colors.primary : colors.border },
+              styles.primaryPill,
+              {
+                backgroundColor: isValid ? colors.primary : colors.gray100,
+                opacity: isValid ? 1 : 0.6,
+              },
             ]}
             onPress={handleContinue}
             disabled={!isValid}
-            activeOpacity={0.7}
+            activeOpacity={0.85}
           >
-            <Text style={[styles.continueButtonText, { color: isValid ? '#FFFFFF' : colors.textTertiary }]}>
+            <Text
+              style={[
+                styles.primaryPillLabel,
+                { color: isValid ? colors.textInverse : colors.textTertiary },
+              ]}
+            >
               Continue
             </Text>
             {isValid && (
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              <Ionicons name="arrow-forward" size={18} color={colors.textInverse} />
             )}
           </TouchableOpacity>
         </View>
@@ -187,151 +317,120 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
+
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  scrollView: {
-    flex: 1,
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  content: {
-    padding: 20,
-    paddingBottom: spacing.xxxl,
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
   },
-  pageTitle: {
-    fontSize: 28,
+
+  // Hero amount block — Cash App / Venmo style.
+  amountBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 180,
+    marginBottom: spacing.xl,
+  },
+  amountKicker: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  amountValue: {
+    fontSize: 64,
+    lineHeight: 72,
     fontWeight: '700',
-    marginBottom: 4,
+    letterSpacing: -1.6,
     textAlign: 'center',
-    letterSpacing: -0.3,
   },
-  pageSubtitle: {
-    fontSize: 15,
-    marginBottom: spacing.xl,
-    textAlign: 'center',
-    lineHeight: 21,
+  hiddenInput: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
-  amountSection: {
-    marginBottom: spacing.xl,
-    paddingVertical: spacing.md,
-  },
+
   section: {
     marginBottom: spacing.lg,
   },
-  inputLabel: {
-    fontSize: 13,
+  fieldLabel: {
+    ...typography.bodySmall,
     fontWeight: '600',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
   },
-  optionalLabel: {
-    fontSize: 11,
-    fontWeight: '400',
-    textTransform: 'none',
-  },
-  inputContainer: {
+  input: {
+    ...typography.bodyLarge,
     borderRadius: radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  textInput: {
-    fontSize: 16,
-    padding: 0,
-    minHeight: 22,
-  },
-  textAreaContainer: {
+    paddingHorizontal: spacing.md,
     paddingVertical: 14,
   },
-  textArea: {
-    minHeight: 90,
+  noteInput: {
+    minHeight: 88,
     textAlignVertical: 'top',
+    paddingTop: 14,
   },
-  errorText: {
-    fontSize: 13,
-    marginTop: 6,
+  noteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  removeLabel: {
+    ...typography.bodySmall,
+    fontWeight: '600',
   },
   charCount: {
-    fontSize: 12,
+    ...typography.caption,
     marginTop: 6,
     textAlign: 'right',
   },
-  infoRow: {
+  addNoteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    marginTop: spacing.sm,
-  },
-  infoText: {
-    fontSize: 13,
-  },
-  buttonContainer: {
-    padding: 20,
-    paddingBottom: 20,
-  },
-  continueButton: {
+    height: 48,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+  },
+  addNoteLabel: {
+    ...typography.button,
+    fontSize: 14,
+  },
+
+  bottomBar: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  primaryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
     height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    borderRadius: radius.pill,
   },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scanReceiptButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: radius.lg,
-    padding: 16,
-    marginBottom: spacing.md,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  scanIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanTextContainer: {
-    flex: 1,
-    gap: 2,
-  },
-  scanButtonTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  scanButtonSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.lg,
-    gap: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-  dividerText: {
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  primaryPillLabel: {
+    ...typography.button,
+    fontSize: 17,
+    fontWeight: '700',
   },
 });

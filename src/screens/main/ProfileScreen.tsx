@@ -227,6 +227,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.displayLarge,
+    textAlign: 'center',
   },
 
   section: {
