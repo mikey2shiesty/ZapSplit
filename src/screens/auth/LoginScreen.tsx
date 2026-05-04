@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -37,19 +39,31 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+
+  // Subtle horizontal shake on validation failure (iOS-style "no").
+  const shake = useRef(new Animated.Value(0)).current;
+  const triggerShake = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    shake.setValue(0);
+    Animated.sequence([
+      Animated.timing(shake, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -4, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const validateForm = () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return false;
-    }
+    const next: typeof errors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-    if (!password) {
-      Alert.alert('Error', 'Please enter your password');
+    if (!email.trim()) next.email = 'Email is required';
+    else if (!emailRegex.test(email.trim())) next.email = 'Enter a valid email address';
+    if (!password) next.password = 'Password is required';
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      triggerShake();
       return false;
     }
     return true;
@@ -61,12 +75,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     try {
       await signIn(email.trim(), password);
     } catch (error: any) {
-      Alert.alert(
-        'Login failed',
+      const msg =
         error.message === 'Invalid login credentials'
           ? 'Invalid email or password'
-          : error.message || 'An error occurred during login'
-      );
+          : error.message || 'Something went wrong, try again.';
+      setErrors({ form: msg });
+      triggerShake();
     } finally {
       setLoading(false);
     }
@@ -95,8 +109,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   };
 
-  const inputBorder = (focused: boolean) =>
-    focused ? colors.primary : colors.border;
+  const inputBorder = (focused: boolean, hasError?: boolean) =>
+    hasError ? colors.error : focused ? colors.primary : colors.border;
+  const inputWidth = (focused: boolean, hasError?: boolean) =>
+    hasError || focused ? 2 : 1;
 
   return (
     <KeyboardAvoidingView
@@ -110,23 +126,31 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* BACK */}
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.text} />
-        </TouchableOpacity>
+        {/* TOP ROW — back + brand logo */}
+        <View style={styles.topRow}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <Image
+            source={require('../../assets/images/brand-icon.png')}
+            style={styles.brandIcon}
+            resizeMode="contain"
+          />
+        </View>
 
         {/* HEADING */}
+        <Text style={[styles.kicker, { color: colors.primary }]}>Sign in</Text>
         <Text style={[styles.title, { color: colors.text }]}>Welcome back.</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Log in to keep splitting.
         </Text>
 
         {/* FORM */}
-        <View style={styles.form}>
+        <Animated.View style={[styles.form, { transform: [{ translateX: shake }] }]}>
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
             <TextInput
@@ -134,21 +158,27 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 styles.input,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder(emailFocused),
-                  borderWidth: emailFocused ? 2 : 1,
+                  borderColor: inputBorder(emailFocused, !!errors.email),
+                  borderWidth: inputWidth(emailFocused, !!errors.email),
                   color: colors.text,
                 },
               ]}
               placeholder="you@example.com"
               placeholderTextColor={colors.textTertiary}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => {
+                setEmail(t);
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
               onFocus={() => setEmailFocused(true)}
               onBlur={() => setEmailFocused(false)}
               keyboardType="email-address"
               autoCapitalize="none"
               returnKeyType="next"
             />
+            {errors.email && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.email}</Text>
+            )}
           </View>
 
           <View style={styles.field}>
@@ -158,8 +188,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 styles.passwordRow,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder(passwordFocused),
-                  borderWidth: passwordFocused ? 2 : 1,
+                  borderColor: inputBorder(passwordFocused, !!errors.password),
+                  borderWidth: inputWidth(passwordFocused, !!errors.password),
                 },
               ]}
             >
@@ -168,7 +198,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 placeholder="Your password"
                 placeholderTextColor={colors.textTertiary}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(t) => {
+                  setPassword(t);
+                  if (errors.password) setErrors({ ...errors, password: undefined });
+                }}
                 onFocus={() => setPasswordFocused(true)}
                 onBlur={() => setPasswordFocused(false)}
                 secureTextEntry={!showPassword}
@@ -188,7 +221,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 />
               </TouchableOpacity>
             </View>
+            {errors.password && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.password}</Text>
+            )}
           </View>
+
+          {/* Form-level error (e.g. invalid credentials) */}
+          {errors.form && (
+            <View style={[styles.formError, { backgroundColor: colors.errorLight }]}>
+              <Ionicons name="alert-circle" size={16} color={colors.error} />
+              <Text style={[styles.formErrorText, { color: colors.error }]}>{errors.form}</Text>
+            </View>
+          )}
 
           {/* PRIMARY CTA */}
           <TouchableOpacity
@@ -206,9 +250,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             {loading ? (
               <ActivityIndicator color={colors.textInverse} />
             ) : (
-              <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
-                Log in
-              </Text>
+              <>
+                <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                  Log in
+                </Text>
+                <Ionicons name="arrow-forward" size={18} color={colors.textInverse} />
+              </>
             )}
           </TouchableOpacity>
 
@@ -219,13 +266,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
           </View>
 
-          {/* APPLE */}
+          {/* APPLE — outlined for visual consistency with Google on dark */}
           {isAppleSignInAvailable && (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={
                 isDark
-                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
                   : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
               }
               cornerRadius={9999}
@@ -271,7 +318,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               <Text style={{ color: colors.primary, fontWeight: '700' }}>Sign up</Text>
             </Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -285,13 +332,27 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+  },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+  },
+  brandIcon: {
+    width: 40,
+    height: 44,
+  },
+  kicker: {
+    ...typography.bodyLarge,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
   },
   title: {
     ...typography.displayLarge,
@@ -338,10 +399,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   primaryPill: {
-    height: 56,
-    borderRadius: radius.pill,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    height: 56,
+    borderRadius: radius.pill,
     marginTop: spacing.sm,
   },
   primaryPillLabel: {
@@ -385,5 +448,24 @@ const styles = StyleSheet.create({
   },
   signupLinkText: {
     ...typography.body,
+  },
+  errorText: {
+    ...typography.bodySmall,
+    fontSize: 12,
+    paddingLeft: 4,
+    marginTop: 4,
+  },
+  formError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+  },
+  formErrorText: {
+    flex: 1,
+    ...typography.bodySmall,
+    fontWeight: '600',
   },
 });

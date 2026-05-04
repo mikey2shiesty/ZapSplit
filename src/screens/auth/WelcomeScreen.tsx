@@ -1,16 +1,19 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, typography, radius } from '../../constants/theme';
+import { spacing, typography, radius, fonts } from '../../constants/theme';
 
 interface WelcomeScreenProps {
   navigation: any;
 }
 
-// Friendly Fintech Welcome.
-// Logo top, big bold display heading + soft subtitle, two pill CTAs at bottom.
+// Friendly Fintech Welcome — text-driven, dark canvas, saturated CTA.
+// No app-icon thumbnail. Brand mark sits as a small saturated pill at top, the
+// heading does the heavy lifting, supporting text holds the middle, two pill
+// CTAs at the bottom (filled blue + outlined for contrast on dark).
 export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -21,26 +24,34 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: insets.top + spacing.xl,
-          paddingBottom: insets.bottom + spacing.xl,
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: insets.bottom + spacing.md,
         },
       ]}
     >
-      <View style={styles.content}>
+      {/* HERO CONTENT — heading first, brand mark sits next to the headline
+          (small, saturated, transparent canvas). The big "Splits made simple."
+          IS the brand presence — the icon just signs it off. */}
+
+      {/* HEADING — real ZapSplit logo (transparent PNG) anchors the hero block. */}
+      <View style={styles.heroBlock}>
         <Image
-          source={require('../../assets/images/logo.png')}
-          style={styles.logo}
+          source={require('../../assets/images/brand-icon.png')}
+          style={styles.brandIcon}
           resizeMode="contain"
         />
-
+        <Text style={[styles.kicker, { color: colors.primary }]}>
+          Built for friends.
+        </Text>
         <Text style={[styles.title, { color: colors.text }]}>
-          Splits made simple.
+          Splits{'\n'}made simple.
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Scan receipts, split costs with friends, and get paid fast.
         </Text>
       </View>
 
+      {/* CTAs */}
       <View style={styles.buttonStack}>
         <TouchableOpacity
           style={[styles.primaryPill, { backgroundColor: colors.primary }]}
@@ -53,17 +64,21 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
             Get started
           </Text>
+          <Ionicons name="arrow-forward" size={18} color={colors.textInverse} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.softPill, { backgroundColor: colors.primaryLight }]}
+          style={[
+            styles.outlinePill,
+            { borderColor: colors.border, backgroundColor: 'transparent' },
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             navigation.navigate('Login');
           }}
           activeOpacity={0.85}
         >
-          <Text style={[styles.softPillLabel, { color: colors.primary }]}>
+          <Text style={[styles.outlinePillLabel, { color: colors.text }]}>
             I already have an account
           </Text>
         </TouchableOpacity>
@@ -77,49 +92,63 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.lg,
   },
-  content: {
+
+  brandIcon: {
+    width: 64,
+    height: 72,
+    marginBottom: spacing.lg,
+  },
+
+  heroBlock: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    paddingRight: spacing.xl,
   },
-  logo: {
-    width: 64,
-    height: 64,
-    marginBottom: spacing.xl,
+  kicker: {
+    ...typography.bodyLarge,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
   },
   title: {
-    ...typography.displayLarge,
-    fontSize: 40,
-    lineHeight: 46,
-    letterSpacing: -0.8,
-    marginBottom: spacing.md,
+    fontFamily: fonts.sans,
+    fontSize: 56,
+    lineHeight: 60,
+    fontWeight: '700',
+    letterSpacing: -1.4,
+    marginBottom: spacing.lg,
   },
   subtitle: {
     ...typography.bodyLarge,
     fontWeight: '500',
     paddingRight: spacing.lg,
   },
+
   buttonStack: {
     gap: spacing.sm,
   },
   primaryPill: {
-    height: 56,
-    borderRadius: radius.pill,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    height: 56,
+    borderRadius: radius.pill,
   },
   primaryPillLabel: {
     ...typography.button,
     fontSize: 17,
+    fontWeight: '700',
   },
-  softPill: {
+  outlinePill: {
     height: 56,
     borderRadius: radius.pill,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  softPillLabel: {
+  outlinePillLabel: {
     ...typography.button,
     fontSize: 17,
+    fontWeight: '600',
   },
 });

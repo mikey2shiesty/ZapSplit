@@ -32,6 +32,7 @@ import Card from '../../components/common/Card';
 import { SearchInput } from '../../components/common/Input';
 import IconCircle from '../../components/common/IconCircle';
 import MoneyText from '../../components/common/MoneyText';
+import Skeleton from '../../components/common/Skeleton';
 
 // ZapSplit 2026 — Friendly Fintech Home.
 // Reference: Coinbase × Public × Uber. Pill search at top, hero balance card,
@@ -210,42 +211,42 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       >
         {/* HERO BALANCE CARD */}
         <View style={styles.section}>
-          <Card>
-            <View style={styles.heroLabelRow}>
-              <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-                Net balance
-              </Text>
-              {netBalance !== 0 && (
-                <View
-                  style={[
-                    styles.heroPill,
-                    {
-                      backgroundColor:
-                        netBalance > 0 ? colors.successLight : colors.errorLight,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={netBalance > 0 ? 'trending-up' : 'trending-down'}
-                    size={12}
-                    color={netBalance > 0 ? colors.success : colors.error}
-                  />
-                  <Text
+          {loading && !refreshing && recent.length === 0 ? (
+            <Skeleton.Hero />
+          ) : (
+            <Card>
+              <View style={styles.heroLabelRow}>
+                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
+                  Net balance
+                </Text>
+                {netBalance !== 0 && (
+                  <View
                     style={[
-                      styles.heroPillLabel,
+                      styles.heroPill,
                       {
-                        color: netBalance > 0 ? colors.success : colors.error,
+                        backgroundColor:
+                          netBalance > 0 ? colors.successLight : colors.errorLight,
                       },
                     ]}
                   >
-                    {netBalance > 0 ? 'Up' : 'Down'}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {loading && !refreshing ? (
-              <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />
-            ) : (
+                    <Ionicons
+                      name={netBalance > 0 ? 'trending-up' : 'trending-down'}
+                      size={12}
+                      color={netBalance > 0 ? colors.success : colors.error}
+                    />
+                    <Text
+                      style={[
+                        styles.heroPillLabel,
+                        {
+                          color: netBalance > 0 ? colors.success : colors.error,
+                        },
+                      ]}
+                    >
+                      {netBalance > 0 ? 'Up' : 'Down'}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <MoneyText
                 amount={netBalance}
                 size="hero"
@@ -253,24 +254,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 showSign={false}
                 style={{ marginTop: 4 }}
               />
-            )}
 
-            <View style={[styles.owedRow, { borderTopColor: colors.border }]}>
-              <View style={styles.owedCell}>
-                <Text style={[styles.owedLabel, { color: colors.textSecondary }]}>
-                  Owed to you
-                </Text>
-                <MoneyText amount={owedToYou} size="row" tone="positive" />
+              <View style={[styles.owedRow, { borderTopColor: colors.border }]}>
+                <View style={styles.owedCell}>
+                  <Text style={[styles.owedLabel, { color: colors.textSecondary }]}>
+                    Owed to you
+                  </Text>
+                  <MoneyText amount={owedToYou} size="row" tone="positive" />
+                </View>
+                <View style={[styles.owedDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.owedCell}>
+                  <Text style={[styles.owedLabel, { color: colors.textSecondary }]}>
+                    You owe
+                  </Text>
+                  <MoneyText amount={youOwe} size="row" tone="negative" />
+                </View>
               </View>
-              <View style={[styles.owedDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.owedCell}>
-                <Text style={[styles.owedLabel, { color: colors.textSecondary }]}>
-                  You owe
-                </Text>
-                <MoneyText amount={youOwe} size="row" tone="negative" />
-              </View>
-            </View>
-          </Card>
+            </Card>
+          )}
         </View>
 
         {/* GET STARTED CARD — only for new users */}
@@ -340,9 +341,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </View>
 
           {loading && recent.length === 0 ? (
-            <Card>
-              <ActivityIndicator color={colors.primary} />
-            </Card>
+            <Skeleton.List rows={4} />
           ) : recent.length === 0 ? (
             <Card>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>

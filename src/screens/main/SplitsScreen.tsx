@@ -23,6 +23,7 @@ import Card from '../../components/common/Card';
 import { SearchInput } from '../../components/common/Input';
 import IconCircle from '../../components/common/IconCircle';
 import MoneyText from '../../components/common/MoneyText';
+import Skeleton from '../../components/common/Skeleton';
 
 // Friendly Fintech Splits screen.
 // Header → search → filter chips → summary stat → splits as rows in one card.
@@ -198,9 +199,7 @@ export default function SplitsScreen() {
         {/* SPLITS LIST */}
         <View style={styles.section}>
           {loading && filtered.length === 0 ? (
-            <Card>
-              <ActivityIndicator color={colors.primary} />
-            </Card>
+            <Skeleton.List rows={5} />
           ) : filtered.length === 0 ? (
             <Card>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>

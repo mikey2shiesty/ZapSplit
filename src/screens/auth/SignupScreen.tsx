@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -38,39 +40,41 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    confirm?: string;
+    form?: string;
+  }>({});
+
+  const shake = useRef(new Animated.Value(0)).current;
+  const triggerShake = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    shake.setValue(0);
+    Animated.sequence([
+      Animated.timing(shake, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -4, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const validateForm = () => {
-    if (!fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
-      return false;
-    }
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return false;
-    }
+    const next: typeof errors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
-      return false;
-    }
-    if (!/[A-Z]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one uppercase letter');
-      return false;
-    }
-    if (!/[0-9]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one number');
-      return false;
-    }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one special character');
-      return false;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    if (!fullName.trim()) next.fullName = 'Name is required';
+    if (!email.trim()) next.email = 'Email is required';
+    else if (!emailRegex.test(email)) next.email = 'Enter a valid email address';
+    if (password.length < 8) next.password = 'At least 8 characters';
+    else if (!/[A-Z]/.test(password)) next.password = 'Add an uppercase letter';
+    else if (!/[0-9]/.test(password)) next.password = 'Add a number';
+    else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) next.password = 'Add a special character';
+    if (password !== confirmPassword) next.confirm = 'Passwords don\'t match';
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      triggerShake();
       return false;
     }
     return true;
@@ -82,7 +86,8 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     try {
       await signUp(email, password, fullName);
     } catch (error: any) {
-      Alert.alert('Signup failed', error.message || 'An error occurred during signup');
+      setErrors({ form: error.message || 'Something went wrong, try again.' });
+      triggerShake();
     } finally {
       setLoading(false);
     }
@@ -111,9 +116,10 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
     }
   };
 
-  const inputBorder = (field: string) =>
-    focusedField === field ? colors.primary : colors.border;
-  const inputWidth = (field: string) => (focusedField === field ? 2 : 1);
+  const inputBorder = (field: string, hasError?: boolean) =>
+    hasError ? colors.error : focusedField === field ? colors.primary : colors.border;
+  const inputWidth = (field: string, hasError?: boolean) =>
+    hasError || focusedField === field ? 2 : 1;
 
   // Reqs row helper
   type ReqProps = { ok: boolean; label: string };
@@ -142,20 +148,28 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.text} />
-        </TouchableOpacity>
+        <View style={styles.topRow}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.primaryLight }]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <Image
+            source={require('../../assets/images/brand-icon.png')}
+            style={styles.brandIcon}
+            resizeMode="contain"
+          />
+        </View>
 
+        <Text style={[styles.kicker, { color: colors.primary }]}>Sign up</Text>
         <Text style={[styles.title, { color: colors.text }]}>Create your account.</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Start splitting bills with friends.
         </Text>
 
-        <View style={styles.form}>
+        <Animated.View style={[styles.form, { transform: [{ translateX: shake }] }]}>
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Full name</Text>
             <TextInput
@@ -163,20 +177,26 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 styles.input,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder('name'),
-                  borderWidth: inputWidth('name'),
+                  borderColor: inputBorder('name', !!errors.fullName),
+                  borderWidth: inputWidth('name', !!errors.fullName),
                   color: colors.text,
                 },
               ]}
               placeholder="John Doe"
               placeholderTextColor={colors.textTertiary}
               value={fullName}
-              onChangeText={setFullName}
+              onChangeText={(t) => {
+                setFullName(t);
+                if (errors.fullName) setErrors({ ...errors, fullName: undefined });
+              }}
               onFocus={() => setFocusedField('name')}
               onBlur={() => setFocusedField(null)}
               autoCapitalize="words"
               returnKeyType="next"
             />
+            {errors.fullName && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.fullName}</Text>
+            )}
           </View>
 
           <View style={styles.field}>
@@ -186,21 +206,27 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 styles.input,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder('email'),
-                  borderWidth: inputWidth('email'),
+                  borderColor: inputBorder('email', !!errors.email),
+                  borderWidth: inputWidth('email', !!errors.email),
                   color: colors.text,
                 },
               ]}
               placeholder="you@example.com"
               placeholderTextColor={colors.textTertiary}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => {
+                setEmail(t);
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
               onFocus={() => setFocusedField('email')}
               onBlur={() => setFocusedField(null)}
               keyboardType="email-address"
               autoCapitalize="none"
               returnKeyType="next"
             />
+            {errors.email && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.email}</Text>
+            )}
           </View>
 
           <View style={styles.field}>
@@ -210,8 +236,8 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 styles.passwordRow,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder('password'),
-                  borderWidth: inputWidth('password'),
+                  borderColor: inputBorder('password', !!errors.password),
+                  borderWidth: inputWidth('password', !!errors.password),
                 },
               ]}
             >
@@ -220,7 +246,10 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 placeholder="Create a password"
                 placeholderTextColor={colors.textTertiary}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(t) => {
+                  setPassword(t);
+                  if (errors.password) setErrors({ ...errors, password: undefined });
+                }}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 secureTextEntry={!showPassword}
@@ -239,7 +268,10 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 />
               </TouchableOpacity>
             </View>
-            {password.length > 0 && (
+            {errors.password && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.password}</Text>
+            )}
+            {password.length > 0 && !errors.password && (
               <View style={styles.reqs}>
                 <Req ok={password.length >= 8} label="At least 8 characters" />
                 <Req ok={/[A-Z]/.test(password)} label="One uppercase letter" />
@@ -259,15 +291,18 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
                 styles.input,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: inputBorder('confirm'),
-                  borderWidth: inputWidth('confirm'),
+                  borderColor: inputBorder('confirm', !!errors.confirm),
+                  borderWidth: inputWidth('confirm', !!errors.confirm),
                   color: colors.text,
                 },
               ]}
               placeholder="Re-enter your password"
               placeholderTextColor={colors.textTertiary}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(t) => {
+                setConfirmPassword(t);
+                if (errors.confirm) setErrors({ ...errors, confirm: undefined });
+              }}
               onFocus={() => setFocusedField('confirm')}
               onBlur={() => setFocusedField(null)}
               secureTextEntry={!showPassword}
@@ -275,7 +310,18 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
               returnKeyType="done"
               onSubmitEditing={handleSignup}
             />
+            {errors.confirm && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.confirm}</Text>
+            )}
           </View>
+
+          {/* Form-level error */}
+          {errors.form && (
+            <View style={[styles.formError, { backgroundColor: colors.errorLight }]}>
+              <Ionicons name="alert-circle" size={16} color={colors.error} />
+              <Text style={[styles.formErrorText, { color: colors.error }]}>{errors.form}</Text>
+            </View>
+          )}
 
           <TouchableOpacity
             style={[
@@ -292,9 +338,12 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
             {loading ? (
               <ActivityIndicator color={colors.textInverse} />
             ) : (
-              <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
-                Create account
-              </Text>
+              <>
+                <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                  Create account
+                </Text>
+                <Ionicons name="arrow-forward" size={18} color={colors.textInverse} />
+              </>
             )}
           </TouchableOpacity>
 
@@ -309,7 +358,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={
                 isDark
-                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
                   : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
               }
               cornerRadius={9999}
@@ -353,7 +402,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
               <Text style={{ color: colors.primary, fontWeight: '700' }}>Log in</Text>
             </Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -367,13 +416,27 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+  },
+  brandIcon: {
+    width: 40,
+    height: 44,
+  },
+  kicker: {
+    ...typography.bodyLarge,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
   },
   title: {
     ...typography.displayLarge,
@@ -435,10 +498,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   primaryPill: {
-    height: 56,
-    borderRadius: radius.pill,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    height: 56,
+    borderRadius: radius.pill,
     marginTop: spacing.sm,
   },
   primaryPillLabel: {
@@ -482,5 +547,24 @@ const styles = StyleSheet.create({
   },
   loginLinkText: {
     ...typography.body,
+  },
+  errorText: {
+    ...typography.bodySmall,
+    fontSize: 12,
+    paddingLeft: 4,
+    marginTop: 4,
+  },
+  formError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+  },
+  formErrorText: {
+    flex: 1,
+    ...typography.bodySmall,
+    fontWeight: '600',
   },
 });
