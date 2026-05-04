@@ -24,6 +24,7 @@ import { SearchInput } from '../../components/common/Input';
 import IconCircle from '../../components/common/IconCircle';
 import MoneyText from '../../components/common/MoneyText';
 import Skeleton from '../../components/common/Skeleton';
+import SwipeableTabScreen from '../../components/common/SwipeableTabScreen';
 
 // Friendly Fintech Splits screen.
 // Header → search → filter chips → summary stat → splits as rows in one card.
@@ -103,6 +104,7 @@ export default function SplitsScreen() {
   ];
 
   return (
+    <SwipeableTabScreen>
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* HEADER */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -296,6 +298,7 @@ export default function SplitsScreen() {
         </View>
       </ScrollView>
     </View>
+    </SwipeableTabScreen>
   );
 }
 

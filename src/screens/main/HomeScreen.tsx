@@ -33,6 +33,7 @@ import { SearchInput } from '../../components/common/Input';
 import IconCircle from '../../components/common/IconCircle';
 import MoneyText from '../../components/common/MoneyText';
 import Skeleton from '../../components/common/Skeleton';
+import SwipeableTabScreen from '../../components/common/SwipeableTabScreen';
 
 // ZapSplit 2026 — Friendly Fintech Home.
 // Reference: Coinbase × Public × Uber. Pill search at top, hero balance card,
@@ -164,6 +165,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   return (
+    <SwipeableTabScreen>
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* TOP BAR — pill search + chart + bell */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
@@ -623,6 +625,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </KeyboardAvoidingView>
       </Modal>
     </View>
+    </SwipeableTabScreen>
   );
 }
 
