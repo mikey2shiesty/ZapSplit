@@ -111,10 +111,12 @@ function MainTabs() {
 
 // Main Navigator with Modal Stack
 export default function MainNavigator() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        cardStyle: { backgroundColor: colors.background },
       }}
     >
       {/* Main Tab Navigator */}

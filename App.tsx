@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, LinkingOptions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StripeProvider } from '@stripe/stripe-react-native';
@@ -95,7 +96,9 @@ function AppContent() {
     console.warn('⚠️ Stripe publishable key not found. Payment features will not work.');
     return (
       <NavigationContainer theme={navigationTheme} linking={linking}>
-        <AppNavigator />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <AppNavigator />
+        </View>
       </NavigationContainer>
     );
   }
@@ -107,7 +110,9 @@ function AppContent() {
       urlScheme="zapsplit"
     >
       <NavigationContainer theme={navigationTheme} linking={linking}>
-        <AppNavigator />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <AppNavigator />
+        </View>
       </NavigationContainer>
     </StripeProvider>
   );
