@@ -185,13 +185,13 @@ export default function SettingsScreen() {
               onPress={() =>
                 Alert.alert(
                   'Need help?',
-                  'For questions or support, email us at zapsplit@gmail.com',
+                  'For questions or support, email us at support@zapsplit.com.au',
                   [
                     { text: 'Cancel', style: 'cancel' },
                     {
                       text: 'Email support',
                       onPress: () =>
-                        Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Support'),
+                        Linking.openURL('mailto:support@zapsplit.com.au?subject=ZapSplit%20Support'),
                     },
                   ]
                 )
@@ -201,7 +201,7 @@ export default function SettingsScreen() {
               icon="chatbubble"
               label="Contact support"
               onPress={() =>
-                Linking.openURL('mailto:zapsplit@gmail.com?subject=ZapSplit%20Feedback')
+                Linking.openURL('mailto:support@zapsplit.com.au?subject=ZapSplit%20Feedback')
               }
             />
             <Row

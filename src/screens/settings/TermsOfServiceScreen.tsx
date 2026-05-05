@@ -13,7 +13,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius, typography } from '../../constants/theme';
 import Header from '../../components/common/Header';
 
-const CONTACT_EMAIL = 'zapsplit@gmail.com';
+const CONTACT_EMAIL = 'support@zapsplit.com.au';
 const EFFECTIVE_DATE = '18 February 2026';
 
 export default function TermsOfServiceScreen() {
