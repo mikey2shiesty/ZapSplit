@@ -121,7 +121,7 @@ export default function SplitsScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

@@ -58,6 +58,7 @@ const Tab = createNativeBottomTabNavigator<MainTabParamList>();
 //     overrides break it.
 //   • tabPress haptic via screenListeners.
 function MainTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenListeners={{
@@ -65,9 +66,10 @@ function MainTabs() {
           Haptics.selectionAsync().catch(() => {});
         },
       }}
+      sceneContainerStyle={{ backgroundColor: colors.background }}
       screenOptions={{
         headerShown: false,
-        tabBarMinimizeBehavior: 'onScrollDown',
+        tabBarMinimizeBehavior: 'never',
         popToTopOnBlur: true,
       }}
     >
