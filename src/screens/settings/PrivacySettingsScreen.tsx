@@ -182,8 +182,8 @@ export default function PrivacySettingsScreen() {
       <Switch
         value={settings?.[key] as boolean}
         onValueChange={(value) => handleToggle(key, value)}
-        trackColor={{ false: colors.border, true: colors.primaryLight }}
-        thumbColor={settings?.[key] ? colors.primary : colors.surface}
+        trackColor={{ false: colors.border, true: '#34C759' }}
+        ios_backgroundColor={colors.border}
         disabled={saving}
       />
     </View>
