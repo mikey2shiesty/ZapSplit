@@ -250,15 +250,16 @@ export default function FriendsScreen() {
           </Card>
         </View>
       ) : (
-        <View style={styles.section}>
-          <Card padding="sm">
+        <View style={[styles.section, { flex: 1 }]}>
+          <Card padding="sm" style={{ flex: 1 }}>
             <FlatList
-              scrollEnabled={false}
               data={data as any[]}
               keyExtractor={(item: any, i) =>
                 'friendship_id' in item ? item.friendship_id : item.id
               }
               renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 200 }}
+              showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
