@@ -30,6 +30,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "michael.cheneka@gmail.com",
+        "ascAppId": "6759526469",
+        "appleTeamId": "48TQ9H988B"
+      }
+    }
   }
 }
