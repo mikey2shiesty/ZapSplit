@@ -1,19 +1,33 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ViewStyle,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../contexts/ThemeContext';
-import { shadows } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 interface HeaderProps {
   title: string;
   onBack?: () => void;
   rightElement?: React.ReactNode;
   showBackButton?: boolean;
-  variant?: 'default' | 'transparent';
+  variant?: 'default' | 'transparent' | 'glass';
   style?: ViewStyle;
 }
 
+// Friendly Fintech Header.
+// `default`     → solid background using `colors.background`.
+// `transparent` → no background fill (used when content sits on a hero canvas).
+// `glass`       → iOS 26 Liquid Glass — BlurView background on iOS, solid on
+//                 Android. Use this when the header floats over scrollable
+//                 content and you want the canvas to peek through.
 export default function Header({
   title,
   onBack,
@@ -23,88 +37,109 @@ export default function Header({
   style,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const isTransparent = variant === 'transparent';
+  const isGlass = variant === 'glass';
 
   return (
     <View
       style={[
-        styles.container,
         {
-          paddingTop: insets.top + 8,
-          backgroundColor: isTransparent ? 'transparent' : colors.surface,
-          borderBottomColor: isTransparent ? 'transparent' : colors.gray200,
-          borderBottomWidth: isTransparent ? 0 : 1,
+          paddingTop: insets.top + spacing.sm,
+          backgroundColor:
+            isTransparent || isGlass ? 'transparent' : colors.background,
         },
         style,
       ]}
     >
+      {/* iOS 26 Liquid Glass background fills behind the safe-area inset. */}
+      {isGlass && Platform.OS === 'ios' && (
+        <BlurView
+          intensity={80}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      {isGlass && Platform.OS === 'android' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: colors.background },
+          ]}
+        />
+      )}
+
       <View style={styles.content}>
-        {/* Left - Back Button */}
         {showBackButton && onBack ? (
           <TouchableOpacity
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: isTransparent ? colors.surface : colors.gray50,
-              },
-            ]}
+            style={[styles.backCircle, { backgroundColor: colors.primaryLight }]}
             onPress={onBack}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
         )}
 
-        {/* Center - Title */}
-        <Text style={[styles.title, { color: colors.gray900 }]} numberOfLines={1}>
+        <Text
+          style={[styles.title, { color: colors.text }]}
+          numberOfLines={1}
+        >
           {title}
         </Text>
 
-        {/* Right - Custom Element or Placeholder */}
         {rightElement ? (
           <View style={styles.rightContainer}>{rightElement}</View>
         ) : (
           <View style={styles.placeholder} />
         )}
       </View>
+
+      {/* Hairline divider on glass variant so the floating header
+          has a visible edge against scrolling content. */}
+      {isGlass && (
+        <View
+          style={[styles.hairline, { backgroundColor: colors.divider }]}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {},
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.low,
+  },
+  placeholder: {
+    width: 40,
+    height: 40,
   },
   title: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.displayMedium,
     textAlign: 'center',
-    marginHorizontal: 12,
-  },
-  placeholder: {
-    width: 44,
-    height: 44,
+    marginHorizontal: spacing.sm,
   },
   rightContainer: {
-    minWidth: 44,
+    minWidth: 40,
+    height: 40,
     alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  hairline: {
+    height: StyleSheet.hairlineWidth,
   },
 });

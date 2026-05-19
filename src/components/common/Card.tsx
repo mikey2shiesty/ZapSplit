@@ -1,35 +1,52 @@
 import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle, Pressable, ColorValue } from 'react-native';
-import { shadows, radius, spacing } from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, StyleProp, ViewStyle, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { radius, spacing, shadows, layout } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+
+// Friendly Fintech Card — the structural container of the app.
+// 16pt corners, 1px hairline border, subtle card shadow, white surface on canvas.
+// Every information cluster lives in one of these.
+
+type Variant = 'default' | 'tinted' | 'outlined' | 'elevated';
 
 interface CardProps {
   children: React.ReactNode;
-  variant?: 'default' | 'elevated' | 'outlined';
-  gradient?: [ColorValue, ColorValue, ...ColorValue[]];
+  variant?: Variant;
+  /** @deprecated gradients are not part of the Friendly Fintech language */
+  gradient?: unknown;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
-  padding?: keyof typeof spacing;
+  padding?: keyof typeof spacing | 'card';
 }
 
 export default function Card({
   children,
   variant = 'default',
-  gradient,
   onPress,
   style,
-  padding = 'md',
+  padding = 'card',
 }: CardProps) {
   const { colors } = useTheme();
-  const paddingValue = spacing[padding];
+
+  // 'card' resolves to the asymmetric default (20 vertical, 16 horizontal).
+  const isCardPad = padding === 'card';
+  const padV = isCardPad ? layout.cardPaddingV : spacing[padding as keyof typeof spacing];
+  const padH = isCardPad ? layout.cardPaddingH : spacing[padding as keyof typeof spacing];
+
+  const fill =
+    variant === 'tinted' ? colors.primaryLight : colors.surface;
 
   const cardStyle: StyleProp<ViewStyle> = [
-    styles.base,
-    { padding: paddingValue, backgroundColor: colors.surface },
-    variant === 'elevated' && [styles.elevated, shadows.medium],
-    variant === 'outlined' && [styles.outlined, { borderColor: colors.border }],
+    {
+      paddingVertical: padV,
+      paddingHorizontal: padH,
+      backgroundColor: fill,
+      borderRadius: radius.lg,
+      borderWidth: variant === 'tinted' ? 0 : 1,
+      borderColor: colors.border,
+    },
+    variant !== 'tinted' && shadows.card,
     style,
   ];
 
@@ -38,38 +55,23 @@ export default function Card({
     onPress?.();
   };
 
-  const content = gradient ? (
-    <LinearGradient
-      colors={gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.base, { padding: 0 }]}
-    >
-      <View style={{ padding: paddingValue }}>{children}</View>
-    </LinearGradient>
-  ) : (
-    <View style={cardStyle}>{children}</View>
-  );
-
   if (onPress) {
     return (
-      <Pressable onPress={handlePress}>
-        {content}
+      <Pressable
+        onPress={handlePress}
+        style={({ pressed }) => [cardStyle, pressed && styles.pressed]}
+      >
+        {children}
       </Pressable>
     );
   }
 
-  return content;
+  return <View style={cardStyle}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  elevated: {},
-  outlined: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
+  pressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
   },
 });

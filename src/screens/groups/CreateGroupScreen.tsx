@@ -20,7 +20,8 @@ import { createGroup, GroupType } from '../../services/groupService';
 import { getFriends, Friend } from '../../services/friendService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
-import { shadows } from '../../constants/theme';
+import { shadows, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const GROUP_TYPES: { value: GroupType; label: string; icon: string }[] = [
@@ -128,7 +129,7 @@ export default function CreateGroupScreen() {
         key={type.value}
         style={[
           styles.typeOption,
-          { backgroundColor: isSelected ? colors.infoLight : colors.gray100 },
+          { backgroundColor: isSelected ? colors.infoLight : colors.surface },
           isSelected && { borderWidth: 1, borderColor: colors.primary },
         ]}
         onPress={() => setSelectedType(type.value)}
@@ -136,9 +137,9 @@ export default function CreateGroupScreen() {
         <Ionicons
           name={type.icon as any}
           size={24}
-          color={isSelected ? colors.primary : colors.gray500}
+          color={isSelected ? colors.primary : colors.textSecondary}
         />
-        <Text style={[styles.typeLabel, { color: isSelected ? colors.primary : colors.gray600 }]}>
+        <Text style={[styles.typeLabel, { color: isSelected ? colors.primary : colors.textSecondary }]}>
           {type.label}
         </Text>
       </TouchableOpacity>
@@ -151,7 +152,7 @@ export default function CreateGroupScreen() {
       <TouchableOpacity
         style={[
           styles.friendItem,
-          { borderBottomColor: colors.gray200 },
+          { borderBottomColor: colors.border },
           isSelected && { backgroundColor: colors.infoLight, marginHorizontal: -16, paddingHorizontal: 16 },
         ]}
         onPress={() => toggleMember(item.id)}
@@ -161,10 +162,10 @@ export default function CreateGroupScreen() {
           uri={item.avatar_url || undefined}
           size="sm"
         />
-        <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.full_name}</Text>
+        <Text style={[styles.friendName, { color: colors.text }]}>{item.full_name}</Text>
         <View style={[
           styles.checkbox,
-          { borderColor: colors.gray300 },
+          { borderColor: colors.border },
           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
         ]}>
           {isSelected && <Ionicons name="checkmark" size={16} color={colors.surface} />}
@@ -175,44 +176,48 @@ export default function CreateGroupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="close" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.gray900 }]}>Create Group</Text>
-        <TouchableOpacity
-          style={[styles.createBtn, { backgroundColor: colors.primary }, !name.trim() && styles.createBtnDisabled]}
-          onPress={handleCreate}
-          disabled={!name.trim() || loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color={colors.surface} />
-          ) : (
-            <Text style={[styles.createBtnText, { color: colors.surface }]}>Create</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="New group"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <TouchableOpacity
+            style={[
+              styles.createBtn,
+              { backgroundColor: colors.primary },
+              !name.trim() && styles.createBtnDisabled,
+            ]}
+            onPress={handleCreate}
+            disabled={!name.trim() || loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={colors.textInverse} />
+            ) : (
+              <Text style={[styles.createBtnText, { color: colors.textInverse }]}>
+                Create
+              </Text>
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Group Details</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Details</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.gray100, color: colors.gray900 }]}
+            style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
             placeholder="Group name"
-            placeholderTextColor={colors.gray400}
+            placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
           />
           <TextInput
-            style={[styles.input, styles.textArea, { backgroundColor: colors.gray100, color: colors.gray900 }]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.surface, color: colors.text }]}
             placeholder="Description (optional)"
-            placeholderTextColor={colors.gray400}
+            placeholderTextColor={colors.textTertiary}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -221,15 +226,15 @@ export default function CreateGroupScreen() {
         </Card>
 
         <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Group Type</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Type</Text>
           <View style={styles.typeGrid}>
             {GROUP_TYPES.map(renderTypeOption)}
           </View>
           {selectedType === 'custom' && (
             <TextInput
-              style={[styles.input, styles.customTypeInput, { backgroundColor: colors.gray100, color: colors.gray900 }]}
+              style={[styles.input, styles.customTypeInput, { backgroundColor: colors.surface, color: colors.text }]}
               placeholder="e.g., Sports Team, Book Club..."
-              placeholderTextColor={colors.gray400}
+              placeholderTextColor={colors.textTertiary}
               value={customTypeName}
               onChangeText={setCustomTypeName}
             />
@@ -238,7 +243,7 @@ export default function CreateGroupScreen() {
 
         <Card variant="default" style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Add Members</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Add Members</Text>
             {selectedMembers.length > 0 && (
               <Text style={[styles.selectedCount, { color: colors.primary }]}>{selectedMembers.length} selected</Text>
             )}
@@ -247,7 +252,7 @@ export default function CreateGroupScreen() {
             <ActivityIndicator size="small" color={colors.primary} />
           ) : friends.length === 0 ? (
             <View style={styles.noFriends}>
-              <Text style={[styles.noFriendsText, { color: colors.gray500 }]}>No friends to add</Text>
+              <Text style={[styles.noFriendsText, { color: colors.textSecondary }]}>No friends to add</Text>
               <TouchableOpacity onPress={() => navigation.navigate('AddFriend')}>
                 <Text style={[styles.addFriendsLink, { color: colors.primary }]}>Add friends first</Text>
               </TouchableOpacity>
@@ -290,9 +295,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   createBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: radius.pill,
+    minHeight: 36,
+    justifyContent: 'center',
   },
   createBtnDisabled: {
     opacity: 0.5,

@@ -1,30 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { supabase } from '../../services/supabase';
-import { getFriends, getIncomingFriendRequests, Friend, FriendRequest } from '../../services/friendService';
-import Avatar from '../../components/common/Avatar';
-import Card from '../../components/common/Card';
+import {
+  getFriends,
+  getIncomingFriendRequests,
+  Friend,
+  FriendRequest,
+} from '../../services/friendService';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius, shadows } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
+import Card from '../../components/common/Card';
+import { SearchInput } from '../../components/common/Input';
 
 type TabType = 'friends' | 'requests';
 
 export default function FriendsScreen() {
   const navigation = useNavigation<any>();
-  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -39,24 +43,18 @@ export default function FriendsScreen() {
   }, []);
 
   useEffect(() => {
-    if (currentUserId) {
-      loadData();
-    }
+    if (currentUserId) loadData();
   }, [currentUserId]);
 
   const loadCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
-    }
+    if (user) setCurrentUserId(user.id);
   };
 
   const loadData = async () => {
     if (!currentUserId) return;
-
     try {
       setLoading(true);
-      // Always load both friends and requests so badge count is accurate
       const [friendsData, requestsData] = await Promise.all([
         getFriends(currentUserId),
         getIncomingFriendRequests(currentUserId),
@@ -76,355 +74,315 @@ export default function FriendsScreen() {
     setRefreshing(false);
   };
 
-  const filteredFriends = friends.filter(friend =>
-    friend.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    friend.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFriends = friends.filter((f) =>
+    f.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderTabButton = (tab: TabType, label: string, count?: number) => {
-    const isActive = activeTab === tab;
+  const Chip = ({ tab, label, count }: { tab: TabType; label: string; count?: number }) => {
+    const active = activeTab === tab;
     return (
       <TouchableOpacity
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setActiveTab(tab);
+        }}
         style={[
-          styles.tabButton,
-          { backgroundColor: isActive ? colors.primary : colors.surface }
+          styles.chip,
+          { backgroundColor: active ? colors.primary : colors.primaryLight },
         ]}
-        onPress={() => setActiveTab(tab)}
+        activeOpacity={0.85}
       >
-        <Text style={[
-          styles.tabText,
-          { color: isActive ? colors.surface : colors.gray700 }
-        ]}>
+        <Text
+          style={[
+            styles.chipLabel,
+            { color: active ? colors.textInverse : colors.primary },
+          ]}
+        >
           {label}
         </Text>
         {count !== undefined && count > 0 && (
-          <View style={[styles.badge, { backgroundColor: colors.error }]}>
-            <Text style={[styles.badgeText, { color: colors.surface }]}>{count}</Text>
+          <View style={[styles.countDot, { backgroundColor: active ? colors.textInverse : colors.primary }]}>
+            <Text
+              style={[
+                styles.countLabel,
+                { color: active ? colors.primary : colors.textInverse },
+              ]}
+            >
+              {count}
+            </Text>
           </View>
         )}
       </TouchableOpacity>
     );
   };
 
-  const renderFriendItem = ({ item }: { item: Friend }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('FriendProfile', { friendId: item.id })}
-    >
-      <Card variant="default" style={styles.friendCard}>
-        <View style={styles.friendContent}>
-          <Avatar
-            name={item.full_name}
-            uri={item.avatar_url || undefined}
-            size="md"
-          />
-          <View style={styles.friendInfo}>
-            <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.full_name}</Text>
-            <Text style={[styles.friendEmail, { color: colors.gray500 }]}>{item.email}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+  const renderFriendItem = ({ item, index }: { item: Friend; index: number }) => {
+    const initial = (item.full_name?.charAt(0) || '?').toUpperCase();
+    const isLast = index === filteredFriends.length - 1;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.row,
+          !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
+        ]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('FriendProfile', { friendId: item.id });
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.avatarInitial, { color: colors.textInverse }]}>{initial}</Text>
         </View>
-      </Card>
-    </TouchableOpacity>
-  );
-
-  const renderRequestItem = ({ item }: { item: FriendRequest }) => (
-    <Card variant="default" style={styles.requestCard}>
-      <View style={styles.requestContent}>
-        <Avatar
-          name={item.sender?.full_name || 'Unknown'}
-          uri={item.sender?.avatar_url || undefined}
-          size="md"
-        />
-        <View style={styles.requestInfo}>
-          <Text style={[styles.friendName, { color: colors.gray900 }]}>{item.sender?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.friendEmail, { color: colors.gray500 }]}>{item.sender?.email}</Text>
+        <View style={styles.rowMain}>
+          <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+            {item.full_name}
+          </Text>
+          <Text style={[styles.rowMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+            {item.email}
+          </Text>
         </View>
-      </View>
-      <View style={styles.requestActions}>
-        <TouchableOpacity
-          style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('FriendRequests')}
-        >
-          <Text style={[styles.acceptButtonText, { color: colors.surface }]}>View</Text>
-        </TouchableOpacity>
-      </View>
-    </Card>
-  );
+        <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+      </TouchableOpacity>
+    );
+  };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name={activeTab === 'friends' ? 'people-outline' : 'mail-outline'}
-        size={64}
-        color={colors.gray300}
-      />
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>
-        {activeTab === 'friends' ? 'No Friends Yet' : 'No Pending Requests'}
-      </Text>
-      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
-        {activeTab === 'friends'
-          ? 'Add friends to easily split bills together'
-          : 'Friend requests will appear here'}
-      </Text>
-      {activeTab === 'friends' && (
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('AddFriend')}
-        >
-          <Ionicons name="person-add" size={20} color={colors.surface} />
-          <Text style={[styles.addButtonText, { color: colors.surface }]}>Add Friends</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  const renderRequestItem = ({ item, index }: { item: FriendRequest; index: number }) => {
+    const initial = (item.sender?.full_name?.charAt(0) || '?').toUpperCase();
+    const isLast = index === requests.length - 1;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.row,
+          !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
+        ]}
+        onPress={() => navigation.navigate('FriendRequests')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.avatarInitial, { color: colors.textInverse }]}>{initial}</Text>
+        </View>
+        <View style={styles.rowMain}>
+          <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+            {item.sender?.full_name || 'Unknown'}
+          </Text>
+          <Text style={[styles.rowMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+            {item.sender?.email}
+          </Text>
+        </View>
+        <View style={[styles.viewPill, { backgroundColor: colors.primaryLight }]}>
+          <Text style={[styles.viewPillLabel, { color: colors.primary }]}>View</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const data = activeTab === 'friends' ? filteredFriends : requests;
+  const renderItem = activeTab === 'friends' ? renderFriendItem : (renderRequestItem as any);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.gray900 }]}>Friends</Text>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.navigate('AddFriend')}
-        >
-          <Ionicons name="person-add-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header
+        title="Friends"
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <TouchableOpacity
+            style={[styles.addCircle, { backgroundColor: colors.primaryLight }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              navigation.navigate('AddFriend');
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="person-add" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
 
-      {/* Search Bar */}
+      {/* SEARCH */}
       {activeTab === 'friends' && (
-        <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-          <Ionicons name="search" size={20} color={colors.gray400} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.gray900 }]}
-            placeholder="Search friends..."
-            placeholderTextColor={colors.gray400}
+        <View style={styles.section}>
+          <SearchInput
+            placeholder="Search friends"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={colors.gray400} />
-            </TouchableOpacity>
-          )}
         </View>
       )}
 
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        {renderTabButton('friends', 'All Friends')}
-        {renderTabButton('requests', 'Requests', requests.length)}
+      {/* TABS */}
+      <View style={[styles.section, styles.tabsRow]}>
+        <Chip tab="friends" label="All friends" />
+        <Chip tab="requests" label="Requests" count={requests.length} />
       </View>
 
-      {/* Content */}
+      {/* LIST */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator color={colors.primary} />
         </View>
-      ) : activeTab === 'friends' ? (
-        <FlatList
-          data={filteredFriends}
-          keyExtractor={(item) => item.friendship_id}
-          renderItem={renderFriendItem}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
-            />
-          }
-        />
+      ) : data.length === 0 ? (
+        <View style={styles.section}>
+          <Card>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {activeTab === 'friends' ? 'No friends yet' : 'No pending requests'}
+            </Text>
+            <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+              {activeTab === 'friends'
+                ? 'Add friends to easily split bills together.'
+                : 'Friend requests will appear here.'}
+            </Text>
+            {activeTab === 'friends' && (
+              <TouchableOpacity
+                style={[styles.primaryPill, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  navigation.navigate('AddFriend');
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
+                  Add friends
+                </Text>
+              </TouchableOpacity>
+            )}
+          </Card>
+        </View>
       ) : (
-        <FlatList
-          data={requests}
-          keyExtractor={(item) => item.id}
-          renderItem={renderRequestItem}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
+        <View style={[styles.section, { flex: 1 }]}>
+          <Card padding="sm" style={{ flex: 1 }}>
+            <FlatList
+              data={data as any[]}
+              keyExtractor={(item: any, i) =>
+                'friendship_id' in item ? item.friendship_id : item.id
+              }
+              renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 200 }}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={colors.primary}
+                />
+              }
             />
-          }
-        />
+          </Card>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+
+  section: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+
+  addCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    padding: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.low,
   },
-  title: {
-    fontSize: 20,
+
+  tabsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'center',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+  },
+  chipLabel: {
+    ...typography.chip,
+  },
+  countDot: {
+    minWidth: 20,
+    paddingHorizontal: 6,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countLabel: {
+    ...typography.chip,
+    fontSize: 11,
+  },
+
+  // Row
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md + 4,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.md,
+    minHeight: 72,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    ...typography.bodyLarge,
     fontWeight: '700',
   },
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.low,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    borderRadius: radius.md,
-    ...shadows.low,
-  },
-  searchInput: {
+  rowMain: {
     flex: 1,
-    marginLeft: spacing.md,
-    fontSize: 16,
+    gap: 2,
   },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
+  rowTitle: {
+    ...typography.bodyLarge,
   },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
+  rowMeta: {
+    ...typography.bodySmall,
+  },
+  viewPill: {
     paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-    gap: spacing.sm,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
   },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '600',
+  viewPillLabel: {
+    ...typography.chip,
   },
-  badge: {
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
+
   loadingContainer: {
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  listContent: {
-    padding: spacing.lg,
-    paddingTop: 0,
-    flexGrow: 1,
-  },
-  friendCard: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  friendContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  friendInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  friendName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  friendEmail: {
-    fontSize: 14,
-  },
-  requestCard: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  requestContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  requestInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  requestActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-  },
-  acceptButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.sm,
-  },
-  acceptButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
+
+  // Empty
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    ...typography.displayMedium,
   },
-  emptyText: {
-    fontSize: 15,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    marginBottom: spacing.lg,
+  emptyBody: {
+    ...typography.body,
+    marginTop: spacing.xs,
   },
-  addButton: {
-    flexDirection: 'row',
+  primaryPill: {
+    height: 48,
+    borderRadius: radius.pill,
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
-    gap: spacing.sm,
+    alignSelf: 'flex-start',
+    marginTop: spacing.md,
   },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  primaryPillLabel: {
+    ...typography.button,
   },
 });

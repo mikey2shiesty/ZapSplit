@@ -253,14 +253,14 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Assign Items</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Assign Items</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Tap items to assign to each person
           </Text>
@@ -271,12 +271,12 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Participants Summary */}
         <View style={[styles.participantsCard, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Splitting with</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Splitting with</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.participantsList}>
             {participants.map((participant) => (
               <TouchableOpacity
                 key={participant.id}
-                style={[styles.participantChip, { backgroundColor: colors.gray50 }]}
+                style={[styles.participantChip, { backgroundColor: colors.background }]}
                 onPress={() => assignAllToParticipant(participant.id)}
               >
                 <Avatar
@@ -285,7 +285,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
                   size="sm"
                 />
                 <View style={styles.participantChipInfo}>
-                  <Text style={[styles.participantChipName, { color: colors.gray900 }]} numberOfLines={1}>
+                  <Text style={[styles.participantChipName, { color: colors.text }]} numberOfLines={1}>
                     {participant.full_name}
                   </Text>
                   <Text style={[styles.participantChipTotal, { color: colors.primary }]}>
@@ -321,7 +321,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
 
         {/* Summary by Person */}
         <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.summaryTitle, { color: colors.gray900 }]}>Summary</Text>
+          <Text style={[styles.summaryTitle, { color: colors.text }]}>Summary</Text>
           {participants.map((participant) => {
             const totals = participantTotals[participant.id];
             if (!totals || totals.total === 0) return null;
@@ -334,9 +334,9 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
                     uri={participant.avatar_url ?? undefined}
                     size="xs"
                   />
-                  <Text style={[styles.summaryPersonName, { color: colors.gray900 }]}>{participant.full_name}</Text>
+                  <Text style={[styles.summaryPersonName, { color: colors.text }]}>{participant.full_name}</Text>
                 </View>
-                <Text style={[styles.summaryPersonTotal, { color: colors.gray900 }]}>
+                <Text style={[styles.summaryPersonTotal, { color: colors.text }]}>
                   {formatCurrency(totals.total)}
                 </Text>
               </View>
@@ -346,7 +346,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: colors.gray900 }]}>Receipt Total</Text>
+            <Text style={[styles.totalLabel, { color: colors.text }]}>Receipt Total</Text>
             <Text style={[styles.totalValue, { color: colors.primary }]}>{formatCurrency(receipt.total)}</Text>
           </View>
         </View>
@@ -360,7 +360,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           style={[
             styles.continueButton,
             { backgroundColor: colors.primary },
-            (!hasAssignments || saving) && [styles.continueButtonDisabled, { backgroundColor: colors.gray400 }],
+            (!hasAssignments || saving) && [styles.continueButtonDisabled, { backgroundColor: colors.textTertiary }],
           ]}
           onPress={handleContinue}
           disabled={!hasAssignments || saving}
@@ -410,20 +410,20 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment, colors }
               <Text style={[styles.quantityText, { color: colors.primary }]}>{item.quantity}x</Text>
             </View>
           )}
-          <Text style={[styles.itemName, { color: colors.gray900 }]}>{item.name}</Text>
+          <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
         </View>
         {item.quantity > 1 ? (
           <View style={styles.priceContainer}>
             <Text style={[styles.unitPrice, { color: colors.textSecondary }]}>{formatCurrency(item.price)} ea</Text>
-            <Text style={[styles.itemPrice, { color: colors.gray900 }]}>{formatCurrency(lineTotal)}</Text>
+            <Text style={[styles.itemPrice, { color: colors.text }]}>{formatCurrency(lineTotal)}</Text>
           </View>
         ) : (
-          <Text style={[styles.itemPrice, { color: colors.gray900 }]}>{formatCurrency(item.price)}</Text>
+          <Text style={[styles.itemPrice, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
         )}
       </View>
 
       {/* Participant Assignment Chips */}
-      <View style={[styles.assignmentContainer, { borderTopColor: colors.gray200 }]}>
+      <View style={[styles.assignmentContainer, { borderTopColor: colors.border }]}>
         <Text style={[styles.assignmentLabel, { color: colors.textSecondary }]}>Who ordered this?</Text>
         <View style={styles.assignmentChips}>
           {participants.map((participant) => {
@@ -433,7 +433,7 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment, colors }
                 key={participant.id}
                 style={[
                   styles.assignmentChip,
-                  { borderColor: colors.gray300, backgroundColor: colors.surface },
+                  { borderColor: colors.border, backgroundColor: colors.surface },
                   isAssigned && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
                 ]}
                 onPress={() => onToggleAssignment(participant.id)}
@@ -465,7 +465,7 @@ function ItemCard({ item, participants, assignedTo, onToggleAssignment, colors }
 
       {/* Share Info */}
       {assignedTo.length > 0 && (
-        <View style={[styles.shareInfo, { borderTopColor: colors.gray200 }]}>
+        <View style={[styles.shareInfo, { borderTopColor: colors.border }]}>
           <Ionicons name="calculator-outline" size={14} color={colors.success} />
           <Text style={[styles.shareText, { color: colors.success }]}>
             {formatCurrency(sharePerPerson)} each
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     gap: spacing.sm,
     ...shadows.medium,
   },

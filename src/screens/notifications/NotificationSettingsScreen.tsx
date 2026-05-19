@@ -84,18 +84,18 @@ export default function NotificationSettingsScreen() {
     icon: string
   ) => (
     <View style={styles.toggleRow}>
-      <View style={[styles.toggleIconContainer, { backgroundColor: colors.gray100 }]}>
-        <Ionicons name={icon as any} size={22} color={colors.gray600} />
+      <View style={[styles.toggleIconContainer, { backgroundColor: colors.surface }]}>
+        <Ionicons name={icon as any} size={22} color={colors.textSecondary} />
       </View>
       <View style={styles.toggleContent}>
-        <Text style={[styles.toggleLabel, { color: colors.gray900 }]}>{label}</Text>
-        <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>{description}</Text>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>{description}</Text>
       </View>
       <Switch
         value={preferences?.[key] as boolean}
         onValueChange={(value) => handleToggle(key, value)}
-        trackColor={{ false: colors.gray300, true: colors.primaryLight }}
-        thumbColor={preferences?.[key] ? colors.primary : colors.gray100}
+        trackColor={{ false: colors.border, true: '#34C759' }}
+        ios_backgroundColor={colors.border}
         disabled={saving}
       />
     </View>
@@ -103,14 +103,14 @@ export default function NotificationSettingsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Header
         title="Notification Settings"
@@ -126,7 +126,7 @@ export default function NotificationSettingsScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Channels */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Notification Channels</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notification Channels</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Push Notifications',
@@ -134,14 +134,14 @@ export default function NotificationSettingsScreen() {
             'push',
             'phone-portrait-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Email Notifications',
             'Receive notifications via email',
             'email',
             'mail-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'SMS Notifications',
             'Receive notifications via SMS',
@@ -151,7 +151,7 @@ export default function NotificationSettingsScreen() {
         </Card>
 
         {/* Categories */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Notification Types</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notification Types</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Splits',
@@ -159,28 +159,28 @@ export default function NotificationSettingsScreen() {
             'split_notifications',
             'receipt-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Payments',
             'Payment requests and confirmations',
             'payment_notifications',
             'card-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Reminders',
             'Reminders for unpaid balances',
             'reminder_notifications',
             'alarm-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Friends',
             'Friend requests and activity',
             'friend_notifications',
             'people-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Groups',
             'Group invites and activity',
@@ -190,7 +190,7 @@ export default function NotificationSettingsScreen() {
         </Card>
 
         {/* Quiet Hours */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Quiet Hours</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Quiet Hours</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Enable Quiet Hours',
@@ -200,12 +200,12 @@ export default function NotificationSettingsScreen() {
           )}
           {preferences?.quiet_hours_enabled && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+              <View style={[styles.divider, { backgroundColor: colors.surface }]} />
               <View style={styles.quietHoursInfo}>
                 <View style={styles.toggleIconContainer}>
-                  <Ionicons name="time-outline" size={20} color={colors.gray500} />
+                  <Ionicons name="time-outline" size={20} color={colors.textSecondary} />
                 </View>
-                <Text style={[styles.quietHoursText, { color: colors.gray600 }]}>
+                <Text style={[styles.quietHoursText, { color: colors.textSecondary }]}>
                   11:00 PM - 8:00 AM
                 </Text>
               </View>
@@ -215,8 +215,8 @@ export default function NotificationSettingsScreen() {
 
         {/* Info */}
         <View style={styles.infoContainer}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.gray400} />
-          <Text style={[styles.infoText, { color: colors.gray400 }]}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.textTertiary} />
+          <Text style={[styles.infoText, { color: colors.textTertiary }]}>
             You can also manage notifications in your device settings.
           </Text>
         </View>

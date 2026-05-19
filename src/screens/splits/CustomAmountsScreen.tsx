@@ -141,13 +141,13 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>
             {isPercentageMode ? 'Split by Percentage' : 'Custom Amounts'}
           </Text>
           <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
@@ -158,14 +158,14 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
         {/* Progress Card */}
         <View style={[
           styles.progressCard,
-          { backgroundColor: colors.surface, borderColor: colors.gray200 },
+          { backgroundColor: colors.surface, borderColor: colors.border },
           !isValid && { borderColor: colors.warning, backgroundColor: colors.warningLight }
         ]}>
           <View style={styles.progressRow}>
             <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
               {isPercentageMode ? 'Target' : 'Total Bill'}
             </Text>
-            <Text style={[styles.progressAmount, { color: colors.gray900 }]}>
+            <Text style={[styles.progressAmount, { color: colors.text }]}>
               {isPercentageMode ? '100%' : `$${amount.toFixed(2)}`}
             </Text>
           </View>
@@ -174,17 +174,17 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
             <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>Assigned</Text>
             <Text style={[
               styles.progressAmount,
-              { color: colors.gray900 },
+              { color: colors.text },
               totalAssigned > targetTotal && { color: colors.error }
             ]}>
               {isPercentageMode ? `${totalAssigned.toFixed(0)}%` : `$${totalAssigned.toFixed(2)}`}
             </Text>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.progressRow}>
-            <Text style={[styles.remainingLabel, { color: colors.gray900 }]}>Remaining</Text>
+            <Text style={[styles.remainingLabel, { color: colors.text }]}>Remaining</Text>
             <Text style={[
               styles.remainingAmount,
               { color: colors.warning },
@@ -221,7 +221,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
                 styles.participantRow,
                 {
                   backgroundColor: participant.isCreator ? colors.primaryLight : colors.surface,
-                  borderColor: participant.isCreator ? colors.primary : colors.gray200,
+                  borderColor: participant.isCreator ? colors.primary : colors.border,
                   borderWidth: participant.isCreator ? 2 : 1,
                 }
               ]}
@@ -235,32 +235,32 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
 
               {/* Info */}
               <View style={styles.infoContainer}>
-                <Text style={[styles.name, { color: colors.gray900 }]}>
+                <Text style={[styles.name, { color: colors.text }]}>
                   {participant.name}
                 </Text>
                 {participant.email && (
-                  <Text style={[styles.email, { color: colors.gray500 }]}>{participant.email}</Text>
+                  <Text style={[styles.email, { color: colors.textSecondary }]}>{participant.email}</Text>
                 )}
               </View>
 
               {/* Amount/Percentage Input */}
               <View style={[
                 styles.inputContainer,
-                { backgroundColor: colors.gray100, borderColor: colors.gray300 }
+                { backgroundColor: colors.surface, borderColor: colors.border }
               ]}>
                 {!isPercentageMode && (
-                  <Text style={[styles.symbol, { color: colors.gray500 }]}>$</Text>
+                  <Text style={[styles.symbol, { color: colors.textSecondary }]}>$</Text>
                 )}
                 <TextInput
-                  style={[styles.input, { color: colors.gray900 }]}
+                  style={[styles.input, { color: colors.text }]}
                   value={editingValues[participant.id] || ''}
                   onChangeText={(text) => handleValueChange(participant.id, text)}
                   keyboardType="decimal-pad"
                   placeholder="0"
-                  placeholderTextColor={colors.gray400}
+                  placeholderTextColor={colors.textTertiary}
                 />
                 {isPercentageMode && (
-                  <Text style={[styles.symbol, { color: colors.gray500 }]}>%</Text>
+                  <Text style={[styles.symbol, { color: colors.textSecondary }]}>%</Text>
                 )}
               </View>
             </View>
@@ -269,7 +269,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
       </View>
 
       {/* Continue Button - Fixed at Bottom */}
-      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {isValid && (
           <Text style={[styles.validText, { color: colors.success }]}>
             {isPercentageMode ? 'Percentages add up to 100%' : 'Amounts match total'}
@@ -279,7 +279,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
           style={[
             styles.continueButton,
             { backgroundColor: colors.primary },
-            !isValid && { backgroundColor: colors.gray200 }
+            !isValid && { backgroundColor: colors.border }
           ]}
           onPress={handleContinue}
           disabled={!isValid}
@@ -288,7 +288,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
           <Text style={[
             styles.continueButtonText,
             { color: colors.surface },
-            !isValid && { color: colors.gray400 }
+            !isValid && { color: colors.textTertiary }
           ]}>
             Continue
           </Text>
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   continueButton: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',

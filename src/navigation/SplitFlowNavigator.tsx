@@ -50,18 +50,9 @@ export default function SplitFlowNavigator() {
       <Stack.Screen
         name="CreateSplit"
         component={CreateSplitScreen}
-        options={({ navigation }) => ({
-          title: 'New Split',
-          headerLeft: () => null, // Remove back button on first screen
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.getParent()?.goBack()}
-              style={{ marginRight: 16 }}
-            >
-              <Ionicons name="close" size={28} color={colors.gray400} />
-            </TouchableOpacity>
-          ),
-        })}
+        options={{
+          headerShown: false, // Custom top bar inside the screen
+        }}
       />
       <Stack.Screen
         name="ScanReceipt"

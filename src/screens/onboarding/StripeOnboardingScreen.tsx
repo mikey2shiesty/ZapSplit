@@ -86,12 +86,12 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* Skip link (top-right) */}
       <View style={styles.topBar}>
         <View style={styles.placeholder} />
         <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-          <Text style={[styles.skipText, { color: colors.gray500 }]}>Set up later</Text>
+          <Text style={[styles.skipText, { color: colors.textSecondary }]}>Set up later</Text>
         </TouchableOpacity>
       </View>
 
@@ -103,10 +103,10 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
         </View>
 
         {/* Title & Subtitle */}
-        <Text style={[styles.title, { color: colors.gray900 }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
           Connect Your Bank Account
         </Text>
-        <Text style={[styles.subtitle, { color: colors.gray600 }]}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           To receive money when friends pay their share, connect your bank account via Stripe.
         </Text>
 
@@ -117,7 +117,7 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
               <View style={[styles.checkCircle, { backgroundColor: colors.success + '20' }]}>
                 <Ionicons name="checkmark" size={16} color={colors.success} />
               </View>
-              <Text style={[styles.benefitText, { color: colors.gray700 }]}>
+              <Text style={[styles.benefitText, { color: colors.text }]}>
                 {benefit.text}
               </Text>
             </View>
@@ -141,15 +141,15 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleSkip} style={styles.laterButton}>
-          <Text style={[styles.laterText, { color: colors.gray500 }]}>
+          <Text style={[styles.laterText, { color: colors.textSecondary }]}>
             Set up later in Settings
           </Text>
         </TouchableOpacity>
 
         {/* Powered by Stripe */}
         <View style={styles.stripeFooter}>
-          <Ionicons name="lock-closed" size={13} color={colors.gray400} />
-          <Text style={[styles.poweredBy, { color: colors.gray400 }]}>Powered by</Text>
+          <Ionicons name="lock-closed" size={13} color={colors.textTertiary} />
+          <Text style={[styles.poweredBy, { color: colors.textTertiary }]}>Powered by</Text>
           <Text style={styles.stripeLogo}>Stripe</Text>
         </View>
       </View>

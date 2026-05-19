@@ -72,3 +72,14 @@ out/
 .firebase/
 .dynamodb/
 .vercel
+
+# Supabase CLI cache
+supabase/.temp/
+
+# Local data exports (Stripe/balance investigations)
+*.csv
+
+# macOS iCloud duplicate artifacts
+* 2.*
+* 2.png
+* 2.jpg

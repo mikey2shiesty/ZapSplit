@@ -101,9 +101,9 @@ export default function BlockedUsersScreen() {
             size="md"
           />
           <View style={styles.userDetails}>
-            <Text style={[styles.userName, { color: colors.gray900 }]}>{profile?.full_name || 'Unknown User'}</Text>
-            <Text style={[styles.userEmail, { color: colors.gray500 }]}>{profile?.email || 'No email'}</Text>
-            <Text style={[styles.blockedDate, { color: colors.gray400 }]}>Blocked {formatDate(item.created_at)}</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{profile?.full_name || 'Unknown User'}</Text>
+            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{profile?.email || 'No email'}</Text>
+            <Text style={[styles.blockedDate, { color: colors.textTertiary }]}>Blocked {formatDate(item.created_at)}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -123,11 +123,11 @@ export default function BlockedUsersScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIconContainer, { backgroundColor: colors.gray100 }]}>
-        <Ionicons name="ban-outline" size={48} color={colors.gray300} />
+      <View style={[styles.emptyIconContainer, { backgroundColor: colors.surface }]}>
+        <Ionicons name="ban-outline" size={48} color={colors.textTertiary} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>No Blocked Users</Text>
-      <Text style={[styles.emptySubtitle, { color: colors.gray500 }]}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No Blocked Users</Text>
+      <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
         Users you block won't be able to see your profile or send you friend requests.
       </Text>
     </View>
@@ -135,14 +135,14 @@ export default function BlockedUsersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Header title="Blocked Users" onBack={() => navigation.goBack()} />
 
@@ -167,9 +167,9 @@ export default function BlockedUsersScreen() {
 
       {/* Info Footer */}
       {blockedUsers.length > 0 && (
-        <View style={[styles.infoFooter, { backgroundColor: colors.gray50 }]}>
-          <Ionicons name="information-circle-outline" size={18} color={colors.gray400} />
-          <Text style={[styles.infoText, { color: colors.gray400 }]}>
+        <View style={[styles.infoFooter, { backgroundColor: colors.background }]}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.textTertiary} />
+          <Text style={[styles.infoText, { color: colors.textTertiary }]}>
             Blocked users cannot see your profile, send friend requests, or add you to splits.
           </Text>
         </View>
@@ -223,9 +223,9 @@ const styles = StyleSheet.create({
   },
   unblockButton: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-    minWidth: 80,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.pill,
+    minWidth: 88,
     alignItems: 'center',
   },
   unblockButtonDisabled: {

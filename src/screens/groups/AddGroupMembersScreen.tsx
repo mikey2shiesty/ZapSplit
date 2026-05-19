@@ -117,16 +117,16 @@ export default function AddGroupMembersScreen() {
           size="sm"
         />
         <View style={styles.friendInfo}>
-          <Text style={[styles.friendName, { color: colors.gray900 }]}>
+          <Text style={[styles.friendName, { color: colors.text }]}>
             {item.full_name || 'Unknown'}
           </Text>
-          <Text style={[styles.friendEmail, { color: colors.gray500 }]}>
+          <Text style={[styles.friendEmail, { color: colors.textSecondary }]}>
             {item.email}
           </Text>
         </View>
         <View style={[
           styles.checkbox,
-          { borderColor: isSelected ? colors.primary : colors.gray300 },
+          { borderColor: isSelected ? colors.primary : colors.border },
           isSelected && { backgroundColor: colors.primary },
         ]}>
           {isSelected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
@@ -137,7 +137,7 @@ export default function AddGroupMembersScreen() {
 
   if (loading || friendsLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Add Members" onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -147,16 +147,16 @@ export default function AddGroupMembersScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Add Members" onBack={() => navigation.goBack()} />
 
       {availableFriends.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="people-outline" size={48} color={colors.gray300} />
-          <Text style={[styles.emptyTitle, { color: colors.gray700 }]}>
+          <Ionicons name="people-outline" size={48} color={colors.border} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
             No friends to add
           </Text>
-          <Text style={[styles.emptyText, { color: colors.gray500 }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             All your friends are already in this group, or you need to add more friends first.
           </Text>
         </View>
@@ -167,13 +167,13 @@ export default function AddGroupMembersScreen() {
           renderItem={renderFriend}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => (
-            <View style={[styles.separator, { backgroundColor: colors.gray100 }]} />
+            <View style={[styles.separator, { backgroundColor: colors.surface }]} />
           )}
         />
       )}
 
       {selectedIds.length > 0 && (
-        <View style={[styles.bottomBar, { backgroundColor: colors.gray50 }]}>
+        <View style={[styles.bottomBar, { backgroundColor: colors.background }]}>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.primary }]}
             onPress={handleAdd}

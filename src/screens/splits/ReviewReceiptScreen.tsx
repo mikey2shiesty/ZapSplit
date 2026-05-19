@@ -195,7 +195,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Loading state
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <AIConsentModal
           visible={showConsentModal}
           onAccept={handleConsentAccept}
@@ -203,7 +203,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.gray900 }]}>Analysing receipt with AI...</Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Analysing receipt with AI...</Text>
           <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
             This may take a few seconds
           </Text>
@@ -215,7 +215,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Show consent modal if not yet checked
   if (showConsentModal) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <AIConsentModal
           visible={showConsentModal}
           onAccept={handleConsentAccept}
@@ -228,10 +228,10 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   // Error state
   if (error || !receipt) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={80} color={colors.error} />
-          <Text style={[styles.errorTitle, { color: colors.gray900 }]}>Couldn't read receipt</Text>
+          <Text style={[styles.errorTitle, { color: colors.text }]}>Couldn't read receipt</Text>
           <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
             Make sure the receipt is clear and well-lit, then try again
           </Text>
@@ -248,7 +248,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -259,10 +259,10 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={[styles.headerTitle, { color: colors.gray900 }]}>Review Receipt</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Review Receipt</Text>
             <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
               {receipt.merchant || 'Unknown Restaurant'}
             </Text>
@@ -286,7 +286,7 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
           {/* Items List */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>Items</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Items</Text>
               <TouchableOpacity onPress={handleAddItem} style={styles.addButton}>
                 <Ionicons name="add-circle" size={20} color={colors.primary} />
                 <Text style={[styles.addButtonText, { color: colors.primary }]}>Add Item</Text>
@@ -310,19 +310,19 @@ export default function ReviewReceiptScreen({ navigation, route }: ReviewReceipt
           <View style={[styles.totalsCard, { backgroundColor: colors.surface }]}>
             <View style={styles.totalRow}>
               <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.subtotal.toFixed(2)}</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>${receipt.subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Tax</Text>
-              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.tax.toFixed(2)}</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>${receipt.tax.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Tip</Text>
-              <Text style={[styles.totalValue, { color: colors.gray900 }]}>${receipt.tip.toFixed(2)}</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>${receipt.tip.toFixed(2)}</Text>
             </View>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.totalRow}>
-              <Text style={[styles.grandTotalLabel, { color: colors.gray900 }]}>Total</Text>
+              <Text style={[styles.grandTotalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.grandTotalValue, { color: colors.primary }]}>${receipt.total.toFixed(2)}</Text>
             </View>
           </View>
@@ -370,7 +370,7 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete, colors }: ItemRowP
       <View style={[styles.itemCard, { backgroundColor: colors.surface }]}>
         <View style={styles.itemEditRow}>
           <TextInput
-            style={[styles.itemNameInput, { color: colors.gray900, backgroundColor: colors.gray50, borderColor: colors.border }]}
+            style={[styles.itemNameInput, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             value={name}
             onChangeText={setName}
             placeholder="Item name"
@@ -378,7 +378,7 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete, colors }: ItemRowP
             autoFocus
           />
           <TextInput
-            style={[styles.itemPriceInput, { color: colors.gray900, backgroundColor: colors.gray50, borderColor: colors.border }]}
+            style={[styles.itemPriceInput, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             value={price}
             onChangeText={setPrice}
             placeholder="0.00"
@@ -413,16 +413,16 @@ function ItemRow({ item, isEditing, onEdit, onSave, onDelete, colors }: ItemRowP
             <Text style={[styles.quantityText, { color: colors.primary }]}>{item.quantity}x</Text>
           </View>
         )}
-        <Text style={[styles.itemName, { color: colors.gray900 }]}>{item.name}</Text>
+        <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
       </View>
       <View style={styles.itemRight}>
         {item.quantity > 1 ? (
           <View style={styles.priceContainer}>
             <Text style={[styles.unitPrice, { color: colors.textSecondary }]}>${item.price.toFixed(2)} ea</Text>
-            <Text style={[styles.itemPrice, { color: colors.gray900 }]}>${lineTotal.toFixed(2)}</Text>
+            <Text style={[styles.itemPrice, { color: colors.text }]}>${lineTotal.toFixed(2)}</Text>
           </View>
         ) : (
-          <Text style={[styles.itemPrice, { color: colors.gray900 }]}>${item.price.toFixed(2)}</Text>
+          <Text style={[styles.itemPrice, { color: colors.text }]}>${item.price.toFixed(2)}</Text>
         )}
         <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
           <Ionicons name="trash-outline" size={18} color={colors.error} />
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     gap: spacing.xs,
   },
   saveButtonText: {
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     gap: spacing.sm,
     ...shadows.medium,
   },

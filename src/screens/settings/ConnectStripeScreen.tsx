@@ -19,6 +19,7 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
 
 export default function ConnectStripeScreen() {
   const navigation = useNavigation<any>();
@@ -119,20 +120,11 @@ export default function ConnectStripeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
-        <View style={styles.navHeader}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surface }]}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-          </TouchableOpacity>
-          <Text style={[styles.navTitle, { color: colors.gray900 }]}>Receive Payments</Text>
-          <View style={styles.placeholder} />
-        </View>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title="Receive payments" onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading account status...</Text>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading…</Text>
         </View>
       </View>
     );
@@ -141,23 +133,13 @@ export default function ConnectStripeScreen() {
   const isConnected = accountStatus?.connected && accountStatus?.chargesEnabled;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
-      {/* Navigation Header */}
-      <View style={styles.navHeader}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.navTitle, { color: colors.gray900 }]}>Receive Payments</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header title="Receive payments" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.subtitle, { color: colors.gray600 }]}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Connect your bank account to receive payments from splits
           </Text>
         </View>
@@ -169,22 +151,22 @@ export default function ConnectStripeScreen() {
             <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
               <Ionicons name="wallet-outline" size={40} color={colors.primary} />
             </View>
-            <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Connect Your Bank Account</Text>
-            <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Connect Your Bank Account</Text>
+            <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
               To receive payments through ZapSplit, you'll need to connect your bank account via Stripe.
             </Text>
             <View style={styles.benefits}>
               <View style={styles.benefitRow}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <Text style={[styles.benefitText, { color: colors.gray700 }]}>Secure bank-level encryption</Text>
+                <Text style={[styles.benefitText, { color: colors.text }]}>Secure bank-level encryption</Text>
               </View>
               <View style={styles.benefitRow}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <Text style={[styles.benefitText, { color: colors.gray700 }]}>Instant payouts to your bank</Text>
+                <Text style={[styles.benefitText, { color: colors.text }]}>Instant payouts to your bank</Text>
               </View>
               <View style={styles.benefitRow}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <Text style={[styles.benefitText, { color: colors.gray700 }]}>No monthly fees</Text>
+                <Text style={[styles.benefitText, { color: colors.text }]}>No monthly fees</Text>
               </View>
             </View>
             <Button
@@ -197,8 +179,8 @@ export default function ConnectStripeScreen() {
               {connecting ? 'Connecting...' : 'Connect Bank Account'}
             </Button>
             <View style={styles.stripeFooter}>
-              <Ionicons name="lock-closed" size={13} color={colors.gray500} />
-              <Text style={[styles.poweredBy, { color: colors.gray500 }]}>Powered by</Text>
+              <Ionicons name="lock-closed" size={13} color={colors.textSecondary} />
+              <Text style={[styles.poweredBy, { color: colors.textSecondary }]}>Powered by</Text>
               <Text style={styles.stripeLogo}>Stripe</Text>
             </View>
           </View>
@@ -207,29 +189,29 @@ export default function ConnectStripeScreen() {
             <View style={[styles.iconContainer, { backgroundColor: colors.success + '15' }]}>
               <Ionicons name="checkmark-circle" size={40} color={colors.success} />
             </View>
-            <Text style={[styles.cardTitle, { color: colors.gray900 }]}>Bank Account Connected</Text>
-            <Text style={[styles.cardDescription, { color: colors.gray600 }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Bank Account Connected</Text>
+            <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
               You're all set to receive payments through ZapSplit!
             </Text>
 
             {/* Account Info */}
-            <View style={[styles.accountInfo, { backgroundColor: colors.gray50 }]}>
+            <View style={[styles.accountInfo, { backgroundColor: colors.background }]}>
               <View style={styles.infoRow}>
-                <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Status</Text>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Status</Text>
                 <View style={[styles.statusBadge, { backgroundColor: colors.success }]}>
                   <Text style={styles.statusText}>Active</Text>
                 </View>
               </View>
               {accountStatus?.chargesEnabled && (
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Charges</Text>
-                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Charges</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>Enabled</Text>
                 </View>
               )}
               {accountStatus?.payoutsEnabled && (
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.gray600 }]}>Payouts</Text>
-                  <Text style={[styles.infoValue, { color: colors.gray900 }]}>Enabled</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Payouts</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>Enabled</Text>
                 </View>
               )}
             </View>
@@ -251,9 +233,9 @@ export default function ConnectStripeScreen() {
         <Card variant="default" style={[styles.requirementsCard, { backgroundColor: colors.warningLight }]}>
           <View style={styles.requirementsTitleRow}>
             <Ionicons name="information-circle" size={20} color={colors.warning} />
-            <Text style={[styles.requirementsTitle, { color: colors.gray900 }]}>Finish Your Setup</Text>
+            <Text style={[styles.requirementsTitle, { color: colors.text }]}>Finish Your Setup</Text>
           </View>
-          <Text style={[styles.requirementsDescription, { color: colors.gray700 }]}>
+          <Text style={[styles.requirementsDescription, { color: colors.text }]}>
             Stripe needs a few more details to verify your identity and enable payouts. Tap below to continue where you left off.
           </Text>
           <Button
@@ -269,17 +251,17 @@ export default function ConnectStripeScreen() {
 
       {/* Info Section */}
       <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.infoTitle, { color: colors.gray900 }]}>How it works</Text>
-        <Text style={[styles.infoText, { color: colors.gray700 }]}>
+        <Text style={[styles.infoTitle, { color: colors.text }]}>How it works</Text>
+        <Text style={[styles.infoText, { color: colors.text }]}>
           1. Connect your bank account through Stripe's secure onboarding
         </Text>
-        <Text style={[styles.infoText, { color: colors.gray700 }]}>
+        <Text style={[styles.infoText, { color: colors.text }]}>
           2. Stripe verifies your information (usually instant)
         </Text>
-        <Text style={[styles.infoText, { color: colors.gray700 }]}>
+        <Text style={[styles.infoText, { color: colors.text }]}>
           3. Start receiving payments from your splits
         </Text>
-        <Text style={[styles.infoText, { color: colors.gray700 }]}>
+        <Text style={[styles.infoText, { color: colors.text }]}>
           4. Funds are automatically deposited to your bank account
         </Text>
       </View>

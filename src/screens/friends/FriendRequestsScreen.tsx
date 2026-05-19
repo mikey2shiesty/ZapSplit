@@ -23,6 +23,7 @@ import {
 import Avatar from '../../components/common/Avatar';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
+import Header from '../../components/common/Header';
 
 type TabType = 'incoming' | 'outgoing';
 
@@ -133,17 +134,18 @@ export default function FriendRequestsScreen() {
       <TouchableOpacity
         style={[
           styles.tabButton,
-          { backgroundColor: isActive ? colors.primary : colors.surface }
+          { backgroundColor: isActive ? colors.primary : colors.primaryLight, borderRadius: radius.pill }
         ]}
         onPress={() => setActiveTab(tab)}
+        activeOpacity={0.85}
       >
-        <Text style={[styles.tabText, { color: isActive ? colors.surface : colors.gray700 }]}>{label}</Text>
+        <Text style={[styles.tabText, { color: isActive ? colors.textInverse : colors.primary }]}>{label}</Text>
         {count > 0 && (
           <View style={[
             styles.badge,
-            { backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : colors.gray200 }
+            { backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : colors.primary }
           ]}>
-            <Text style={[styles.badgeText, { color: isActive ? colors.surface : colors.gray700 }]}>{count}</Text>
+            <Text style={[styles.badgeText, { color: isActive ? colors.textInverse : colors.textInverse }]}>{count}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -159,20 +161,20 @@ export default function FriendRequestsScreen() {
           size="lg"
         />
         <View style={styles.requestInfo}>
-          <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.sender?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.requestEmail, { color: colors.gray500 }]} numberOfLines={1}>{item.sender?.email}</Text>
-          <Text style={[styles.requestTime, { color: colors.gray400 }]}>
+          <Text style={[styles.requestName, { color: colors.text }]}>{item.sender?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.requestEmail, { color: colors.textSecondary }]} numberOfLines={1}>{item.sender?.email}</Text>
+          <Text style={[styles.requestTime, { color: colors.textTertiary }]}>
             {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
       </View>
       <View style={styles.requestActions}>
         <TouchableOpacity
-          style={[styles.declineButton, { backgroundColor: colors.gray100 }]}
+          style={[styles.declineButton, { backgroundColor: colors.surface }]}
           onPress={() => handleDecline(item.id)}
           disabled={processingId === item.id}
         >
-          <Text style={[styles.declineButtonText, { color: colors.gray700 }]}>Decline</Text>
+          <Text style={[styles.declineButtonText, { color: colors.text }]}>Decline</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.acceptButton, { backgroundColor: colors.primary }]}
@@ -198,9 +200,9 @@ export default function FriendRequestsScreen() {
           size="lg"
         />
         <View style={styles.requestInfo}>
-          <Text style={[styles.requestName, { color: colors.gray900 }]}>{item.receiver?.full_name || 'Unknown'}</Text>
-          <Text style={[styles.requestEmail, { color: colors.gray500 }]} numberOfLines={1}>{item.receiver?.email}</Text>
-          <Text style={[styles.requestTime, { color: colors.gray400 }]}>
+          <Text style={[styles.requestName, { color: colors.text }]}>{item.receiver?.full_name || 'Unknown'}</Text>
+          <Text style={[styles.requestEmail, { color: colors.textSecondary }]} numberOfLines={1}>{item.receiver?.email}</Text>
+          <Text style={[styles.requestTime, { color: colors.textTertiary }]}>
             {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
@@ -214,11 +216,11 @@ export default function FriendRequestsScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="mail-outline" size={64} color={colors.gray300} />
-      <Text style={[styles.emptyTitle, { color: colors.gray900 }]}>
+      <Ionicons name="mail-outline" size={64} color={colors.border} />
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>
         {activeTab === 'incoming' ? 'No Incoming Requests' : 'No Pending Requests'}
       </Text>
-      <Text style={[styles.emptyText, { color: colors.gray600 }]}>
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
         {activeTab === 'incoming'
           ? 'When someone sends you a friend request, it will appear here'
           : 'Requests you send will appear here until accepted'}
@@ -227,18 +229,8 @@ export default function FriendRequestsScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.surface }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.gray900} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.gray900 }]}>Friend Requests</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header title="Friend requests" onBack={() => navigation.goBack()} />
 
       {/* Tabs */}
       <View style={styles.tabs}>

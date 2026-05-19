@@ -81,7 +81,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.gray50 }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
@@ -94,7 +94,7 @@ export default function DeleteAccountScreen() {
             <Ionicons name="warning" size={40} color={colors.error} />
           </View>
           <Text style={[styles.warningTitle, { color: colors.error }]}>This action is permanent</Text>
-          <Text style={[styles.warningText, { color: colors.gray700 }]}>
+          <Text style={[styles.warningText, { color: colors.text }]}>
             Deleting your account will permanently remove all your data from ZapSplit.
             This cannot be undone.
           </Text>
@@ -102,38 +102,38 @@ export default function DeleteAccountScreen() {
 
         {/* What gets deleted */}
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray900 }]}>What will be deleted:</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>What will be deleted:</Text>
 
-          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.surface }]}>
             <Ionicons name="person-outline" size={20} color={colors.error} />
-            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your profile and account information</Text>
+            <Text style={[styles.deleteItemText, { color: colors.text }]}>Your profile and account information</Text>
           </View>
 
-          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.surface }]}>
             <Ionicons name="receipt-outline" size={20} color={colors.error} />
-            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>All splits you've created or participated in</Text>
+            <Text style={[styles.deleteItemText, { color: colors.text }]}>All splits you've created or participated in</Text>
           </View>
 
-          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.surface }]}>
             <Ionicons name="card-outline" size={20} color={colors.error} />
-            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your payment history</Text>
+            <Text style={[styles.deleteItemText, { color: colors.text }]}>Your payment history</Text>
           </View>
 
-          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.surface }]}>
             <Ionicons name="people-outline" size={20} color={colors.error} />
-            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>Your friends list and group memberships</Text>
+            <Text style={[styles.deleteItemText, { color: colors.text }]}>Your friends list and group memberships</Text>
           </View>
 
-          <View style={[styles.deleteItem, { borderBottomColor: colors.gray100 }]}>
+          <View style={[styles.deleteItem, { borderBottomColor: colors.surface }]}>
             <Ionicons name="notifications-outline" size={20} color={colors.error} />
-            <Text style={[styles.deleteItemText, { color: colors.gray700 }]}>All notifications and preferences</Text>
+            <Text style={[styles.deleteItemText, { color: colors.text }]}>All notifications and preferences</Text>
           </View>
         </View>
 
         {/* Important notes */}
-        <View style={[styles.notesSection, { backgroundColor: colors.gray100 }]}>
-          <Text style={[styles.notesTitle, { color: colors.gray700 }]}>Important notes:</Text>
-          <Text style={[styles.notesText, { color: colors.gray600 }]}>
+        <View style={[styles.notesSection, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.notesTitle, { color: colors.text }]}>Important notes:</Text>
+          <Text style={[styles.notesText, { color: colors.textSecondary }]}>
             {'\u2022'} Outstanding payments may still be processed through Stripe{'\n'}
             {'\u2022'} Your Stripe Connect account (if linked) will remain active unless you deactivate it separately{'\n'}
             {'\u2022'} We may retain anonymized transaction data for legal compliance{'\n'}
@@ -143,15 +143,15 @@ export default function DeleteAccountScreen() {
 
         {/* Confirmation input */}
         <View style={styles.confirmSection}>
-          <Text style={[styles.confirmLabel, { color: colors.gray700 }]}>
+          <Text style={[styles.confirmLabel, { color: colors.text }]}>
             Type <Text style={[styles.confirmKeyword, { color: colors.error }]}>"delete my account"</Text> to confirm:
           </Text>
           <TextInput
-            style={[styles.confirmInput, { backgroundColor: colors.surface, borderColor: colors.gray200, color: colors.gray900 }]}
+            style={[styles.confirmInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
             value={confirmText}
             onChangeText={setConfirmText}
             placeholder="delete my account"
-            placeholderTextColor={colors.gray400}
+            placeholderTextColor={colors.textTertiary}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -182,7 +182,7 @@ export default function DeleteAccountScreen() {
           style={styles.cancelButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={[styles.cancelButtonText, { color: colors.gray500 }]}>Cancel and go back</Text>
+          <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel and go back</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomSpacer} />

@@ -1,8 +1,10 @@
 import React from 'react';
+import * as Haptics from 'expo-haptics';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+// `/unstable` is the real native UITabBarController. The default export at
+// the package root is the JS-side tab bar — that one will NOT render iOS 26
+// Liquid Glass, no matter how it's styled. Do not switch this import.
+import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable';
 import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
 import SplitsScreen from '../screens/main/SplitsScreen';
@@ -41,86 +43,66 @@ import { RootStackParamList, MainTabParamList } from '../types/navigation';
 import { useTheme } from '../contexts/ThemeContext';
 
 const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
+const Tab = createNativeBottomTabNavigator<MainTabParamList>();
 
-// Tab Navigator Component
+// MainTabs — real iOS 26 native tab bar via UITabBarController.
+//
+// Critical config (do not "improve" any of this):
+//   • tabBarMinimizeBehavior: 'onScrollDown'
+//       → iOS 26 morph-into-pill on scroll-down, expand on scroll-up.
+//   • popToTopOnBlur: true
+//       → standard iOS UX (tab pop-to-top when blurred).
+//   • SF Symbol tabBarIcons via { type: 'sfSymbol', name: '...' }.
+//   • NO tabBarStyle / tabBarBackground / tabBarActiveTintColor / etc —
+//     the system styles the bar with the proper Liquid Glass material; any
+//     overrides break it.
+//   • tabPress haptic via screenListeners.
 function MainTabs() {
   const { colors } = useTheme();
-
   return (
     <Tab.Navigator
+      screenListeners={{
+        tabPress: () => {
+          Haptics.selectionAsync().catch(() => {});
+        },
+      }}
+      sceneContainerStyle={{ backgroundColor: colors.background }}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.gray500,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.gray200,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-          height: Platform.OS === 'ios' ? 88 : 64,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: -4,
-        },
-        tabBarIconStyle: {
-          marginTop: 4,
-        },
+        tabBarMinimizeBehavior: 'never',
+        popToTopOnBlur: true,
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          title: 'Home',
+          tabBarIcon: { type: 'sfSymbol', name: 'house' as any },
         }}
       />
       <Tab.Screen
         name="Scan"
         component={ScanScreen}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'camera' : 'camera-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          title: 'Scan',
+          tabBarIcon: { type: 'sfSymbol', name: 'camera' as any },
         }}
       />
       <Tab.Screen
         name="Splits"
         component={SplitsScreen}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'receipt' : 'receipt-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          title: 'Splits',
+          tabBarIcon: { type: 'sfSymbol', name: 'list.bullet.rectangle' as any },
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'person' : 'person-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          title: 'Profile',
+          tabBarIcon: { type: 'sfSymbol', name: 'person.crop.circle' as any },
         }}
       />
     </Tab.Navigator>
@@ -129,10 +111,12 @@ function MainTabs() {
 
 // Main Navigator with Modal Stack
 export default function MainNavigator() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        cardStyle: { backgroundColor: colors.background },
       }}
     >
       {/* Main Tab Navigator */}

@@ -171,10 +171,10 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.gray50, paddingTop: insets.top }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.gray600 }]}>Loading payment details...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading payment details...</Text>
         </View>
       </View>
     );
@@ -185,17 +185,17 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.gray50 }]} contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.gray900 }]}>Pay with Card</Text>
-          <Text style={[styles.subtitle, { color: colors.gray600 }]}>Secure payment powered by Stripe</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Pay with Card</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Secure payment powered by Stripe</Text>
         </View>
 
         {/* Recipient Card */}
         <Card variant="elevated" style={styles.card}>
           <View style={styles.recipientSection}>
-            <Text style={[styles.sectionLabel, { color: colors.gray500 }]}>Paying</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Paying</Text>
             <View style={styles.recipientInfo}>
               <Avatar
                 name={recipient.full_name}
@@ -203,8 +203,8 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
                 size="lg"
               />
               <View style={styles.recipientDetails}>
-                <Text style={[styles.recipientName, { color: colors.gray900 }]}>{recipient.full_name}</Text>
-                <Text style={[styles.recipientEmail, { color: colors.gray600 }]}>{recipient.email}</Text>
+                <Text style={[styles.recipientName, { color: colors.text }]}>{recipient.full_name}</Text>
+                <Text style={[styles.recipientEmail, { color: colors.textSecondary }]}>{recipient.email}</Text>
               </View>
             </View>
           </View>
@@ -214,10 +214,10 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         {split && (
           <Card variant="default" style={styles.card}>
             <View style={styles.splitSection}>
-              <Text style={[styles.sectionLabel, { color: colors.gray500 }]}>For</Text>
-              <Text style={[styles.splitTitle, { color: colors.gray900 }]}>{split.title}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>For</Text>
+              <Text style={[styles.splitTitle, { color: colors.text }]}>{split.title}</Text>
               {split.description && (
-                <Text style={[styles.splitDescription, { color: colors.gray600 }]}>{split.description}</Text>
+                <Text style={[styles.splitDescription, { color: colors.textSecondary }]}>{split.description}</Text>
               )}
             </View>
           </Card>
@@ -225,26 +225,26 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
 
         {/* Fee Breakdown Card */}
         <Card variant="elevated" style={styles.breakdownCard}>
-          <Text style={[styles.breakdownTitle, { color: colors.gray900 }]}>Payment Breakdown</Text>
+          <Text style={[styles.breakdownTitle, { color: colors.text }]}>Payment Breakdown</Text>
 
           <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Your share</Text>
-            <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>${fees.amount.toFixed(2)}</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.text }]}>Your share</Text>
+            <Text style={[styles.breakdownValue, { color: colors.text }]}>${fees.amount.toFixed(2)}</Text>
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={[styles.breakdownLabel, { color: colors.gray700 }]}>Fees (split {participantCount} ways)</Text>
-            <Text style={[styles.breakdownValue, { color: colors.gray900 }]}>+${fees.userFee.toFixed(2)}</Text>
+            <Text style={[styles.breakdownLabel, { color: colors.text }]}>Fees (split {participantCount} ways)</Text>
+            <Text style={[styles.breakdownValue, { color: colors.text }]}>+${fees.userFee.toFixed(2)}</Text>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.gray200 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: colors.gray900 }]}>Total charge</Text>
+            <Text style={[styles.totalLabel, { color: colors.text }]}>Total charge</Text>
             <Text style={[styles.totalValue, { color: colors.primary }]}>${fees.total.toFixed(2)}</Text>
           </View>
 
-          <Text style={[styles.feeNote, { color: colors.gray500 }]}>
+          <Text style={[styles.feeNote, { color: colors.textSecondary }]}>
             All fees (processing, instant payout, and service fee) are split equally among all {participantCount} participants.
           </Text>
         </Card>
@@ -253,7 +253,7 @@ export default function PayScreen({ navigation, route }: PayScreenProps) {
         <Card variant="default" style={[styles.infoCard, { backgroundColor: colors.primary + '10' }]}>
           <View style={styles.infoRow}>
             <Text style={styles.infoIcon}>💳</Text>
-            <Text style={[styles.infoText, { color: colors.gray700 }]}>
+            <Text style={[styles.infoText, { color: colors.text }]}>
               Your card information is securely processed by Stripe and never stored on our servers.
             </Text>
           </View>

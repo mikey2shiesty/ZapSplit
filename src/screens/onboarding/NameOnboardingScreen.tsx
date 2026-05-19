@@ -60,7 +60,7 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
   const initials = name.trim().split(' ').map(w => w[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('');
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0F0F1A' : '#F8F9FB', paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -86,8 +86,8 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
           <View style={[
             styles.inputContainer,
             {
-              backgroundColor: isDark ? colors.surface : '#FFFFFF',
-              borderColor: name.trim() ? colors.primary : isDark ? colors.border : '#E5E7EB',
+              backgroundColor: colors.surface,
+              borderColor: name.trim() ? colors.primary : colors.border,
             },
           ]}>
             <Ionicons name="person-outline" size={20} color={name.trim() ? colors.primary : colors.textSecondary} style={styles.inputIcon} />
@@ -115,25 +115,22 @@ export default function NameOnboardingScreen({ userId, onComplete }: Props) {
             style={[
               styles.button,
               {
-                backgroundColor: isValid ? colors.primary : isDark ? colors.surface : '#E5E7EB',
-                shadowColor: isValid ? colors.primary : 'transparent',
-                shadowOpacity: isValid ? 0.3 : 0,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 4 },
+                backgroundColor: isValid ? colors.primary : colors.surface,
+                opacity: isValid && !saving ? 1 : 0.6,
               },
             ]}
             onPress={handleContinue}
             disabled={!isValid || saving}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
             {saving ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.textInverse} />
             ) : (
               <View style={styles.buttonContent}>
-                <Text style={[styles.buttonText, { color: isValid ? '#FFFFFF' : colors.textSecondary }]}>
-                  Get Started
+                <Text style={[styles.buttonText, { color: isValid ? colors.textInverse : colors.textSecondary }]}>
+                  Get started
                 </Text>
-                {isValid && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
+                {isValid && <Ionicons name="arrow-forward" size={18} color={colors.textInverse} />}
               </View>
             )}
           </TouchableOpacity>
@@ -210,8 +207,8 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
-    height: 54,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 9999,
     justifyContent: 'center',
     alignItems: 'center',
   },

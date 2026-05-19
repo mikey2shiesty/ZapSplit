@@ -172,18 +172,18 @@ export default function PrivacySettingsScreen() {
     icon: string
   ) => (
     <View style={styles.toggleRow}>
-      <View style={[styles.toggleIconContainer, { backgroundColor: colors.gray100 }]}>
-        <Ionicons name={icon as any} size={22} color={colors.gray600} />
+      <View style={[styles.toggleIconContainer, { backgroundColor: colors.surface }]}>
+        <Ionicons name={icon as any} size={22} color={colors.textSecondary} />
       </View>
       <View style={styles.toggleContent}>
-        <Text style={[styles.toggleLabel, { color: colors.gray900 }]}>{label}</Text>
-        <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>{description}</Text>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>{description}</Text>
       </View>
       <Switch
         value={settings?.[key] as boolean}
         onValueChange={(value) => handleToggle(key, value)}
-        trackColor={{ false: colors.gray300, true: colors.primaryLight }}
-        thumbColor={settings?.[key] ? colors.primary : colors.gray100}
+        trackColor={{ false: colors.border, true: '#34C759' }}
+        ios_backgroundColor={colors.border}
         disabled={saving}
       />
     </View>
@@ -191,14 +191,14 @@ export default function PrivacySettingsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.gray50 }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Header
         title="Privacy & Security"
@@ -220,7 +220,7 @@ export default function PrivacySettingsScreen() {
               <Ionicons name="warning" size={24} color={colors.error} />
               <View style={styles.deletionBannerText}>
                 <Text style={[styles.deletionBannerTitle, { color: colors.error }]}>Account Deletion Scheduled</Text>
-                <Text style={[styles.deletionBannerDate, { color: colors.gray700 }]}>
+                <Text style={[styles.deletionBannerDate, { color: colors.text }]}>
                   Your account will be deleted on{'\n'}
                   {formatDeletionDate(deletionRequest.scheduled_for)}
                 </Text>
@@ -236,7 +236,7 @@ export default function PrivacySettingsScreen() {
         )}
 
         {/* Profile Visibility */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Profile Visibility</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Profile Visibility</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Public Profile',
@@ -244,14 +244,14 @@ export default function PrivacySettingsScreen() {
             'profile_visible',
             'eye-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Online Status',
             'Show when you were last active',
             'show_online_status',
             'radio-button-on-outline'
           )}
-          <View style={[styles.divider, { backgroundColor: colors.gray100 }]} />
+          <View style={[styles.divider, { backgroundColor: colors.surface }]} />
           {renderToggle(
             'Friend Requests',
             'Allow others to send you friend requests',
@@ -261,7 +261,7 @@ export default function PrivacySettingsScreen() {
         </Card>
 
         {/* Data & Analytics */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Data & Analytics</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Data & Analytics</Text>
         <Card variant="default" style={styles.card}>
           {renderToggle(
             'Share Statistics',
@@ -272,27 +272,27 @@ export default function PrivacySettingsScreen() {
         </Card>
 
         {/* Blocked Users */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Blocked Users</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Blocked Users</Text>
         <TouchableOpacity
           style={[styles.blockedUsersCard, { backgroundColor: colors.surface }]}
           onPress={() => navigation.navigate('BlockedUsers')}
         >
           <View style={styles.blockedUsersContent}>
-            <View style={[styles.blockedIconContainer, { backgroundColor: colors.gray100 }]}>
-              <Ionicons name="ban-outline" size={22} color={colors.gray600} />
+            <View style={[styles.blockedIconContainer, { backgroundColor: colors.surface }]}>
+              <Ionicons name="ban-outline" size={22} color={colors.textSecondary} />
             </View>
             <View style={styles.blockedTextContainer}>
-              <Text style={[styles.blockedUsersLabel, { color: colors.gray900 }]}>Manage Blocked Users</Text>
-              <Text style={[styles.blockedUsersCount, { color: colors.gray500 }]}>
+              <Text style={[styles.blockedUsersLabel, { color: colors.text }]}>Manage Blocked Users</Text>
+              <Text style={[styles.blockedUsersCount, { color: colors.textSecondary }]}>
                 {blockedCount} {blockedCount === 1 ? 'user' : 'users'} blocked
               </Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </TouchableOpacity>
 
         {/* Data Export */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Your Data</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Your Data</Text>
         <Card variant="default" style={styles.card}>
           <TouchableOpacity
             style={styles.actionRow}
@@ -303,21 +303,21 @@ export default function PrivacySettingsScreen() {
               <Ionicons name="download-outline" size={22} color={colors.primary} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={[styles.actionLabel, { color: colors.gray900 }]}>Export Your Data</Text>
-              <Text style={[styles.actionDescription, { color: colors.gray500 }]}>
+              <Text style={[styles.actionLabel, { color: colors.text }]}>Export Your Data</Text>
+              <Text style={[styles.actionDescription, { color: colors.textSecondary }]}>
                 Download a copy of all your ZapSplit data
               </Text>
             </View>
             {exporting ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
-              <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
             )}
           </TouchableOpacity>
         </Card>
 
         {/* Delete Account */}
-        <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Danger Zone</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Danger Zone</Text>
         <Card variant="default" style={[styles.dangerCard, { borderColor: colors.errorLight }]}>
           {!showDeleteConfirm ? (
             <TouchableOpacity
@@ -328,7 +328,7 @@ export default function PrivacySettingsScreen() {
               <Ionicons name="trash-outline" size={22} color={colors.error} />
               <View style={styles.deleteContent}>
                 <Text style={[styles.deleteLabel, { color: colors.error }]}>Delete Account</Text>
-                <Text style={[styles.deleteDescription, { color: colors.gray500 }]}>
+                <Text style={[styles.deleteDescription, { color: colors.textSecondary }]}>
                   Permanently delete your account and all data
                 </Text>
               </View>
@@ -336,14 +336,14 @@ export default function PrivacySettingsScreen() {
           ) : (
             <View style={styles.deleteConfirmContainer}>
               <Text style={[styles.deleteConfirmTitle, { color: colors.error }]}>Delete Your Account?</Text>
-              <Text style={[styles.deleteConfirmText, { color: colors.gray600 }]}>
+              <Text style={[styles.deleteConfirmText, { color: colors.textSecondary }]}>
                 This will permanently delete your account, including all splits, payments, and friendships.
                 You have 30 days to change your mind.
               </Text>
               <TextInput
-                style={[styles.deleteReasonInput, { borderColor: colors.gray200, color: colors.gray900, backgroundColor: colors.gray50 }]}
+                style={[styles.deleteReasonInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.background }]}
                 placeholder="Why are you leaving? (optional)"
-                placeholderTextColor={colors.gray400}
+                placeholderTextColor={colors.textTertiary}
                 value={deleteReason}
                 onChangeText={setDeleteReason}
                 multiline
@@ -351,13 +351,13 @@ export default function PrivacySettingsScreen() {
               />
               <View style={styles.deleteConfirmButtons}>
                 <TouchableOpacity
-                  style={[styles.cancelButton, { backgroundColor: colors.gray100 }]}
+                  style={[styles.cancelButton, { backgroundColor: colors.surface }]}
                   onPress={() => {
                     setShowDeleteConfirm(false);
                     setDeleteReason('');
                   }}
                 >
-                  <Text style={[styles.cancelButtonText, { color: colors.gray700 }]}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.confirmDeleteButton, { backgroundColor: colors.error }]}
@@ -372,8 +372,8 @@ export default function PrivacySettingsScreen() {
 
         {/* Info Footer */}
         <View style={styles.infoFooter}>
-          <Ionicons name="shield-checkmark-outline" size={18} color={colors.gray400} />
-          <Text style={[styles.infoText, { color: colors.gray400 }]}>
+          <Ionicons name="shield-checkmark-outline" size={18} color={colors.textTertiary} />
+          <Text style={[styles.infoText, { color: colors.textTertiary }]}>
             Your data is encrypted and stored securely. We comply with GDPR and Australian privacy laws.
           </Text>
         </View>

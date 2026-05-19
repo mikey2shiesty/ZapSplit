@@ -1,8 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { colors, radius, spacing, typography } from '../../constants/theme';
+import { spacing, typography, radius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
-type BadgeVariant = 'paid' | 'pending' | 'owed' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+// Friendly Fintech Badge — soft-tinted pill with weight-600 text in matching tone.
+// Title case, NOT uppercase (consumer fintech doesn't shout).
+
+type BadgeVariant =
+  | 'paid'
+  | 'pending'
+  | 'owed'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'neutral';
 type BadgeSize = 'small' | 'medium' | 'large';
 
 interface BadgeProps {
@@ -22,61 +34,32 @@ export default function Badge({
   style,
   textStyle,
 }: BadgeProps) {
-  const variantConfig = {
-    paid: {
-      backgroundColor: colors.successLight,
-      color: colors.success,
-    },
-    pending: {
-      backgroundColor: colors.warningLight,
-      color: colors.warning,
-    },
-    owed: {
-      backgroundColor: colors.errorLight,
-      color: colors.error,
-    },
-    success: {
-      backgroundColor: colors.successLight,
-      color: colors.success,
-    },
-    warning: {
-      backgroundColor: colors.warningLight,
-      color: colors.warning,
-    },
-    error: {
-      backgroundColor: colors.errorLight,
-      color: colors.error,
-    },
-    info: {
-      backgroundColor: colors.infoLight,
-      color: colors.info,
-    },
-    neutral: {
-      backgroundColor: colors.gray100,
-      color: colors.gray700,
-    },
+  const { colors } = useTheme();
+
+  const tint: Record<BadgeVariant, { fill: string; ink: string }> = {
+    paid: { fill: colors.successLight, ink: colors.success },
+    pending: { fill: colors.warningLight, ink: colors.warning },
+    owed: { fill: colors.errorLight, ink: colors.error },
+    success: { fill: colors.successLight, ink: colors.success },
+    warning: { fill: colors.warningLight, ink: colors.warning },
+    error: { fill: colors.errorLight, ink: colors.error },
+    info: { fill: colors.primaryLight, ink: colors.primary },
+    neutral: { fill: colors.gray100, ink: colors.textSecondary },
   };
 
-  const config = variantConfig[variant];
+  const config = tint[variant];
 
   return (
     <View
       style={[
         styles.base,
         styles[size],
-        { backgroundColor: config.backgroundColor },
+        { backgroundColor: config.fill },
         style,
       ]}
     >
       {icon}
-      <Text
-        style={[
-          styles.text,
-          styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}` as keyof typeof styles],
-          { color: config.color },
-          textStyle,
-        ]}
-      >
+      <Text style={[styles.text, { color: config.ink }, textStyle]}>
         {children}
       </Text>
     </View>
@@ -89,31 +72,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     borderRadius: radius.pill,
-    gap: spacing.xxs,
+    gap: spacing.xs,
   },
   small: {
-    paddingVertical: spacing.xxs,
+    paddingVertical: 2,
     paddingHorizontal: spacing.sm,
   },
   medium: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm + 2,
   },
   large: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
   },
   text: {
-    ...typography.caption,
-    fontWeight: '600',
-  },
-  textSmall: {
-    fontSize: 10,
-  },
-  textMedium: {
-    fontSize: 12,
-  },
-  textLarge: {
-    fontSize: 14,
+    ...typography.chip,
   },
 });

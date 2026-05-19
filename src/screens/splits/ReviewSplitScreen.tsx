@@ -175,14 +175,14 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.gray50 }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.pageTitle, { color: colors.gray900 }]}>Review Split</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.gray500 }]}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>Review Split</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
             Review the details before creating
           </Text>
         </View>
@@ -202,7 +202,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       </View>
 
       {/* Create Split Button - Fixed at Bottom */}
-      <View style={[styles.buttonContainer, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={[styles.createButton, { backgroundColor: colors.primary }, loading && styles.createButtonDisabled]}
           onPress={handleCreateSplit}
@@ -218,7 +218,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
           )}
         </TouchableOpacity>
 
-        <Text style={[styles.helperText, { color: colors.gray500 }]}>
+        <Text style={[styles.helperText, { color: colors.textSecondary }]}>
           Participants will be notified after you create this split
         </Text>
       </View>
