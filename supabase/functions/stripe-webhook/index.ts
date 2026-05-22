@@ -122,7 +122,7 @@ serve(async (req) => {
           // Get the split to know the creator_id
           const { data: splitData } = await supabase
             .from('splits')
-            .select('creator_id')
+            .select('creator_id, title')
             .eq('id', payment.split_id)
             .single();
 
@@ -134,6 +134,47 @@ serve(async (req) => {
               .from('splits')
               .update({ status: 'settled' })
               .eq('id', payment.split_id);
+          }
+
+          // Send payment notifications to payer (payment_sent) and recipient (payment_received)
+          try {
+            const [{ data: payerProfile }, { data: recipientProfile }] = await Promise.all([
+              supabase.from('profiles').select('full_name').eq('id', payment.from_user_id).single(),
+              splitData?.creator_id
+                ? supabase.from('profiles').select('full_name').eq('id', splitData.creator_id).single()
+                : Promise.resolve({ data: null }),
+            ]);
+
+            const payerName = payerProfile?.full_name || 'Someone';
+            const recipientName = recipientProfile?.full_name || 'someone';
+            const splitTitle = splitData?.title || 'a split';
+            const amount = payment.amount;
+
+            const rows: Array<Record<string, unknown>> = [];
+            if (splitData?.creator_id && splitData.creator_id !== payment.from_user_id) {
+              rows.push({
+                user_id: splitData.creator_id,
+                type: 'payment_received',
+                title: 'Payment Received',
+                body: `${payerName} paid you $${amount.toFixed(2)} for "${splitTitle}"`,
+                data: { splitId: payment.split_id, amount },
+                action_url: `/splits/${payment.split_id}`,
+                channels: ['in_app', 'push'],
+              });
+            }
+            rows.push({
+              user_id: payment.from_user_id,
+              type: 'payment_sent',
+              title: 'Payment Sent',
+              body: `You paid ${recipientName} $${amount.toFixed(2)} for "${splitTitle}"`,
+              data: { splitId: payment.split_id, amount },
+              action_url: `/splits/${payment.split_id}`,
+              channels: ['in_app', 'push'],
+            });
+
+            await supabase.from('notifications').insert(rows);
+          } catch (notifErr) {
+            console.warn('Failed to insert payment notifications:', notifErr);
           }
         }
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { notifySplitCreated } from './notificationService';
 
 export interface CreateSplitParticipant {
   user_id?: string;
@@ -111,6 +112,23 @@ export async function createSplit(data: CreateSplitData): Promise<Split> {
     // Rollback: delete the split if participants insertion fails
     await supabase.from('splits').delete().eq('id', split.id);
     throw participantsError;
+  }
+
+  const recipientUserIds = data.participants
+    .map(p => p.user_id)
+    .filter((id): id is string => Boolean(id) && id !== user.id);
+
+  if (recipientUserIds.length > 0) {
+    const { data: creatorProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    const creatorName = creatorProfile?.full_name || 'Someone';
+
+    notifySplitCreated(recipientUserIds, data.title, creatorName, split.id).catch(
+      (err) => console.warn('notifySplitCreated failed:', err)
+    );
   }
 
   return split;

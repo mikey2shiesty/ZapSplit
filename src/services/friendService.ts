@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { supabase } from './supabase';
+import { notifyFriendRequest, notifyFriendAccepted } from './notificationService';
 
 export interface Friend {
   id: string;
@@ -187,6 +188,18 @@ export async function sendFriendRequest(userId: string, friendId: string): Promi
       .insert({ user_id: userId, friend_id: friendId, status: 'pending' });
 
     if (error) throw error;
+
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single();
+    const senderName = senderProfile?.full_name || 'Someone';
+
+    notifyFriendRequest(friendId, senderName, userId).catch(
+      (err) => console.warn('notifyFriendRequest failed:', err)
+    );
+
     return { success: true };
   } catch (error: any) {
     console.error('Error sending friend request:', error);
@@ -196,12 +209,34 @@ export async function sendFriendRequest(userId: string, friendId: string): Promi
 
 export async function acceptFriendRequest(friendshipId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const { data: friendship, error: fetchError } = await supabase
+      .from('friendships')
+      .select('user_id, friend_id')
+      .eq('id', friendshipId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { error } = await supabase
       .from('friendships')
       .update({ status: 'accepted', accepted_at: new Date().toISOString() })
       .eq('id', friendshipId);
 
     if (error) throw error;
+
+    if (friendship) {
+      const { data: accepterProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', friendship.friend_id)
+        .single();
+      const accepterName = accepterProfile?.full_name || 'Someone';
+
+      notifyFriendAccepted(friendship.user_id, accepterName, friendship.friend_id).catch(
+        (err) => console.warn('notifyFriendAccepted failed:', err)
+      );
+    }
+
     return { success: true };
   } catch (error: any) {
     console.error('Error accepting friend request:', error);
