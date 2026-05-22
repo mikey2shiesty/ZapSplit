@@ -24,7 +24,11 @@
       "infoPlist": {
         "NSCameraUsageDescription": "ZapSplit needs camera access to scan receipts and automatically split bills.",
         "NSPhotoLibraryUsageDescription": "ZapSplit needs access to your photos to upload receipt images.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "entitlements": {
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -71,6 +75,13 @@
       ]
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#000000",
+          "defaultChannel": "default"
+        }
+      ],
       [
         "expo-camera",
         {
