@@ -300,7 +300,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         {/* QUICK ACTIONS — two pills side-by-side */}
         <View style={[styles.section, styles.ctaRow]}>
           <TouchableOpacity
-            style={[styles.primaryPill, { backgroundColor: colors.primary }]}
+            style={[styles.primaryPill, { flex: 1, backgroundColor: colors.primary }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               navigation.navigate('SplitFlow');
@@ -312,7 +312,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.softPill, { backgroundColor: colors.primaryLight }]}
+            style={[styles.softPill, { flex: 1, backgroundColor: colors.primaryLight }]}
             onPress={openRequestModal}
             activeOpacity={0.85}
           >
@@ -732,7 +732,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   primaryPill: {
-    flex: 1,
     height: 52,
     borderRadius: radius.pill,
     alignItems: 'center',
@@ -742,7 +741,6 @@ const styles = StyleSheet.create({
     ...typography.button,
   },
   softPill: {
-    flex: 1,
     height: 52,
     borderRadius: radius.pill,
     alignItems: 'center',

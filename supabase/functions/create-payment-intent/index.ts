@@ -56,6 +56,13 @@ serve(async (req) => {
       );
     }
 
+    if (fromUserId === toUserId) {
+      return new Response(
+        JSON.stringify({ error: "You can't pay yourself for a split you created." }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -130,27 +137,50 @@ serve(async (req) => {
 
     // Create PaymentIntent with destination charge
     // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: payerTotal,
-      currency: 'aud',
-      customer: customerId,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      application_fee_amount: applicationFee,
-      transfer_data: {
-        destination: receiver.stripe_connect_account_id,
-      },
-      metadata: {
-        splitId,
-        fromUserId,
-        toUserId,
-        originalAmount: amount.toString(),
-        instantPayoutAmount: amountCents.toString(), // Amount receiver gets (in cents)
-        connectedAccountId: receiver.stripe_connect_account_id,
-      },
-      description: `Payment for Split #${splitId.substring(0, 8)}`,
-    });
+    let paymentIntent: Stripe.PaymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: payerTotal,
+        currency: 'aud',
+        customer: customerId,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        application_fee_amount: applicationFee,
+        transfer_data: {
+          destination: receiver.stripe_connect_account_id,
+        },
+        metadata: {
+          splitId,
+          fromUserId,
+          toUserId,
+          originalAmount: amount.toString(),
+          instantPayoutAmount: amountCents.toString(), // Amount receiver gets (in cents)
+          connectedAccountId: receiver.stripe_connect_account_id,
+        },
+        description: `Payment for Split #${splitId.substring(0, 8)}`,
+      });
+    } catch (stripeErr: any) {
+      console.error('Stripe paymentIntents.create failed:', JSON.stringify({
+        message: stripeErr.message,
+        type: stripeErr.type,
+        code: stripeErr.code,
+        decline_code: stripeErr.decline_code,
+        param: stripeErr.param,
+        statusCode: stripeErr.statusCode,
+        raw: stripeErr.raw?.message,
+        connectedAccount: receiver.stripe_connect_account_id,
+      }));
+      return new Response(
+        JSON.stringify({
+          error: stripeErr.message || 'Stripe rejected the payment intent',
+          stripeCode: stripeErr.code,
+          stripeType: stripeErr.type,
+          stripeParam: stripeErr.param,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
 
     // Create payment record in database
     const { data: payment, error: paymentError } = await supabase
