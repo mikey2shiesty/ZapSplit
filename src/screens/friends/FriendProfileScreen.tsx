@@ -18,6 +18,7 @@ import {
   FriendProfile
 } from '../../services/friendService';
 import { blockUser, reportUser, ReportReason } from '../../services/privacyService';
+import { createNotification } from '../../services/notificationService';
 import Avatar from '../../components/common/Avatar';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -154,6 +155,55 @@ export default function FriendProfileScreen() {
     );
   };
 
+  const handleViewSharedSplits = () => {
+    navigation.navigate('Main', { screen: 'Splits' });
+  };
+
+  const handleCreateSplit = () => {
+    navigation.navigate('SplitFlow');
+  };
+
+  const handleSendReminder = async () => {
+    if (!profile) return;
+
+    if (profile.total_they_owe <= 0) {
+      Alert.alert('Nothing to remind', `${profile.full_name} doesn't owe you anything right now.`);
+      return;
+    }
+
+    Alert.alert(
+      'Send Reminder',
+      `Send ${profile.full_name} a reminder about the $${profile.total_they_owe.toFixed(2)} they owe?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              const id = await createNotification(
+                friendId,
+                'payment_reminder',
+                'Payment Reminder',
+                `You owe $${profile.total_they_owe.toFixed(2)} across your splits.`,
+                { fromUserId: currentUserId, amount: profile.total_they_owe }
+              );
+              if (id) {
+                Alert.alert('Reminder Sent', `${profile.full_name} has been notified.`);
+              } else {
+                Alert.alert('Something went wrong', "Couldn't send the reminder. Please try again.");
+              }
+            } catch (err) {
+              Alert.alert('Something went wrong', "Couldn't send the reminder. Please try again.");
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleReportUser = () => {
     Alert.alert(
       'Report User',
@@ -280,7 +330,11 @@ export default function FriendProfileScreen() {
         <View style={styles.actionsSection}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
 
-          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity
+            style={[styles.actionItem, { backgroundColor: colors.surface }]}
+            onPress={handleViewSharedSplits}
+            activeOpacity={0.7}
+          >
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="receipt-outline" size={24} color={colors.primary} />
             </View>
@@ -291,7 +345,11 @@ export default function FriendProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity
+            style={[styles.actionItem, { backgroundColor: colors.surface }]}
+            onPress={handleCreateSplit}
+            activeOpacity={0.7}
+          >
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
             </View>
@@ -302,7 +360,12 @@ export default function FriendProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionItem, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity
+            style={[styles.actionItem, { backgroundColor: colors.surface }]}
+            onPress={handleSendReminder}
+            disabled={actionLoading}
+            activeOpacity={0.7}
+          >
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="chatbubble-outline" size={24} color={colors.primary} />
             </View>

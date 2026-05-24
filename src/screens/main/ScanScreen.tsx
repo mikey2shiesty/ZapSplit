@@ -16,12 +16,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { spacing, radius } from '../../constants/theme';
+import { spacing, radius, layout } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  // iOS 26 floating tab bar overlays content — push bottom UI above it.
+  const bottomOffset = layout.tabBarHeight + insets.bottom;
   const { colors } = useTheme();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
@@ -146,7 +148,7 @@ export default function ScanScreen() {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
+        <View style={[styles.actionsContainer, { paddingBottom: bottomOffset + spacing.md }]}>
           <TouchableOpacity
             style={styles.retakeButton}
             onPress={handleRetake}
@@ -204,7 +206,7 @@ export default function ScanScreen() {
       </View>
 
       {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
+      <View style={[styles.bottomActions, { paddingBottom: bottomOffset + spacing.md }]}>
         <TouchableOpacity
           style={styles.galleryButton}
           onPress={handlePickImage}
