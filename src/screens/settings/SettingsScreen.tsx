@@ -18,6 +18,7 @@ import { spacing, typography, radius } from '../../constants/theme';
 import Header from '../../components/common/Header';
 import Card from '../../components/common/Card';
 import IconCircle from '../../components/common/IconCircle';
+import StripeActionRequiredBanner from '../../components/common/StripeActionRequiredBanner';
 
 // Friendly Fintech Settings hub.
 // Header → groups of rows in cards. Each row uses a soft-blue IconCircle.
@@ -87,6 +88,9 @@ export default function SettingsScreen() {
         contentContainerStyle={{ paddingBottom: spacing.xxl }}
         showsVerticalScrollIndicator={false}
       >
+        {/* STRIPE ACTION REQUIRED — auto-hides when nothing's due. */}
+        <StripeActionRequiredBanner />
+
         {/* ACCOUNT */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>

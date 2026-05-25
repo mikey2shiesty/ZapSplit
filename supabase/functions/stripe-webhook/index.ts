@@ -31,7 +31,6 @@ serve(async (req) => {
       return new Response('Missing stripe-signature header', { status: 400 });
     }
 
-    // Use async version for Deno (WebCrypto API)
     let event: Stripe.Event;
     try {
       event = await stripe.webhooks.constructEventAsync(
@@ -53,7 +52,6 @@ serve(async (req) => {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         console.log('Payment succeeded:', paymentIntent.id);
 
-        // Update payment record to completed
         const { error: updateError } = await supabase
           .from('payments')
           .update({
@@ -66,28 +64,98 @@ serve(async (req) => {
           console.error('Failed to update payment:', updateError);
         }
 
-        // Trigger instant payout to the split creator
         const instantPayoutAmount = paymentIntent.metadata?.instantPayoutAmount;
         const connectedAccountId = paymentIntent.metadata?.connectedAccountId;
 
         if (instantPayoutAmount && connectedAccountId) {
-          try {
-            const payout = await stripe.payouts.create(
+          // Try instant first, fall back to a standard payout, persist outcome either way.
+          let payoutOk = false;
+          let payoutId: string | null = null;
+          let payoutMethod: 'instant' | 'standard' | null = null;
+          let payoutError: string | null = null;
+
+          const createPayout = async (method: 'instant' | 'standard') =>
+            stripe.payouts.create(
               {
                 amount: parseInt(instantPayoutAmount),
                 currency: 'aud',
-                method: 'instant',
+                method,
                 description: `ZapSplit payment - ${paymentIntent.metadata?.splitId?.substring(0, 8)}`,
               },
               { stripeAccount: connectedAccountId }
             );
+
+          try {
+            const payout = await createPayout('instant');
+            payoutOk = true;
+            payoutId = payout.id;
+            payoutMethod = 'instant';
             console.log('Instant payout created:', payout.id);
-          } catch (payoutError: any) {
-            console.error('Instant payout failed, falling back to standard:', payoutError.message);
+          } catch (instantErr: any) {
+            console.warn('Instant payout failed:', instantErr.message);
+            payoutError = instantErr.message;
+            try {
+              const payout = await createPayout('standard');
+              payoutOk = true;
+              payoutId = payout.id;
+              payoutMethod = 'standard';
+              payoutError = null;
+              console.log('Standard payout created:', payout.id);
+            } catch (stdErr: any) {
+              console.error('Standard payout also failed:', stdErr.message);
+              payoutError = `instant: ${instantErr.message} | standard: ${stdErr.message}`;
+            }
+          }
+
+          await supabase
+            .from('payments')
+            .update({
+              payout_status: payoutOk ? `paid_${payoutMethod}` : 'failed',
+              payout_id: payoutId,
+              payout_error: payoutError,
+            })
+            .eq('stripe_payment_intent_id', paymentIntent.id);
+
+          if (!payoutOk) {
+            try {
+              const recipientId = paymentIntent.metadata?.toUserId;
+              try {
+                const acct = await stripe.accounts.retrieve(connectedAccountId);
+                const due = acct.requirements?.currently_due ?? [];
+                await supabase
+                  .from('profiles')
+                  .update({
+                    stripe_payouts_enabled: !!acct.payouts_enabled,
+                    stripe_connect_onboarding_complete:
+                      !!acct.details_submitted && !!acct.charges_enabled && !!acct.payouts_enabled,
+                    stripe_requirements_currently_due: due,
+                  })
+                  .eq('stripe_connect_account_id', connectedAccountId);
+              } catch (e) {
+                console.warn('Failed to refresh account status after payout failure:', (e as any)?.message);
+              }
+
+              if (recipientId) {
+                await supabase.from('notifications').insert({
+                  user_id: recipientId,
+                  type: 'verification_required',
+                  title: 'Verify your ID to receive your payment',
+                  body: 'Stripe is holding your payout until you upload a government ID. Tap to finish verification.',
+                  data: {
+                    paymentIntentId: paymentIntent.id,
+                    connectedAccountId,
+                    payoutError,
+                  },
+                  action_url: '/settings/stripe',
+                  channels: ['in_app', 'push'],
+                });
+              }
+            } catch (notifErr) {
+              console.warn('Failed to insert verification_required notification:', notifErr);
+            }
           }
         }
 
-        // Update split_participant status
         const { data: payment } = await supabase
           .from('payments')
           .select('from_user_id, split_id, amount')
@@ -95,7 +163,6 @@ serve(async (req) => {
           .single();
 
         if (payment) {
-          // Get participant's amount_owed to set as amount_paid
           const { data: participant } = await supabase
             .from('split_participants')
             .select('amount_owed')
@@ -113,20 +180,17 @@ serve(async (req) => {
             .eq('split_id', payment.split_id)
             .eq('user_id', payment.from_user_id);
 
-          // Check if all participants paid -> mark split as settled
           const { data: participants } = await supabase
             .from('split_participants')
             .select('status, user_id')
             .eq('split_id', payment.split_id);
 
-          // Get the split to know the creator_id
           const { data: splitData } = await supabase
             .from('splits')
             .select('creator_id, title')
             .eq('id', payment.split_id)
             .single();
 
-          // All non-creator participants are paid
           const nonCreatorParticipants = participants?.filter(p => p.user_id !== splitData?.creator_id);
           const allPaid = nonCreatorParticipants?.every((p) => p.status === 'paid');
           if (allPaid && nonCreatorParticipants && nonCreatorParticipants.length > 0) {
@@ -136,7 +200,6 @@ serve(async (req) => {
               .eq('id', payment.split_id);
           }
 
-          // Send payment notifications to payer (payment_sent) and recipient (payment_received)
           try {
             const [{ data: payerProfile }, { data: recipientProfile }] = await Promise.all([
               supabase.from('profiles').select('full_name').eq('id', payment.from_user_id).single(),
@@ -209,12 +272,63 @@ serve(async (req) => {
         const account = event.data.object as Stripe.Account;
         console.log('Connect account updated:', account.id);
 
-        const onboardingComplete = account.details_submitted && account.charges_enabled;
+        // Onboarding is only "complete" when payouts can actually leave the account.
+        // charges_enabled lets them receive money, but payouts_enabled means they can
+        // withdraw it. We require all three so trapped-balance bugs can't recur.
+        const onboardingComplete =
+          !!account.details_submitted &&
+          !!account.charges_enabled &&
+          !!account.payouts_enabled;
+
+        const currentlyDue = account.requirements?.currently_due ?? [];
 
         await supabase
           .from('profiles')
-          .update({ stripe_connect_onboarding_complete: onboardingComplete })
+          .update({
+            stripe_connect_onboarding_complete: onboardingComplete,
+            stripe_payouts_enabled: !!account.payouts_enabled,
+            stripe_requirements_currently_due: currentlyDue,
+          })
           .eq('stripe_connect_account_id', account.id);
+
+        // If a previously trapped payout's recipient just got payouts_enabled, retry.
+        if (account.payouts_enabled) {
+          const { data: blocked } = await supabase
+            .from('payments')
+            .select('id, stripe_payment_intent_id, amount, to_user_id')
+            .eq('payout_status', 'failed');
+          for (const row of blocked ?? []) {
+            try {
+              const pi = await stripe.paymentIntents.retrieve(row.stripe_payment_intent_id);
+              if (pi.metadata?.connectedAccountId !== account.id) continue;
+              const amt = parseInt(pi.metadata.instantPayoutAmount || '0');
+              if (!amt) continue;
+              let payout: Stripe.Payout | null = null;
+              try {
+                payout = await stripe.payouts.create(
+                  { amount: amt, currency: 'aud', method: 'instant', description: 'ZapSplit retry' },
+                  { stripeAccount: account.id }
+                );
+              } catch {
+                payout = await stripe.payouts.create(
+                  { amount: amt, currency: 'aud', method: 'standard', description: 'ZapSplit retry' },
+                  { stripeAccount: account.id }
+                );
+              }
+              await supabase
+                .from('payments')
+                .update({
+                  payout_status: `paid_${payout.method}`,
+                  payout_id: payout.id,
+                  payout_error: null,
+                })
+                .eq('id', row.id);
+              console.log('Retried payout for', row.id, '→', payout.id);
+            } catch (retryErr: any) {
+              console.warn('Payout retry failed for', row.id, retryErr.message);
+            }
+          }
+        }
 
         break;
       }
