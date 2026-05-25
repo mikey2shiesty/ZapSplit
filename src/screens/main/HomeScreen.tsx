@@ -33,6 +33,9 @@ import { SearchInput } from '../../components/common/Input';
 import IconCircle from '../../components/common/IconCircle';
 import MoneyText from '../../components/common/MoneyText';
 import Skeleton from '../../components/common/Skeleton';
+import StripeActionRequiredBanner from '../../components/common/StripeActionRequiredBanner';
+import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
+import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
 
 // ZapSplit 2026 — Friendly Fintech Home.
 // Reference: Coinbase × Public × Uber. Pill search at top, hero balance card,
@@ -63,6 +66,33 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [requestAmount, setRequestAmount] = useState('');
   const [requestNote, setRequestNote] = useState('');
   const [sendingRequest, setSendingRequest] = useState(false);
+
+  // Block split/request flows if the user can't actually receive money yet.
+  const stripeStatus = useStripeAccountStatus();
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyContext, setVerifyContext] = useState<'split' | 'request'>('split');
+
+  const canReceive = stripeStatus.payoutsEnabled && stripeStatus.currentlyDue.length === 0;
+
+  const handleStartSplit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!stripeStatus.loading && !canReceive) {
+      setVerifyContext('split');
+      setShowVerifyModal(true);
+      return;
+    }
+    navigation.navigate('SplitFlow');
+  };
+
+  const handleStartRequest = () => {
+    if (!stripeStatus.loading && !canReceive) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setVerifyContext('request');
+      setShowVerifyModal(true);
+      return;
+    }
+    openRequestModal();
+  };
 
   const { youOwe, owedToYou } = stats;
   const netBalance = owedToYou - youOwe;
@@ -274,6 +304,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           )}
         </View>
 
+        {/* STRIPE ACTION REQUIRED — auto-hides when nothing's due. */}
+        <StripeActionRequiredBanner />
+
         {/* GET STARTED CARD — only for new users */}
         {isNewUser && (
           <View style={styles.section}>
@@ -286,7 +319,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               </Text>
               <TouchableOpacity
                 style={[styles.tintedCta, { backgroundColor: colors.primary }]}
-                onPress={() => navigation.navigate('SplitFlow')}
+                onPress={handleStartSplit}
                 activeOpacity={0.85}
               >
                 <Text style={[styles.tintedCtaLabel, { color: colors.textInverse }]}>
@@ -301,10 +334,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <View style={[styles.section, styles.ctaRow]}>
           <TouchableOpacity
             style={[styles.primaryPill, { flex: 1, backgroundColor: colors.primary }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              navigation.navigate('SplitFlow');
-            }}
+            onPress={handleStartSplit}
             activeOpacity={0.85}
           >
             <Text style={[styles.primaryPillLabel, { color: colors.textInverse }]}>
@@ -313,7 +343,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.softPill, { flex: 1, backgroundColor: colors.primaryLight }]}
-            onPress={openRequestModal}
+            onPress={handleStartRequest}
             activeOpacity={0.85}
           >
             <Text style={[styles.softPillLabel, { color: colors.primary }]}>
@@ -622,6 +652,18 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* VERIFY ID GATE — blocks splits/requests until Stripe payouts are live. */}
+      <VerifyIdRequiredModal
+        visible={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        title={verifyContext === 'request' ? 'Verify ID to request money' : 'Verify ID to create splits'}
+        message={
+          verifyContext === 'request'
+            ? 'To receive payments from friends, Stripe needs to verify your identity first. It takes under a minute.'
+            : 'Splits send payments to you. Before creating one, finish setting up your bank account so funds can land safely.'
+        }
+      />
     </View>
   );
 }

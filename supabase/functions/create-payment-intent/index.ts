@@ -83,7 +83,7 @@ serve(async (req) => {
     // Get receiver's profile (to check Stripe Connect account)
     const { data: receiver, error: receiverError } = await supabase
       .from('profiles')
-      .select('stripe_connect_account_id, stripe_connect_onboarding_complete, full_name')
+      .select('stripe_connect_account_id, stripe_connect_onboarding_complete, stripe_payouts_enabled, full_name')
       .eq('id', toUserId)
       .single();
 
@@ -94,7 +94,6 @@ serve(async (req) => {
       );
     }
 
-    // Check if receiver has completed Stripe onboarding
     if (!receiver.stripe_connect_account_id || !receiver.stripe_connect_onboarding_complete) {
       return new Response(
         JSON.stringify({
@@ -102,6 +101,41 @@ serve(async (req) => {
           receiverName: receiver.full_name
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify against live Stripe state — our DB flag can lag behind account.updated webhooks.
+    // Block the charge if payouts are disabled (e.g., recipient hasn't uploaded ID) so funds
+    // don't get trapped in the recipient's pending balance.
+    let livePayoutsEnabled = receiver.stripe_payouts_enabled === true;
+    try {
+      const liveAccount = await stripe.accounts.retrieve(receiver.stripe_connect_account_id);
+      livePayoutsEnabled = !!liveAccount.payouts_enabled;
+      const liveDue = liveAccount.requirements?.currently_due ?? [];
+      const fullyComplete =
+        !!liveAccount.details_submitted && !!liveAccount.charges_enabled && !!liveAccount.payouts_enabled;
+
+      // Keep our DB in sync for next time (no waiting for the webhook).
+      await supabase
+        .from('profiles')
+        .update({
+          stripe_payouts_enabled: livePayoutsEnabled,
+          stripe_connect_onboarding_complete: fullyComplete,
+          stripe_requirements_currently_due: liveDue,
+        })
+        .eq('id', toUserId);
+    } catch (e) {
+      console.warn('Could not verify live Stripe account status:', (e as any)?.message);
+    }
+
+    if (!livePayoutsEnabled) {
+      return new Response(
+        JSON.stringify({
+          error: `${receiver.full_name || 'The recipient'} needs to finish ID verification before they can be paid.`,
+          receiverName: receiver.full_name,
+          code: 'payouts_disabled',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 

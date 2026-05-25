@@ -32,7 +32,28 @@ export interface ConnectAccountStatus {
     currently_due: string[];
     eventually_due: string[];
     past_due: string[];
+    errors?: Array<{ code: string; reason: string; requirement: string }>;
   };
+}
+
+export type StripeOnboardingState =
+  | 'new_account'
+  | 'needs_id'
+  | 'needs_info'
+  | 'incomplete'
+  | 'verified';
+
+export interface StripeOnboardingLink {
+  accountId: string;
+  url: string;
+  expiresAt: number | null;
+  state: StripeOnboardingState;
+  currentlyDue: string[];
+  pastDue?: string[];
+  errors?: Array<{ code: string; reason: string; requirement: string }>;
+  payoutsEnabled: boolean;
+  chargesEnabled: boolean;
+  detailsSubmitted?: boolean;
 }
 
 export interface Payment {
@@ -125,6 +146,59 @@ export async function createConnectAccount(
     console.error('Failed to create Connect account:', error);
     return null;
   }
+}
+
+/**
+ * Get the right Stripe link for the user's current state.
+ * Server decides whether to return a new-account onboarding URL, a currently_due
+ * account_links URL, or an Express dashboard login link — caller just opens it.
+ */
+export async function getOnboardingLink(userId: string): Promise<StripeOnboardingLink | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-stripe-onboarding-link', {
+      body: { userId },
+    });
+    if (error) {
+      console.error('Error getting Stripe onboarding link:', error);
+      return null;
+    }
+    return data as StripeOnboardingLink;
+  } catch (err) {
+    console.error('Failed to fetch Stripe onboarding link:', err);
+    return null;
+  }
+}
+
+/**
+ * Translate a Stripe requirement key into a short human-readable label.
+ * Falls back to a cleaned-up version of the key if we don't have a mapping yet.
+ */
+export function describeRequirement(req: string): string {
+  const map: Record<string, string> = {
+    'individual.verification.document': 'Upload a government ID (passport or driver’s licence)',
+    'individual.verification.document.front': 'Upload the front of your ID',
+    'individual.verification.document.back': 'Upload the back of your ID',
+    'individual.verification.additional_document': 'Upload an additional ID document',
+    'individual.dob.day': 'Confirm your date of birth',
+    'individual.dob.month': 'Confirm your date of birth',
+    'individual.dob.year': 'Confirm your date of birth',
+    'individual.first_name': 'Confirm your legal first name',
+    'individual.last_name': 'Confirm your legal last name',
+    'individual.address.line1': 'Confirm your home address',
+    'individual.address.postal_code': 'Confirm your postcode',
+    'individual.address.city': 'Confirm your city',
+    'individual.address.state': 'Confirm your state',
+    'individual.phone': 'Confirm your phone number',
+    'individual.email': 'Confirm your email',
+    'individual.id_number': 'Provide your tax / ID number',
+    'external_account': 'Add your bank account details (BSB + account number)',
+    'tos_acceptance.date': 'Accept Stripe’s terms of service',
+    'tos_acceptance.ip': 'Accept Stripe’s terms of service',
+  };
+  if (map[req]) return map[req];
+  // Strip prefix + tidy: 'individual.dob.day' -> 'Dob day'
+  const tail = req.split('.').slice(-1)[0].replace(/_/g, ' ');
+  return tail.charAt(0).toUpperCase() + tail.slice(1);
 }
 
 /**

@@ -18,6 +18,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius, layout } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
+import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
+import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
@@ -30,6 +32,12 @@ export default function ScanScreen() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+
+  // Receipt scans always end at a split that pays the current user; if the user
+  // can't receive yet, gate the action and route them to verification.
+  const stripeStatus = useStripeAccountStatus();
+  const canReceive = stripeStatus.payoutsEnabled && stripeStatus.currentlyDue.length === 0;
+  const [showVerifyGate, setShowVerifyGate] = useState(false);
 
   // Request camera permission
   if (!permission) {
@@ -60,6 +68,11 @@ export default function ScanScreen() {
 
   const handleTakePhoto = async () => {
     if (!cameraRef.current) return;
+    if (!stripeStatus.loading && !canReceive) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setShowVerifyGate(true);
+      return;
+    }
 
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -81,6 +94,11 @@ export default function ScanScreen() {
   };
 
   const handlePickImage = async () => {
+    if (!stripeStatus.loading && !canReceive) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setShowVerifyGate(true);
+      return;
+    }
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -231,6 +249,13 @@ export default function ScanScreen() {
 
         <View style={styles.galleryButton} />
       </View>
+
+      <VerifyIdRequiredModal
+        visible={showVerifyGate}
+        onClose={() => setShowVerifyGate(false)}
+        title="Verify ID to scan receipts"
+        message="Scanning a receipt creates a split where friends pay you. Finish verifying your ID with Stripe so the money can reach your bank."
+      />
     </View>
   );
 }
