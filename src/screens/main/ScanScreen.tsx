@@ -1,254 +1,187 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Alert,
-  Platform,
-  StatusBar,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
+import DocumentScanner, { ResponseType } from 'react-native-document-scanner-plugin';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius, layout } from '../../constants/theme';
-import * as Haptics from 'expo-haptics';
 import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
 import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
+
+// Receipt capture screen. iOS-26-Liquid-Glass tab bar overlays content, so we
+// pad the bottom by tab bar height + safe area inset.
+//
+// Capture pipeline (post-L3):
+//   • "Scan Receipt" opens the native document scanner (Apple Vision /
+//     ML Kit) which auto-detects edges, perspective-corrects, and returns a
+//     clean rectangular JPEG. Way better OCR input than a raw camera frame.
+//   • "Upload from gallery" stays on expo-image-picker for users who already
+//     have a photo. Sent as-is; gets the server-side sum-check protection but
+//     no perspective correction.
+//
+// Both paths land on SplitFlow > ReviewReceipt with the captured imageUri.
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  // iOS 26 floating tab bar overlays content — push bottom UI above it.
   const bottomOffset = layout.tabBarHeight + insets.bottom;
   const { colors } = useTheme();
-  const [facing, setFacing] = useState<CameraType>('back');
-  const [permission, requestPermission] = useCameraPermissions();
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const cameraRef = useRef<CameraView>(null);
+  const [busy, setBusy] = useState(false);
 
-  // Receipt scans always end at a split that pays the current user; if the user
-  // can't receive yet, gate the action and route them to verification.
   const stripeStatus = useStripeAccountStatus();
   const canReceive = stripeStatus.payoutsEnabled && stripeStatus.currentlyDue.length === 0;
   const [showVerifyGate, setShowVerifyGate] = useState(false);
 
-  // Request camera permission
-  if (!permission) {
-    return (
-      <View style={[styles.container, styles.cameraBackground]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={[styles.permissionContainer, { backgroundColor: colors.gray50 }]}>
-        <Ionicons name="camera-outline" size={80} color={colors.gray400} />
-        <Text style={[styles.permissionTitle, { color: colors.gray900 }]}>Camera Access Required</Text>
-        <Text style={[styles.permissionMessage, { color: colors.gray500 }]}>
-          ZapSplit needs camera access to scan receipts and automatically split bills.
-        </Text>
-        <TouchableOpacity
-          style={[styles.permissionButton, { backgroundColor: colors.primary }]}
-          onPress={requestPermission}
-        >
-          <Text style={[styles.permissionButtonText, { color: colors.surface }]}>Grant Permission</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const handleTakePhoto = async () => {
-    if (!cameraRef.current) return;
-    if (!stripeStatus.loading && !canReceive) {
+  const guardCanReceive = (): boolean => {
+    if (stripeStatus.loading) return true; // optimistic — let the action proceed; the gate will catch them downstream if needed
+    if (!canReceive) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       setShowVerifyGate(true);
-      return;
+      return false;
     }
+    return true;
+  };
 
+  const goToReview = (imageUri: string) => {
+    navigation.navigate('SplitFlow', {
+      screen: 'ReviewReceipt',
+      params: { imageUri },
+    });
+  };
+
+  const handleScan = async () => {
+    if (!guardCanReceive()) return;
     try {
+      setBusy(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setIsProcessing(true);
 
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+      // Native scanner: auto-edges + perspective correction + corner-handle UI.
+      const { scannedImages } = await DocumentScanner.scanDocument({
+        maxNumDocuments: 1,
+        croppedImageQuality: 100,
+        responseType: ResponseType.ImageFilePath,
       });
 
-      if (photo) {
-        setCapturedImage(photo.uri);
+      if (scannedImages && scannedImages.length > 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        goToReview(scannedImages[0]);
       }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      // If user cancelled the scanner, scannedImages is empty/null — do nothing.
+    } catch (error: any) {
+      console.error('Error scanning document:', error);
+      Alert.alert(
+        'Scan failed',
+        error?.message || 'Could not open the document scanner. Please try again.'
+      );
     } finally {
-      setIsProcessing(false);
+      setBusy(false);
     }
   };
 
-  const handlePickImage = async () => {
-    if (!stripeStatus.loading && !canReceive) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      setShowVerifyGate(true);
-      return;
-    }
+  const handlePickFromGallery = async () => {
+    if (!guardCanReceive()) return;
     try {
+      setBusy(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [3, 4],
-        quality: 0.8,
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
-        setCapturedImage(result.assets[0].uri);
+        goToReview(result.assets[0].uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleUsePhoto = () => {
-    if (!capturedImage) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    // Navigate to SplitFlow -> ReviewReceipt for AI parsing
-    navigation.navigate('SplitFlow', {
-      screen: 'ReviewReceipt',
-      params: { imageUri: capturedImage },
-    });
-
-    // Reset after navigation
-    setTimeout(() => setCapturedImage(null), 500);
-  };
-
-  const handleRetake = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCapturedImage(null);
-  };
-
-  // If image is captured, show preview
-  if (capturedImage) {
-    return (
-      <View style={[styles.container, styles.cameraBackground, { paddingTop: insets.top }]}>
-        <StatusBar barStyle="light-content" />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleRetake}>
-            <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Review Photo</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
-        {/* Image Preview */}
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="contain" />
-        </View>
-
-        {/* Instructions */}
-        <View style={styles.instructionsContainer}>
-          <Text style={styles.instructionsText}>
-            Make sure the receipt is clear and all items are visible
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={[styles.actionsContainer, { paddingBottom: bottomOffset + spacing.md }]}>
-          <TouchableOpacity
-            style={styles.retakeButton}
-            onPress={handleRetake}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
-            <Text style={styles.retakeButtonText}>Retake</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.usePhotoButton, { backgroundColor: colors.primary }]}
-            onPress={handleUsePhoto}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.usePhotoButtonText}>Use Photo</Text>
-            <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // Camera view
   return (
-    <View style={[styles.container, styles.cameraBackground, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerSpacer} />
-        <Text style={styles.headerTitle}>Scan Receipt</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Camera View */}
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing={facing}
-          ref={cameraRef}
-        >
-          {/* Receipt frame guide */}
-          <View style={styles.frameGuide}>
-            <View style={styles.frameCorner} />
-          </View>
-        </CameraView>
-      </View>
-
-      {/* Instructions */}
-      <View style={styles.instructionsContainer}>
-        <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
-        <Text style={styles.instructionsText}>
-          Position the entire receipt within the frame
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomOffset + spacing.xl }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.title, { color: colors.text }]}>Scan a receipt</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Capture a clear photo and we’ll split it for you.
         </Text>
-      </View>
 
-      {/* Bottom Actions */}
-      <View style={[styles.bottomActions, { paddingBottom: bottomOffset + spacing.md }]}>
-        <TouchableOpacity
-          style={styles.galleryButton}
-          onPress={handlePickImage}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="images-outline" size={28} color="#FFFFFF" />
-          <Text style={styles.galleryButtonText}>Gallery</Text>
-        </TouchableOpacity>
+        <View style={[styles.heroIcon, { backgroundColor: colors.primary + '15' }]}>
+          <Ionicons name="receipt-outline" size={48} color={colors.primary} />
+        </View>
 
+        {/* Primary CTA — document scanner */}
         <TouchableOpacity
-          style={[styles.captureButton, isProcessing && styles.captureButtonDisabled]}
-          onPress={handleTakePhoto}
-          disabled={isProcessing}
-          activeOpacity={0.8}
+          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+          onPress={handleScan}
+          disabled={busy}
+          activeOpacity={0.85}
         >
-          {isProcessing ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
+          {busy ? (
+            <ActivityIndicator color={colors.textInverse ?? '#FFFFFF'} />
           ) : (
-            <View style={styles.captureButtonInner} />
+            <>
+              <Ionicons name="scan-outline" size={22} color={colors.textInverse ?? '#FFFFFF'} />
+              <Text style={[styles.primaryButtonLabel, { color: colors.textInverse ?? '#FFFFFF' }]}>
+                Scan with camera
+              </Text>
+            </>
           )}
         </TouchableOpacity>
 
-        <View style={styles.galleryButton} />
-      </View>
+        {/* Secondary CTA — gallery */}
+        <TouchableOpacity
+          style={[styles.secondaryButton, { borderColor: colors.border }]}
+          onPress={handlePickFromGallery}
+          disabled={busy}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="images-outline" size={22} color={colors.text} />
+          <Text style={[styles.secondaryButtonLabel, { color: colors.text }]}>
+            Upload from gallery
+          </Text>
+        </TouchableOpacity>
+
+        {/* Tips */}
+        <View style={[styles.tipsCard, { backgroundColor: colors.surface }]}>
+          <View style={styles.tipRow}>
+            <Ionicons name="sunny-outline" size={18} color={colors.textSecondary} />
+            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
+              Good lighting helps accuracy
+            </Text>
+          </View>
+          <View style={styles.tipRow}>
+            <Ionicons name="phone-portrait-outline" size={18} color={colors.textSecondary} />
+            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
+              Hold your phone flat over the receipt
+            </Text>
+          </View>
+          <View style={styles.tipRow}>
+            <Ionicons name="resize-outline" size={18} color={colors.textSecondary} />
+            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
+              Make sure the whole receipt fits in frame
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
 
       <VerifyIdRequiredModal
         visible={showVerifyGate}
@@ -264,174 +197,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  cameraBackground: {
-    backgroundColor: '#000000',
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
     alignItems: 'center',
-    padding: spacing.xl,
   },
-  permissionTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: '700',
-    marginTop: spacing.lg,
+    letterSpacing: -0.4,
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
-  permissionMessage: {
-    fontSize: 16,
+  subtitle: {
+    fontSize: 15,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 21,
     marginBottom: spacing.xl,
+    maxWidth: 300,
   },
-  permissionButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
+  heroIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xl + spacing.sm,
+  },
+
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: 16,
+    width: '100%',
+    borderRadius: radius.pill ?? 30,
     marginBottom: spacing.md,
   },
-  permissionButtonText: {
-    fontSize: 16,
+  primaryButtonLabel: {
+    fontSize: 17,
     fontWeight: '600',
   },
-  header: {
+
+  secondaryButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? 0 : spacing.md,
-    paddingBottom: spacing.md,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  headerSpacer: {
-    width: 28,
-  },
-  cameraContainer: {
-    flex: 1,
-    overflow: 'hidden',
-    borderRadius: radius.lg,
-    margin: spacing.lg,
-  },
-  camera: {
-    flex: 1,
-  },
-  frameGuide: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  frameCorner: {
+    gap: spacing.sm,
+    paddingVertical: 14,
     width: '100%',
-    height: '80%',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    borderRadius: radius.md,
-    opacity: 0.5,
+    borderRadius: radius.pill ?? 30,
+    borderWidth: 1,
+    marginBottom: spacing.xl,
   },
-  instructionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
+  secondaryButtonLabel: {
+    fontSize: 16,
+    fontWeight: '500',
   },
-  instructionsText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  bottomActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  galleryButton: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    width: 80,
-  },
-  galleryButtonText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    marginTop: spacing.xs,
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-    borderColor: '#374151',
-  },
-  captureButtonInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#FFFFFF',
-  },
-  captureButtonDisabled: {
-    opacity: 0.5,
-  },
-  previewContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  previewImage: {
+
+  tipsCard: {
     width: '100%',
-    height: '100%',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  retakeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1F2937',
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
+    borderRadius: radius.md ?? 16,
+    padding: spacing.md,
     gap: spacing.sm,
   },
-  retakeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  usePhotoButton: {
-    flex: 1,
+  tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
     gap: spacing.sm,
   },
-  usePhotoButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  tipText: {
+    fontSize: 13,
+    flex: 1,
   },
 });

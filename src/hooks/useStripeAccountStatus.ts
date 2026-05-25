@@ -28,23 +28,24 @@ export function useStripeAccountStatus(): StripeAccountState {
   });
 
   const load = useCallback(async () => {
-    if (!user?.id) {
-      setState({
-        loading: false,
-        hasAccount: false,
-        payoutsEnabled: false,
-        onboardingComplete: false,
-        currentlyDue: [],
-      });
-      return;
-    }
-    const { data } = await supabase
+    // If we don't have a user yet, auth is still resolving. Keep loading=true
+    // so consumers (e.g. the verification gate in CreateSplitScreen) don't
+    // misinterpret pre-auth nulls as "user can't receive payments".
+    if (!user?.id) return;
+    const { data, error } = await supabase
       .from('profiles')
       .select(
         'stripe_connect_account_id, stripe_connect_onboarding_complete, stripe_payouts_enabled, stripe_requirements_currently_due'
       )
       .eq('id', user.id)
       .single();
+    if (error) {
+      // Network / RLS error — leave the previous state intact rather than
+      // flipping to a definite "no payouts" answer that fires the gate.
+      console.warn('useStripeAccountStatus: profile fetch failed:', error.message);
+      setState((s) => ({ ...s, loading: false }));
+      return;
+    }
     setState({
       loading: false,
       hasAccount: !!data?.stripe_connect_account_id,

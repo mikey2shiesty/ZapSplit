@@ -108,7 +108,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.721298532681-23u9e6stdpjjf0v3do9fcqraj96ekca8"
         }
-      ]
+      ],
+      "react-native-document-scanner-plugin"
     ],
     "extra": {
       "eas": {
