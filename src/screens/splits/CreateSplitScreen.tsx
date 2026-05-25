@@ -54,9 +54,10 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
   const [showVerifyGate, setShowVerifyGate] = useState(false);
 
   useEffect(() => {
-    if (!stripeStatus.loading && !canReceive) {
-      setShowVerifyGate(true);
-    }
+    // Mirror the gate state to canReceive. If a stale "can't receive" briefly
+    // showed the gate, it auto-clears the moment we confirm the user is fine.
+    if (stripeStatus.loading) return;
+    setShowVerifyGate(!canReceive);
   }, [stripeStatus.loading, canReceive]);
 
   useEffect(() => {
