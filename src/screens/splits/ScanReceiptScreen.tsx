@@ -1,236 +1,71 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Alert,
-  Platform,
-  StatusBar,
-  ActivityIndicator,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
-import { spacing, radius } from '../../constants/theme';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import DocumentScanner, { ResponseType } from 'react-native-document-scanner-plugin';
 import { useTheme } from '../../contexts/ThemeContext';
-import * as Haptics from 'expo-haptics';
+
+// Thin wrapper: when this screen mounts, immediately open the native document
+// scanner. On success, navigate to ReviewReceipt with the cropped imageUri.
+// On cancel/error, pop back. The screen itself is just a black loading state
+// while the OS-level scanner takes over the foreground.
+//
+// Previously this was a custom camera with no perspective correction. Replaced
+// to match the Scan-tab flow so receipts get auto-deskewed and contrast-boosted
+// before going to GPT.
 
 interface ScanReceiptScreenProps {
   navigation: any;
   route: any;
 }
 
-export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScreenProps) {
+export default function ScanReceiptScreen({ navigation }: ScanReceiptScreenProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const [facing, setFacing] = useState<CameraType>('back');
-  const [permission, requestPermission] = useCameraPermissions();
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const cameraRef = useRef<CameraView>(null);
+  const launchedRef = useRef(false);
 
-  // Request camera permission
-  if (!permission) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="camera-outline" size={80} color={colors.textTertiary} />
-        <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera Access Required</Text>
-        <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>
-          ZapSplit needs camera access to scan receipts and automatically split bills.
-        </Text>
-        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: colors.primary }]} onPress={requestPermission}>
-          <Text style={[styles.permissionButtonText, { color: colors.surface }]}>Grant Permission</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const handleTakePhoto = async () => {
-    if (!cameraRef.current) return;
+  const launchScanner = useCallback(async () => {
+    if (launchedRef.current) return;
+    launchedRef.current = true;
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setIsProcessing(true);
-
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+      const { scannedImages } = await DocumentScanner.scanDocument({
+        maxNumDocuments: 1,
+        croppedImageQuality: 100,
+        responseType: ResponseType.ImageFilePath,
       });
 
-      if (photo) {
-        setCapturedImage(photo.uri);
+      if (scannedImages && scannedImages.length > 0) {
+        // Replace this screen with the review so backing out doesn't return
+        // here (which would re-open the scanner in an infinite loop).
+        navigation.replace('ReviewReceipt', { imageUri: scannedImages[0] });
+      } else {
+        // User cancelled. Pop back to wherever they came from.
+        navigation.goBack();
       }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
-    } finally {
-      setIsProcessing(false);
+    } catch (error: any) {
+      console.error('Document scanner error:', error);
+      Alert.alert(
+        'Scan failed',
+        error?.message || 'Could not open the document scanner. Please try again.',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     }
-  };
+  }, [navigation]);
 
-  const handlePickImage = async () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Launch on first focus only — guarded by launchedRef so re-focuses are ignored.
+  useFocusEffect(
+    useCallback(() => {
+      launchScanner();
+    }, [launchScanner])
+  );
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
+  useEffect(() => {
+    // Safety net in case useFocusEffect doesn't fire on cold start.
+    launchScanner();
+  }, [launchScanner]);
 
-      if (!result.canceled && result.assets[0]) {
-        setCapturedImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
-    }
-  };
-
-  const handleUsePhoto = () => {
-    if (!capturedImage) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    // Navigate to ReviewReceiptScreen for AI parsing
-    navigation.navigate('ReviewReceipt', { imageUri: capturedImage });
-  };
-
-  const handleRetake = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCapturedImage(null);
-  };
-
-  // If image is captured, show preview
-  if (capturedImage) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-        <StatusBar barStyle="light-content" />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="close" size={28} color={colors.surface} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.surface }]}>Review Photo</Text>
-          <View style={{ width: 28 }} />
-        </View>
-
-        {/* Image Preview */}
-        <View style={[styles.previewContainer, { backgroundColor: colors.background }]}>
-          <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="contain" />
-        </View>
-
-        {/* Instructions */}
-        <View style={styles.instructionsContainer}>
-          <Text style={[styles.instructionsText, { color: colors.textTertiary }]}>
-            Make sure the receipt is clear and all items are visible
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.retakeButton, { backgroundColor: colors.text }]}
-            onPress={handleRetake}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="camera-reverse-outline" size={24} color={colors.surface} />
-            <Text style={[styles.retakeButtonText, { color: colors.surface }]}>Retake</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.usePhotoButton, { backgroundColor: colors.primary }]}
-            onPress={handleUsePhoto}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.usePhotoButtonText, { color: colors.surface }]}>Use Photo</Text>
-            <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // Camera view
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={28} color={colors.surface} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.surface }]}>Scan Receipt</Text>
-        <View style={{ width: 28 }} />
-      </View>
-
-      {/* Camera View */}
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing={facing}
-          ref={cameraRef}
-        >
-          {/* Receipt frame guide */}
-          <View style={styles.frameGuide}>
-            <View style={[styles.frameCorner, { borderColor: colors.surface }]} />
-          </View>
-        </CameraView>
-      </View>
-
-      {/* Instructions */}
-      <View style={styles.instructionsContainer}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.textTertiary} />
-        <Text style={[styles.instructionsText, { color: colors.textTertiary }]}>
-          Position the entire receipt within the frame
-        </Text>
-      </View>
-
-      {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity
-          style={styles.galleryButton}
-          onPress={handlePickImage}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="images-outline" size={28} color={colors.surface} />
-          <Text style={[styles.galleryButtonText, { color: colors.surface }]}>Gallery</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.captureButton, { backgroundColor: colors.surface, borderColor: colors.text }, isProcessing && styles.captureButtonDisabled]}
-          onPress={handleTakePhoto}
-          disabled={isProcessing}
-          activeOpacity={0.8}
-        >
-          {isProcessing ? (
-            <ActivityIndicator size="large" color={colors.background} />
-          ) : (
-            <View style={[styles.captureButtonInner, { backgroundColor: colors.surface }]} />
-          )}
-        </TouchableOpacity>
-
-        <View style={{ width: 80 }} />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
 }
@@ -238,167 +73,7 @@ export default function ScanReceiptScreen({ navigation, route }: ScanReceiptScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  permissionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  permissionMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: spacing.xl,
-  },
-  permissionButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    marginBottom: spacing.md,
-  },
-  permissionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? 0 : spacing.md,
-    paddingBottom: spacing.md,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  cameraContainer: {
-    flex: 1,
-    overflow: 'hidden',
-    borderRadius: radius.lg,
-    margin: spacing.lg,
-  },
-  camera: {
-    flex: 1,
-  },
-  frameGuide: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  frameCorner: {
-    width: '100%',
-    height: '80%',
-    borderWidth: 2,
-    borderRadius: radius.md,
-    opacity: 0.5,
-  },
-  instructionsContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  instructionsText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  bottomActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  galleryButton: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    width: 80,
-  },
-  galleryButtonText: {
-    fontSize: 12,
-    marginTop: spacing.xs,
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-  },
-  captureButtonInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-  },
-  captureButtonDisabled: {
-    opacity: 0.5,
-  },
-  previewContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  retakeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    gap: spacing.sm,
-  },
-  retakeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  usePhotoButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    gap: spacing.sm,
-  },
-  usePhotoButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
