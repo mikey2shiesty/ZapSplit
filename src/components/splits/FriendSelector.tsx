@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getInitials } from '../../utils/initials';
 
 export interface Friend {
   id: string;
@@ -68,7 +69,7 @@ export default function FriendSelector({
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.primaryLight }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
-                {item.full_name?.charAt(0).toUpperCase() || '?'}
+                {getInitials(item.full_name)}
               </Text>
             </View>
           )}

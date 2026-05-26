@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows } from '../../constants/theme';
+import { getInitials } from '../../utils/initials';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -31,15 +32,6 @@ export default function Avatar({
   };
 
   const config = sizeConfig[size];
-
-  const getInitials = (name?: string): string => {
-    if (!name) return '?';
-    const names = name.trim().split(' ');
-    if (names.length === 1) {
-      return names[0].charAt(0).toUpperCase();
-    }
-    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
-  };
 
   const statusColor = {
     online: colors.success,

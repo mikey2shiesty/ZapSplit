@@ -15,6 +15,7 @@ import { spacing, radius, typography } from '../../constants/theme';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getInitials } from '../../utils/initials';
 
 interface ParticipantEntry {
   id: string;
@@ -229,7 +230,7 @@ export default function CustomAmountsScreen({ navigation, route }: CustomAmounts
               {/* Avatar */}
               <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
                 <Text style={[styles.avatarText, { color: colors.primary }]}>
-                  {participant.name.charAt(0).toUpperCase()}
+                  {getInitials(participant.name)}
                 </Text>
               </View>
 

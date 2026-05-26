@@ -36,6 +36,7 @@ import Skeleton from '../../components/common/Skeleton';
 import StripeActionRequiredBanner from '../../components/common/StripeActionRequiredBanner';
 import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
 import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
+import { getInitials } from '../../utils/initials';
 
 // ZapSplit 2026 — Friendly Fintech Home.
 // Reference: Coinbase × Public × Uber. Pill search at top, hero balance card,
@@ -530,7 +531,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <Card padding="sm">
                       {friends.map((friend, i) => {
                         const isLast = i === friends.length - 1;
-                        const friendInitial = (friend.full_name?.charAt(0) || '?').toUpperCase();
+                        const friendInitial = getInitials(friend.full_name);
                         return (
                           <TouchableOpacity
                             key={friend.id}

@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius } from '../../constants/theme';
+import { getInitials } from '../../utils/initials';
 
 export interface Participant {
   id: string;
@@ -83,7 +84,7 @@ export default function ParticipantRow({
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.primaryLight }]}>
             <Text style={[styles.avatarText, { color: colors.primary }]}>
-              {participant.name.charAt(0).toUpperCase()}
+              {getInitials(participant.name)}
             </Text>
           </View>
         )}

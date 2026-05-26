@@ -25,6 +25,7 @@ import { spacing, typography, radius } from '../../constants/theme';
 import Header from '../../components/common/Header';
 import Card from '../../components/common/Card';
 import IconCircle from '../../components/common/IconCircle';
+import { getInitials } from '../../utils/initials';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation<any>();
@@ -191,7 +192,9 @@ export default function EditProfileScreen() {
   const inputBorder = (field: string) =>
     focused === field ? colors.primary : colors.border;
   const inputWidth = (field: string) => (focused === field ? 2 : 1);
-  const initial = (fullName?.charAt(0) || email?.charAt(0) || '?').toUpperCase();
+  const initial = fullName
+    ? getInitials(fullName)
+    : (email?.charAt(0) || '?').toUpperCase();
 
   if (loading) {
     return (

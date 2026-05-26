@@ -24,6 +24,7 @@ import { spacing, typography, radius } from '../../constants/theme';
 import Header from '../../components/common/Header';
 import Card from '../../components/common/Card';
 import { SearchInput } from '../../components/common/Input';
+import { getInitials } from '../../utils/initials';
 
 type TabType = 'friends' | 'requests';
 
@@ -118,7 +119,7 @@ export default function FriendsScreen() {
   };
 
   const renderFriendItem = ({ item, index }: { item: Friend; index: number }) => {
-    const initial = (item.full_name?.charAt(0) || '?').toUpperCase();
+    const initial = getInitials(item.full_name);
     const isLast = index === filteredFriends.length - 1;
     return (
       <TouchableOpacity
@@ -149,7 +150,7 @@ export default function FriendsScreen() {
   };
 
   const renderRequestItem = ({ item, index }: { item: FriendRequest; index: number }) => {
-    const initial = (item.sender?.full_name?.charAt(0) || '?').toUpperCase();
+    const initial = getInitials(item.sender?.full_name);
     const isLast = index === requests.length - 1;
     return (
       <TouchableOpacity
