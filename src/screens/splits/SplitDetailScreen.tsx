@@ -386,6 +386,13 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           </View>
 
           <View style={styles.summaryRow}>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Created by</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>
+              {isCreator ? 'You' : (split.creator?.full_name || 'Unknown')}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Created</Text>
             <Text style={[styles.summaryValue, { color: colors.text }]}>{formatDate(split.created_at)}</Text>
           </View>
@@ -620,8 +627,11 @@ export default function SplitDetailScreen({ navigation, route }: SplitDetailScre
           </TouchableOpacity>
         )}
 
-        {/* Pay Button - shown if user owes money and has claimed items */}
-        {userOwesMoney && !canClaimItems && (
+        {/* Pay Button - shown if user owes money and isn't the creator.
+            Creators can't pay themselves — the edge function rejects
+            fromUserId === toUserId. Hiding the button stops them from
+            even trying. */}
+        {userOwesMoney && !canClaimItems && !isCreator && (
           <TouchableOpacity
             style={[styles.payButton, { backgroundColor: colors.primary }]}
             onPress={handlePayNow}
