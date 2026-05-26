@@ -394,7 +394,13 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
       const paidEmails = new Set(
         (webPayments || []).map((wp: any) => wp.payer_email?.toLowerCase())
       );
-      const participantsPaid = participants?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
+      // Exclude creator's own participant row from "paid by others" — creators
+      // may have a row tracking their personal share of the bill, which isn't
+      // a payment owed to them.
+      const participantsPaid = participants?.reduce(
+        (sum, p) => p.user_id === split.creator_id ? sum : sum + (p.amount_paid || 0),
+        0
+      ) || 0;
 
       // Sum item amounts for users who have paid (excluding creator)
       const paidClaimsItems = (allClaims || []).reduce((sum, claim) => {
@@ -415,15 +421,21 @@ export async function getUserSplits(): Promise<SplitWithParticipants[]> {
 
       const totalPaid = participantsPaid + paidClaimsTotal;
 
-      // Amount owed by others depends on split type
-      // For receipt splits: use item claims to determine creator's share
-      // For manual splits: use sum of participant amounts (they are the ones who owe)
+      // Amount owed by others = sum of what's been assigned to non-creator
+      // participants. Excludes the creator's own participant row (which
+      // tracks their personal share, not money owed to them). This is the
+      // source of truth across split types: if no one's been assigned,
+      // nothing is owed. Previously receipt splits used (total - creatorClaimed),
+      // which counted the entire bill as outstanding whenever items hadn't
+      // been tagged yet — inflating "owed to you" with phantom amounts from
+      // unassigned/draft receipts.
       const isReceiptSplit = split.split_type === 'receipt';
-      const participantAmountsTotal = participants?.reduce((sum, p) => sum + (p.amount_owed || 0), 0) || 0;
+      const participantAmountsTotal = participants?.reduce(
+        (sum, p) => p.user_id === split.creator_id ? sum : sum + (p.amount_owed || 0),
+        0
+      ) || 0;
 
-      const amountOwedByOthers = isReceiptSplit
-        ? split.total_amount - creatorClaimedAmount
-        : participantAmountsTotal;
+      const amountOwedByOthers = participantAmountsTotal;
 
       // For manual splits, creator's share is total minus what participants owe
       const creatorShareAmount = isReceiptSplit

@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, typography, radius } from '../../constants/theme';
 import Card from '../../components/common/Card';
 import IconCircle from '../../components/common/IconCircle';
+import { getInitials } from '../../utils/initials';
 
 interface Profile {
   id: string;
@@ -55,7 +56,11 @@ export default function ProfileScreen() {
     if (data && !error) setProfile(data);
   };
 
-  const initial = (profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?').toUpperCase();
+  // "Michael Cheneka" → "MC", "Tyler" → "T". Falls back to first letter of
+  // the email local-part if no name is set.
+  const initial = profile?.full_name
+    ? getInitials(profile.full_name)
+    : (user?.email?.charAt(0) || '?').toUpperCase();
 
   type IconName = keyof typeof Ionicons.glyphMap;
   type Tone = 'info' | 'success' | 'warning' | 'error' | 'neutral';

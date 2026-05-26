@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -115,52 +114,54 @@ export default function ScanScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: bottomOffset + spacing.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>Scan a receipt</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Capture a clear photo and we’ll split it for you.
-        </Text>
-
-        <View style={[styles.heroIcon, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="receipt-outline" size={48} color={colors.primary} />
+      {/* Three sections distributed top-to-bottom so the screen never has a
+          dead-zone gap above the tab bar. */}
+      <View style={[styles.body, { paddingBottom: bottomOffset + spacing.lg }]}>
+        {/* TOP: Title + hero icon */}
+        <View style={styles.topGroup}>
+          <Text style={[styles.title, { color: colors.text }]}>Scan a receipt</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Capture a clear photo and we’ll split it for you.
+          </Text>
+          <View style={[styles.heroIcon, { backgroundColor: colors.primary + '15' }]}>
+            <Ionicons name="receipt-outline" size={52} color={colors.primary} />
+          </View>
         </View>
 
-        {/* Primary CTA — document scanner */}
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-          onPress={handleScan}
-          disabled={busy}
-          activeOpacity={0.85}
-        >
-          {busy ? (
-            <ActivityIndicator color={colors.textInverse ?? '#FFFFFF'} />
-          ) : (
-            <>
-              <Ionicons name="scan-outline" size={22} color={colors.textInverse ?? '#FFFFFF'} />
-              <Text style={[styles.primaryButtonLabel, { color: colors.textInverse ?? '#FFFFFF' }]}>
-                Scan with camera
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* MIDDLE: CTAs */}
+        <View style={styles.middleGroup}>
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+            onPress={handleScan}
+            disabled={busy}
+            activeOpacity={0.85}
+          >
+            {busy ? (
+              <ActivityIndicator color={colors.textInverse ?? '#FFFFFF'} />
+            ) : (
+              <>
+                <Ionicons name="scan-outline" size={22} color={colors.textInverse ?? '#FFFFFF'} />
+                <Text style={[styles.primaryButtonLabel, { color: colors.textInverse ?? '#FFFFFF' }]}>
+                  Scan with camera
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-        {/* Secondary CTA — gallery */}
-        <TouchableOpacity
-          style={[styles.secondaryButton, { borderColor: colors.border }]}
-          onPress={handlePickFromGallery}
-          disabled={busy}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="images-outline" size={22} color={colors.text} />
-          <Text style={[styles.secondaryButtonLabel, { color: colors.text }]}>
-            Upload from gallery
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.secondaryButton, { borderColor: colors.border }]}
+            onPress={handlePickFromGallery}
+            disabled={busy}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="images-outline" size={22} color={colors.text} />
+            <Text style={[styles.secondaryButtonLabel, { color: colors.text }]}>
+              Upload from gallery
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Tips */}
+        {/* BOTTOM: Tips */}
         <View style={[styles.tipsCard, { backgroundColor: colors.surface }]}>
           <View style={styles.tipRow}>
             <Ionicons name="sunny-outline" size={18} color={colors.textSecondary} />
@@ -181,7 +182,7 @@ export default function ScanScreen() {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
 
       <VerifyIdRequiredModal
         visible={showVerifyGate}
@@ -197,32 +198,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  body: {
+    flex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
+    justifyContent: 'space-between',
+  },
+  topGroup: {
     alignItems: 'center',
   },
+  middleGroup: {
+    width: '100%',
+  },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 2,
   },
   subtitle: {
     fontSize: 15,
     textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: spacing.xl,
-    maxWidth: 300,
+    lineHeight: 22,
+    marginBottom: spacing.xl + spacing.md,
+    maxWidth: 320,
   },
   heroIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 128,
+    height: 128,
+    borderRadius: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl + spacing.sm,
   },
 
   primaryButton: {
@@ -230,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: 16,
+    paddingVertical: 18,
     width: '100%',
     borderRadius: radius.pill ?? 30,
     marginBottom: spacing.md,
@@ -245,11 +252,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: 14,
+    paddingVertical: 16,
     width: '100%',
     borderRadius: radius.pill ?? 30,
     borderWidth: 1,
-    marginBottom: spacing.xl,
   },
   secondaryButtonLabel: {
     fontSize: 16,
@@ -259,16 +265,16 @@ const styles = StyleSheet.create({
   tipsCard: {
     width: '100%',
     borderRadius: radius.md ?? 16,
-    padding: spacing.md,
-    gap: spacing.sm,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   tipText: {
-    fontSize: 13,
+    fontSize: 14,
     flex: 1,
   },
 });

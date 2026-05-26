@@ -65,13 +65,16 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
   // Get splits CREATED by user this month (for totalReceived)
-  // The amount received = sum of what participants owe
+  // The amount received = sum of what NON-CREATOR participants owe.
+  // user_id is selected so we can exclude the creator's own participant row
+  // (which tracks their personal share of the bill, not money owed to them).
   const { data: createdSplits } = await supabase
     .from('splits')
     .select(`
       id,
       total_amount,
       split_participants (
+        user_id,
         amount_owed,
         status
       )
@@ -106,9 +109,9 @@ async function getMonthlyStats(userId: string): Promise<MonthlyStats> {
   if (createdSplits) {
     createdSplits.forEach((split: any) => {
       splitsCreatedCount++;
-      // Sum up what all participants owe the creator
+      // Sum up what non-creator participants owe the creator
       const participantsOwe = split.split_participants?.reduce(
-        (sum: number, p: any) => sum + (p.amount_owed || 0),
+        (sum: number, p: any) => p.user_id === userId ? sum : sum + (p.amount_owed || 0),
         0
       ) || 0;
       totalReceived += participantsOwe;
@@ -162,11 +165,13 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
       .gte('splits.created_at', startOfMonth)
       .lte('splits.created_at', endOfMonth);
 
-    // Get splits where user is creator (received money)
+    // Get splits where user is creator (received money). Exclude the creator's
+    // own participant row so we only count what's owed BY others.
     const { data: createdSplits } = await supabase
       .from('splits')
       .select(`
         split_participants (
+          user_id,
           amount_owed
         )
       `)
@@ -177,7 +182,7 @@ async function getSpendingByMonth(userId: string): Promise<SpendingByMonth[]> {
     const spent = participatedSplits?.reduce((sum: number, p: any) => sum + (p.amount_owed || 0), 0) || 0;
     const received = createdSplits?.reduce((sum: number, split: any) => {
       const participantAmounts = split.split_participants?.reduce(
-        (pSum: number, p: any) => pSum + (p.amount_owed || 0),
+        (pSum: number, p: any) => p.user_id === userId ? pSum : pSum + (p.amount_owed || 0),
         0
       ) || 0;
       return sum + participantAmounts;
@@ -210,7 +215,8 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
     .eq('user_id', userId)
     .neq('splits.creator_id', userId);
 
-  // Get splits where user is creator
+  // Get splits where user is creator. Select user_id so we can exclude the
+  // creator's own participant row from the "amount to receive" sum.
   const { data: createdSplits } = await supabase
     .from('splits')
     .select(`
@@ -218,6 +224,7 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
       description,
       total_amount,
       split_participants (
+        user_id,
         amount_owed
       )
     `)
@@ -268,11 +275,11 @@ async function getSplitBreakdown(userId: string): Promise<SplitBreakdown[]> {
     categorize(text, p.amount_owed || 0);
   });
 
-  // Process created splits (amount to receive = sum of participant amounts)
+  // Process created splits (amount to receive = sum of NON-CREATOR participant amounts)
   createdSplits?.forEach((split: any) => {
     const text = `${split.title || ''} ${split.description || ''}`;
     const amountToReceive = split.split_participants?.reduce(
-      (sum: number, p: any) => sum + (p.amount_owed || 0),
+      (sum: number, p: any) => p.user_id === userId ? sum : sum + (p.amount_owed || 0),
       0
     ) || 0;
     categorize(text, amountToReceive);
