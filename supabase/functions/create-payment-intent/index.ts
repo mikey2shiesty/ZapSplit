@@ -2,6 +2,15 @@
 // Supabase Edge Function: create-payment-intent
 // Purpose: Create a Stripe PaymentIntent for peer-to-peer payment
 // ═══════════════════════════════════════════════════════════════
+//
+// IMPORTANT: This function ALWAYS asks Stripe for the live account state
+// before deciding whether to allow a charge. Our DB cache lags behind the
+// account.updated webhook (and the webhook can miss events entirely if it
+// times out or 5xxs), so trusting the cache was producing false rejections
+// where verified recipients couldn't receive payments. Live retrieve is
+// the authoritative source — we use it to decide, then write the result
+// back to our cache so other surfaces (UI banners, dashboard) reflect
+// reality.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -17,7 +26,6 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
   try {
-    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
       return new Response('ok', {
         headers: {
@@ -28,7 +36,6 @@ serve(async (req) => {
       });
     }
 
-    // Only allow POST requests
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
@@ -36,12 +43,10 @@ serve(async (req) => {
       });
     }
 
-    // Get request body
     const body = await req.json();
     console.log('Request body:', JSON.stringify(body));
     const { fromUserId, toUserId, amount, splitId, participantCount = 1 } = body;
 
-    // Validate input
     if (!fromUserId || !toUserId || !amount || !splitId) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: fromUserId, toUserId, amount, splitId' }),
@@ -63,10 +68,8 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get payer's profile (to check Stripe customer ID)
     const { data: payer, error: payerError } = await supabase
       .from('profiles')
       .select('stripe_customer_id, email, full_name')
@@ -80,7 +83,6 @@ serve(async (req) => {
       );
     }
 
-    // Get receiver's profile (to check Stripe Connect account)
     const { data: receiver, error: receiverError } = await supabase
       .from('profiles')
       .select('stripe_connect_account_id, stripe_connect_onboarding_complete, stripe_payouts_enabled, full_name')
@@ -94,52 +96,77 @@ serve(async (req) => {
       );
     }
 
-    if (!receiver.stripe_connect_account_id || !receiver.stripe_connect_onboarding_complete) {
+    // No Connect account at all → nothing we can do until they onboard.
+    if (!receiver.stripe_connect_account_id) {
       return new Response(
         JSON.stringify({
-          error: 'Receiver has not set up their payment account yet',
-          receiverName: receiver.full_name
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify against live Stripe state — our DB flag can lag behind account.updated webhooks.
-    // Block the charge if payouts are disabled (e.g., recipient hasn't uploaded ID) so funds
-    // don't get trapped in the recipient's pending balance.
-    let livePayoutsEnabled = receiver.stripe_payouts_enabled === true;
-    try {
-      const liveAccount = await stripe.accounts.retrieve(receiver.stripe_connect_account_id);
-      livePayoutsEnabled = !!liveAccount.payouts_enabled;
-      const liveDue = liveAccount.requirements?.currently_due ?? [];
-      const fullyComplete =
-        !!liveAccount.details_submitted && !!liveAccount.charges_enabled && !!liveAccount.payouts_enabled;
-
-      // Keep our DB in sync for next time (no waiting for the webhook).
-      await supabase
-        .from('profiles')
-        .update({
-          stripe_payouts_enabled: livePayoutsEnabled,
-          stripe_connect_onboarding_complete: fullyComplete,
-          stripe_requirements_currently_due: liveDue,
-        })
-        .eq('id', toUserId);
-    } catch (e) {
-      console.warn('Could not verify live Stripe account status:', (e as any)?.message);
-    }
-
-    if (!livePayoutsEnabled) {
-      return new Response(
-        JSON.stringify({
-          error: `${receiver.full_name || 'The recipient'} needs to finish ID verification before they can be paid.`,
+          error: `${receiver.full_name || 'The recipient'} hasn't set up their payment account yet.`,
           receiverName: receiver.full_name,
-          code: 'payouts_disabled',
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Create or get Stripe customer for payer
+    // Ask Stripe what the truth is — don't trust the cache. The webhook can
+    // miss account.updated events; this is the only way to be sure.
+    let liveCharges = false;
+    let livePayouts = false;
+    let liveDetailsSubmitted = false;
+    let liveDue: string[] = [];
+    let stripeRetrieveOk = false;
+
+    try {
+      const liveAccount = await stripe.accounts.retrieve(receiver.stripe_connect_account_id);
+      liveCharges = !!liveAccount.charges_enabled;
+      livePayouts = !!liveAccount.payouts_enabled;
+      liveDetailsSubmitted = !!liveAccount.details_submitted;
+      liveDue = (liveAccount.requirements?.currently_due as string[]) ?? [];
+      stripeRetrieveOk = true;
+
+      const fullyComplete = liveDetailsSubmitted && liveCharges && livePayouts;
+      await supabase
+        .from('profiles')
+        .update({
+          stripe_payouts_enabled: livePayouts,
+          stripe_connect_onboarding_complete: fullyComplete,
+          stripe_requirements_currently_due: liveDue,
+        })
+        .eq('id', toUserId);
+      console.log('Synced live Stripe state:', JSON.stringify({
+        toUserId,
+        liveCharges,
+        livePayouts,
+        liveDetailsSubmitted,
+        liveDue,
+        fullyComplete,
+      }));
+    } catch (e) {
+      // Stripe unreachable or returned an error. Fall back to cached values
+      // so a transient failure doesn't lock all payments. The cache is the
+      // floor, not the ceiling.
+      console.warn('Stripe retrieve failed, falling back to cache:', (e as any)?.message);
+      liveCharges = receiver.stripe_payouts_enabled === true; // best-effort proxy
+      livePayouts = receiver.stripe_payouts_enabled === true;
+      liveDetailsSubmitted = receiver.stripe_connect_onboarding_complete === true;
+    }
+
+    // Gate on the LIVE state, not the cached one. We accept a charge as
+    // long as Stripe will accept it (charges_enabled). Payouts may still be
+    // disabled — in that case the money sits in Stripe's pending balance
+    // and the stripe-webhook auto-retries the payout once payouts_enabled
+    // flips true.
+    if (!liveCharges) {
+      return new Response(
+        JSON.stringify({
+          error: `${receiver.full_name || 'The recipient'} needs to finish setting up their Stripe account before they can be paid.`,
+          receiverName: receiver.full_name,
+          code: 'charges_disabled',
+          requirements: liveDue,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
     let customerId = payer.stripe_customer_id;
 
     if (!customerId) {
@@ -152,25 +179,28 @@ serve(async (req) => {
       });
       customerId = customer.id;
 
-      // Update profile with customer ID
       await supabase
         .from('profiles')
         .update({ stripe_customer_id: customerId })
         .eq('id', fromUserId);
     }
 
-    // Dynamic fee: covers Stripe fees (1.75% + $0.30) and guarantees $0.50 profit
-    // Formula: fee = (0.80 + 0.0175 * amount) / 0.9825
     const amountCents = Math.round(amount * 100);
     const fee = (0.80 + 0.0175 * amount) / 0.9825;
     const feeCents = Math.round(fee * 100);
     const payerTotal = amountCents + feeCents;
-    const applicationFee = feeCents; // ZapSplit keeps the entire fee (Stripe deducts their cut from it)
+    const applicationFee = feeCents;
 
-    console.log('Creating PaymentIntent:', JSON.stringify({ payerTotal, applicationFee, amountCents, feeCents, connectedAccount: receiver.stripe_connect_account_id }));
+    console.log('Creating PaymentIntent:', JSON.stringify({
+      payerTotal,
+      applicationFee,
+      amountCents,
+      feeCents,
+      connectedAccount: receiver.stripe_connect_account_id,
+      livePayouts,
+      stripeRetrieveOk,
+    }));
 
-    // Create PaymentIntent with destination charge
-    // Enable automatic_payment_methods to support Apple Pay, Google Pay, and cards
     let paymentIntent: Stripe.PaymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.create({
@@ -189,7 +219,7 @@ serve(async (req) => {
           fromUserId,
           toUserId,
           originalAmount: amount.toString(),
-          instantPayoutAmount: amountCents.toString(), // Amount receiver gets (in cents)
+          instantPayoutAmount: amountCents.toString(),
           connectedAccountId: receiver.stripe_connect_account_id,
         },
         description: `Payment for Split #${splitId.substring(0, 8)}`,
@@ -216,7 +246,6 @@ serve(async (req) => {
       );
     }
 
-    // Create payment record in database
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -234,10 +263,8 @@ serve(async (req) => {
 
     if (paymentError) {
       console.error('Failed to create payment record:', paymentError);
-      // Continue anyway - webhook will create it later if needed
     }
 
-    // Return client secret for frontend
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
