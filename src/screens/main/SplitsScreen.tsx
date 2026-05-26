@@ -69,15 +69,26 @@ export default function SplitsScreen() {
     return userParticipant?.status === 'paid';
   };
 
-  const getUserAmount = (split: SplitWithParticipants) => {
+  // Outstanding = what's still owed after payments. Used for the All/Open
+  // "Total outstanding" stat.
+  const getOutstandingAmount = (split: SplitWithParticipants) => {
     const isCreator = split.creator_id === user?.id;
-    const userParticipant = split.participants.find((p) => p.user_id === user?.id);
     if (isCreator) {
-      return (
-        split.amount_owed_by_others ||
-        split.participants.reduce((sum, p) => sum + (p.amount_owed || 0), 0)
-      );
+      // amount_remaining is computed server-side as max(0, owed - paid) and
+      // already accounts for both participant payments and web payments.
+      return split.amount_remaining ?? 0;
     }
+    const userParticipant = split.participants.find((p) => p.user_id === user?.id);
+    if (!userParticipant) return 0;
+    return Math.max(0, (userParticipant.amount_owed || 0) - (userParticipant.amount_paid || 0));
+  };
+
+  // Gross = total value assigned, ignoring payments. Used only for the
+  // "Settled splits" stat where the meaningful number is the volume settled.
+  const getGrossAmount = (split: SplitWithParticipants) => {
+    const isCreator = split.creator_id === user?.id;
+    if (isCreator) return split.amount_owed_by_others ?? 0;
+    const userParticipant = split.participants.find((p) => p.user_id === user?.id);
     return userParticipant?.amount_owed || 0;
   };
 
@@ -94,7 +105,10 @@ export default function SplitsScreen() {
         : true
     );
 
-  const totalAmount = filtered.reduce((sum, s) => sum + getUserAmount(s), 0);
+  const totalAmount = filtered.reduce(
+    (sum, s) => sum + (filter === 'settled' ? getGrossAmount(s) : getOutstandingAmount(s)),
+    0
+  );
 
   const FILTERS: Array<{ key: FilterType; label: string }> = [
     { key: 'all', label: 'All' },
@@ -234,7 +248,7 @@ export default function SplitsScreen() {
               {filtered.map((split, i) => {
                 const isCreator = split.creator_id === user?.id;
                 const settled = isSettled(split);
-                const amount = getUserAmount(split);
+                const amount = getGrossAmount(split);
                 const isLast = i === filtered.length - 1;
 
                 return (

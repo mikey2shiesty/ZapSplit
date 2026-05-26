@@ -40,14 +40,17 @@ export function useSplits() {
       // Only count active splits
       if (split.status !== 'active') return;
 
-      // Find current user's participant record
-      const userParticipant = split.participants.find(p => p.user_id === user.id);
-
-      if (userParticipant) {
-        // Calculate what user owes (amount_owed - amount_paid)
-        const userOwes = userParticipant.amount_owed - userParticipant.amount_paid;
-        if (userOwes > 0) {
-          youOwe += userOwes;
+      // Find current user's participant record. Skip if user is the creator —
+      // creators may have a participant row tracking their own share of the
+      // bill, but they don't "owe" themselves; that's just bookkeeping.
+      const isCreator = split.creator_id === user.id;
+      if (!isCreator) {
+        const userParticipant = split.participants.find(p => p.user_id === user.id);
+        if (userParticipant) {
+          const userOwes = userParticipant.amount_owed - userParticipant.amount_paid;
+          if (userOwes > 0) {
+            youOwe += userOwes;
+          }
         }
       }
 
