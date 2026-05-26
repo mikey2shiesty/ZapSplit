@@ -252,11 +252,25 @@ export async function createPayment(
 
     if (error) {
       console.error('Error creating payment intent:', error);
-      // Supabase wraps non-2xx responses with a generic message,
-      // but the actual error details are in the data object
-      let errorMessage = data?.error || error.message || 'Failed to create payment';
-      if (data?.receiverName && errorMessage.includes('payment account')) {
-        errorMessage = `${data.receiverName} hasn't set up their payment account yet. They need to connect Stripe in Settings before you can pay them.`;
+
+      // supabase.functions.invoke surfaces non-2xx responses as a
+      // FunctionsHttpError with the generic message
+      // "Edge Function returned a non-2xx status code". The real JSON body
+      // is stashed on error.context (an unread Response object) — pull it
+      // out so we can show the actual server-side reason.
+      let body: any = data;
+      const ctx = (error as any)?.context;
+      if (!body && ctx && typeof ctx.json === 'function') {
+        try {
+          body = await ctx.json();
+        } catch {
+          // ignore — fall back to the generic message below
+        }
+      }
+
+      let errorMessage = body?.error || error.message || 'Failed to create payment';
+      if (body?.receiverName && /payment account/i.test(errorMessage)) {
+        errorMessage = `${body.receiverName} hasn't set up their payment account yet. They need to connect Stripe in Settings before you can pay them.`;
       }
       return {
         success: false,
