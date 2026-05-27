@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -314,9 +315,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   emptyState: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
   },
   emptyIconCircle: {
     width: 64,
