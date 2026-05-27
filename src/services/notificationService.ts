@@ -61,7 +61,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   reminder_notifications: true,
   friend_notifications: true,
   group_notifications: true,
-  quiet_hours_enabled: true,
+  quiet_hours_enabled: false,
   quiet_hours_start: '23:00',
   quiet_hours_end: '08:00',
 };
