@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { ClaimItemsScreenProps } from '../../types/navigation';
 import { colors, spacing, radius, typography } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../services/supabase';
 import { getSplitItems, SplitItem } from '../../services/itemService';
 import { getSplitById, SplitWithParticipants } from '../../services/splitService';
@@ -32,6 +33,7 @@ interface ItemClaim {
 export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreenProps) {
   const { splitId: initialSplitId, paymentLinkCode } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors: themeColors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -352,28 +354,28 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { backgroundColor: themeColors.background, paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading items...</Text>
+          <ActivityIndicator size="large" color={themeColors.primary} />
+          <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Loading items...</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: themeColors.background, paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: themeColors.surface, borderBottomColor: themeColors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={themeColors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Claim Your Items</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: themeColors.text }]}>Claim Your Items</Text>
+          <Text style={[styles.headerSubtitle, { color: themeColors.textSecondary }]}>
             Select the items you ordered
           </Text>
         </View>
@@ -381,22 +383,22 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Split Info Badge */}
-        <View style={styles.splitBadge}>
+        <View style={[styles.splitBadge, { backgroundColor: themeColors.surface, borderColor: themeColors.border }]}>
           <View style={styles.splitBadgeLeft}>
-            <Ionicons name="receipt-outline" size={24} color={colors.primary} />
+            <Ionicons name="receipt-outline" size={24} color={themeColors.primary} />
             <View style={styles.splitBadgeInfo}>
-              <Text style={styles.splitBadgeName}>{split?.title || 'Split'}</Text>
-              <Text style={styles.splitBadgeItems}>{items.length} items</Text>
+              <Text style={[styles.splitBadgeName, { color: themeColors.text }]}>{split?.title || 'Split'}</Text>
+              <Text style={[styles.splitBadgeItems, { color: themeColors.textSecondary }]}>{items.length} items</Text>
             </View>
           </View>
-          <Text style={styles.splitBadgeAmount}>
+          <Text style={[styles.splitBadgeAmount, { color: themeColors.primary }]}>
             ${split?.total_amount.toFixed(2)}
           </Text>
         </View>
 
         {/* Items List */}
         <View style={styles.itemsSection}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
             {selectedItems.size} of {items.length} items selected
           </Text>
 
@@ -416,7 +418,10 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
 
             // Selected quantity should default to remaining (not full quantity)
             const selectedQty = selectedQuantities.get(index) || Math.min(qtyRemaining, 1);
-            const displayPrice = isShared
+            // When item is fully claimed (or not selectable), show its actual price; otherwise the selectable portion
+            const displayPrice = isFullyClaimed
+              ? item.total_price
+              : isShared
               ? (unitPrice * selectedQty) / shareCount
               : unitPrice * selectedQty;
 
@@ -428,8 +433,9 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                 key={item.id}
                 style={[
                   styles.itemCard,
-                  isSelected && styles.itemCardSelected,
-                  (isFullyClaimed || alreadyClaimedByMe) && styles.itemCardDisabled,
+                  { backgroundColor: themeColors.surface, borderColor: 'transparent' },
+                  isSelected && { borderColor: themeColors.primary, backgroundColor: themeColors.primary + '15' },
+                  (isFullyClaimed || alreadyClaimedByMe) && { opacity: 0.6 },
                 ]}
                 onPress={() => canSelect && handleToggleItem(index)}
                 activeOpacity={0.7}
@@ -438,11 +444,12 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                 {/* Checkbox */}
                 <View style={[
                   styles.checkbox,
-                  isSelected && styles.checkboxSelected,
-                  (isFullyClaimed || alreadyClaimedByMe) && styles.checkboxDisabled,
+                  { borderColor: themeColors.border, backgroundColor: themeColors.surface },
+                  isSelected && { borderColor: themeColors.primary, backgroundColor: themeColors.primary },
+                  (isFullyClaimed || alreadyClaimedByMe) && { borderColor: themeColors.success, backgroundColor: themeColors.success },
                 ]}>
                   {(isSelected || isFullyClaimed || alreadyClaimedByMe) && (
-                    <Ionicons name={isFullyClaimed ? "lock-closed" : "checkmark"} size={16} color={colors.surface} />
+                    <Ionicons name={isFullyClaimed ? "lock-closed" : "checkmark"} size={16} color="#FFFFFF" />
                   )}
                 </View>
 
@@ -450,13 +457,14 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                 <View style={styles.itemDetails}>
                   <Text style={[
                     styles.itemName,
-                    isSelected && styles.itemNameSelected,
-                    alreadyClaimedByMe && styles.itemNameDisabled,
+                    { color: themeColors.text },
+                    isSelected && { color: themeColors.primary },
+                    alreadyClaimedByMe && { color: themeColors.textSecondary },
                   ]}>
                     {item.name}
                   </Text>
                   {hasMultipleQty && !isSelected && (
-                    <Text style={styles.itemQuantity}>x{item.quantity} (${unitPrice.toFixed(2)} each)</Text>
+                    <Text style={[styles.itemQuantity, { color: themeColors.textSecondary }]}>x{item.quantity} (${unitPrice.toFixed(2)} each)</Text>
                   )}
 
                   {/* Quantity Selector - show when selected and has remaining qty > 1 */}
@@ -521,7 +529,8 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
                 <View style={styles.itemPriceContainer}>
                   <Text style={[
                     styles.itemPrice,
-                    isSelected && styles.itemPriceSelected,
+                    { color: themeColors.text },
+                    isSelected && { color: themeColors.primary },
                   ]}>
                     ${displayPrice.toFixed(2)}
                   </Text>
@@ -560,36 +569,36 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       </ScrollView>
 
       {/* Payment Summary */}
-      <View style={styles.summaryContainer}>
+      <View style={[styles.summaryContainer, { backgroundColor: themeColors.surface, borderTopColor: themeColors.border }]}>
         {/* Show already claimed total */}
         {myClaimedCount > 0 && selectedItems.size === 0 && (
-          <View style={styles.alreadyClaimedCard}>
+          <View style={[styles.alreadyClaimedCard, { backgroundColor: themeColors.success + '20', borderColor: themeColors.success + '40' }]}>
             <View style={styles.alreadyClaimedHeader}>
-              <Ionicons name="checkmark-circle" size={24} color={colors.success} />
-              <Text style={styles.alreadyClaimedTitle}>Already Claimed</Text>
+              <Ionicons name="checkmark-circle" size={24} color={themeColors.success} />
+              <Text style={[styles.alreadyClaimedTitle, { color: themeColors.success }]}>Already Claimed</Text>
             </View>
-            <Text style={styles.alreadyClaimedText}>
+            <Text style={[styles.alreadyClaimedText, { color: themeColors.text }]}>
               You've claimed {myClaimedCount} item{myClaimedCount > 1 ? 's' : ''} totaling ${alreadyClaimedTotal.toFixed(2)}
             </Text>
           </View>
         )}
 
         {selectedItems.size > 0 && (
-          <View style={styles.summaryCard}>
+          <View style={[styles.summaryCard, { backgroundColor: themeColors.background }]}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Items</Text>
-              <Text style={styles.summaryValue}>${itemsTotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: themeColors.textSecondary }]}>Items</Text>
+              <Text style={[styles.summaryValue, { color: themeColors.text }]}>${itemsTotal.toFixed(2)}</Text>
             </View>
             {serviceFee > 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Service Fee</Text>
-                <Text style={styles.summaryValue}>${serviceFee.toFixed(2)}</Text>
+                <Text style={[styles.summaryLabel, { color: themeColors.textSecondary }]}>Service Fee</Text>
+                <Text style={[styles.summaryValue, { color: themeColors.text }]}>${serviceFee.toFixed(2)}</Text>
               </View>
             )}
-            <View style={styles.summaryDivider} />
+            <View style={[styles.summaryDivider, { backgroundColor: themeColors.border }]} />
             <View style={styles.summaryRow}>
-              <Text style={styles.totalLabel}>Your Total</Text>
-              <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+              <Text style={[styles.totalLabel, { color: themeColors.text }]}>Your Total</Text>
+              <Text style={[styles.totalValue, { color: themeColors.primary }]}>${total.toFixed(2)}</Text>
             </View>
           </View>
         )}
@@ -598,35 +607,36 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
           <TouchableOpacity
             style={[
               styles.continueButton,
-              saving && styles.continueButtonDisabled,
+              { backgroundColor: themeColors.primary },
+              saving && { backgroundColor: themeColors.border },
             ]}
             onPress={handleContinue}
             disabled={saving}
             activeOpacity={0.7}
           >
             {saving ? (
-              <ActivityIndicator size="small" color={colors.surface} />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <>
-                <Text style={styles.continueButtonText}>
+                <Text style={[styles.continueButtonText, { color: '#FFFFFF' }]}>
                   {isCreator ? 'Save My Items' : `Continue to Pay $${total.toFixed(2)}`}
                 </Text>
-                <Ionicons name={isCreator ? "checkmark" : "arrow-forward"} size={20} color={colors.surface} />
+                <Ionicons name={isCreator ? "checkmark" : "arrow-forward"} size={20} color="#FFFFFF" />
               </>
             )}
           </TouchableOpacity>
         ) : myClaimedCount > 0 ? (
           <TouchableOpacity
-            style={[styles.doneButton]}
+            style={[styles.doneButton, { backgroundColor: themeColors.surface, borderColor: themeColors.primary }]}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
-            <Text style={styles.doneButtonText}>Done</Text>
-            <Ionicons name="checkmark" size={20} color={colors.primary} />
+            <Text style={[styles.doneButtonText, { color: themeColors.primary }]}>Done</Text>
+            <Ionicons name="checkmark" size={20} color={themeColors.primary} />
           </TouchableOpacity>
         ) : (
-          <View style={[styles.continueButton, styles.continueButtonDisabled]}>
-            <Text style={styles.continueButtonText}>
+          <View style={[styles.continueButton, { backgroundColor: themeColors.border }]}>
+            <Text style={[styles.continueButtonText, { color: themeColors.textSecondary }]}>
               Select items to continue
             </Text>
           </View>
