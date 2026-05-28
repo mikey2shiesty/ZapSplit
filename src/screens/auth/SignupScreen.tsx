@@ -460,8 +460,9 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 18,
     ...typography.bodyLarge,
+    lineHeight: undefined,
   },
   passwordRow: {
     flexDirection: 'row',
@@ -471,12 +472,13 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 18,
     ...typography.bodyLarge,
+    lineHeight: undefined,
   },
   eyeButton: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 18,
   },
   reqs: {
     marginTop: 6,
