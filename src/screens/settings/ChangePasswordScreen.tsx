@@ -87,21 +87,14 @@ export default function ChangePasswordScreen() {
     </View>
   );
 
-  const PwField = ({
-    field,
-    value,
-    setValue,
-    show,
-    setShow,
-    placeholder,
-  }: {
-    field: string;
-    value: string;
-    setValue: (v: string) => void;
-    show: boolean;
-    setShow: (v: boolean) => void;
-    placeholder: string;
-  }) => (
+  const renderField = (
+    field: string,
+    value: string,
+    setValue: (v: string) => void,
+    show: boolean,
+    setShow: (v: boolean) => void,
+    placeholder: string,
+  ) => (
     <View
       style={[
         styles.passwordRow,
@@ -125,6 +118,8 @@ export default function ChangePasswordScreen() {
         onBlur={() => setFocused(null)}
         secureTextEntry={!show}
         autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="password"
       />
       <TouchableOpacity
         onPress={() => setShow(!show)}
@@ -166,14 +161,14 @@ export default function ChangePasswordScreen() {
               <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Current password
               </Text>
-              <PwField
-                field="currentPassword"
-                value={currentPassword}
-                setValue={setCurrentPassword}
-                show={showCurrent}
-                setShow={setShowCurrent}
-                placeholder="Current password"
-              />
+              {renderField(
+                'currentPassword',
+                currentPassword,
+                setCurrentPassword,
+                showCurrent,
+                setShowCurrent,
+                'Current password',
+              )}
               {errors.currentPassword && (
                 <Text style={[styles.errorText, { color: colors.error }]}>
                   {errors.currentPassword}
@@ -183,14 +178,14 @@ export default function ChangePasswordScreen() {
 
             <View style={styles.field}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>New password</Text>
-              <PwField
-                field="newPassword"
-                value={newPassword}
-                setValue={setNewPassword}
-                show={showNew}
-                setShow={setShowNew}
-                placeholder="New password"
-              />
+              {renderField(
+                'newPassword',
+                newPassword,
+                setNewPassword,
+                showNew,
+                setShowNew,
+                'New password',
+              )}
               {errors.newPassword && (
                 <Text style={[styles.errorText, { color: colors.error }]}>
                   {errors.newPassword}
@@ -202,14 +197,14 @@ export default function ChangePasswordScreen() {
               <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Confirm new password
               </Text>
-              <PwField
-                field="confirmPassword"
-                value={confirmPassword}
-                setValue={setConfirmPassword}
-                show={showConfirm}
-                setShow={setShowConfirm}
-                placeholder="Confirm new password"
-              />
+              {renderField(
+                'confirmPassword',
+                confirmPassword,
+                setConfirmPassword,
+                showConfirm,
+                setShowConfirm,
+                'Confirm new password',
+              )}
               {errors.confirmPassword && (
                 <Text style={[styles.errorText, { color: colors.error }]}>
                   {errors.confirmPassword}
