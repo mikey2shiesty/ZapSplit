@@ -52,8 +52,26 @@ export default function AppNavigator() {
           return;
         }
 
-        // Show name screen if full_name is empty
-        const needsName = !profile.full_name || profile.full_name.trim() === '';
+        // Per App Store guideline 4 (Sign in with Apple design): we must
+        // never re-prompt for info Apple already provided. Apple only returns
+        // the name on the very first sign-in, and only when the user accepts
+        // the default — if they hide it, or if they re-sign-in after a
+        // local user wipe without revoking in iOS Settings, the credential
+        // has no name. Either way we are forbidden from asking again.
+        const providers = [
+          (user.app_metadata?.provider as string | undefined),
+          ...((user.app_metadata?.providers as string[] | undefined) ?? []),
+        ].filter(Boolean);
+        const signedInWithApple = providers.includes('apple');
+
+        const profileName = profile.full_name?.trim() ?? '';
+        const metaName = (user.user_metadata?.full_name as string | undefined)?.trim() ?? '';
+
+        if (!profileName && metaName) {
+          await supabase.from('profiles').update({ full_name: metaName }).eq('id', user.id);
+        }
+
+        const needsName = !signedInWithApple && !profileName && !metaName;
         setShowNameOnboarding(needsName);
 
         // Show Stripe onboarding if user hasn't set up Stripe and hasn't dismissed

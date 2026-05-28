@@ -121,8 +121,11 @@ export function useAuth() {
 
     if (error) throw error;
 
-    // If we got the user's name from Apple (only on first sign in), update profile
-    if (credential.fullName?.givenName || credential.fullName?.familyName) {
+    // Apple only returns the user's name on the FIRST sign-in. Per Apple
+    // guideline 4 (Sign in with Apple design), we must NOT ask the user to
+    // re-enter this — write it straight to the profiles row so the name
+    // onboarding gate (AppNavigator) doesn't fire.
+    if (data.user && (credential.fullName?.givenName || credential.fullName?.familyName)) {
       const fullName = [
         credential.fullName?.givenName,
         credential.fullName?.familyName,
@@ -130,10 +133,12 @@ export function useAuth() {
         .filter(Boolean)
         .join(' ');
 
-      if (fullName && data.user) {
-        await supabase.auth.updateUser({
-          data: { full_name: fullName },
-        });
+      if (fullName) {
+        await supabase.auth.updateUser({ data: { full_name: fullName } });
+        await supabase
+          .from('profiles')
+          .update({ full_name: fullName })
+          .eq('id', data.user.id);
       }
     }
 
@@ -163,12 +168,15 @@ export function useAuth() {
 
     if (error) throw error;
 
-    // Update profile with Google name if available
+    // Mirror the Apple flow: write Google's name straight to profiles so the
+    // name onboarding gate doesn't fire.
     const googleUser = response.data.user;
-    if (googleUser?.name && data.user) {
-      await supabase.auth.updateUser({
-        data: { full_name: googleUser.name },
-      });
+    if (data.user && googleUser?.name) {
+      await supabase.auth.updateUser({ data: { full_name: googleUser.name } });
+      await supabase
+        .from('profiles')
+        .update({ full_name: googleUser.name })
+        .eq('id', data.user.id);
     }
 
     return data;
