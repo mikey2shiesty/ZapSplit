@@ -162,7 +162,7 @@ export const typography = {
     fontFamily: fonts.sans,
     fontSize: 17,
     fontWeight: '600' as const,
-    lineHeight: 24,
+    lineHeight: 26,
     letterSpacing: -0.1,
   },
   body: {
