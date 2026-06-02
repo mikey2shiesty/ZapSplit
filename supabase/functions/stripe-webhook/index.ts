@@ -68,16 +68,26 @@ serve(async (req) => {
         const connectedAccountId = paymentIntent.metadata?.connectedAccountId;
 
         if (instantPayoutAmount && connectedAccountId) {
-          // Try instant first, fall back to a standard payout, persist outcome either way.
           let payoutOk = false;
           let payoutId: string | null = null;
           let payoutMethod: 'instant' | 'standard' | null = null;
           let payoutError: string | null = null;
 
+          // Instant payouts cost a per-payout fee (~$0.50-$1.50) that wipes out
+          // our margin on small splits and pushes the platform balance negative.
+          // Only pay the instant fee when the payout is large enough to justify
+          // it; below the threshold use the free standard (next business day)
+          // payout instead. The money still reaches the bank, just not instantly.
+          const INSTANT_PAYOUT_THRESHOLD_CENTS = 2500; // A$25
+          const payoutAmountCents = parseInt(instantPayoutAmount);
+          const eligibleForInstant =
+            Number.isFinite(payoutAmountCents) &&
+            payoutAmountCents >= INSTANT_PAYOUT_THRESHOLD_CENTS;
+
           const createPayout = async (method: 'instant' | 'standard') =>
             stripe.payouts.create(
               {
-                amount: parseInt(instantPayoutAmount),
+                amount: payoutAmountCents,
                 currency: 'aud',
                 method,
                 description: `ZapSplit payment - ${paymentIntent.metadata?.splitId?.substring(0, 8)}`,
@@ -85,25 +95,40 @@ serve(async (req) => {
               { stripeAccount: connectedAccountId }
             );
 
-          try {
-            const payout = await createPayout('instant');
-            payoutOk = true;
-            payoutId = payout.id;
-            payoutMethod = 'instant';
-            console.log('Instant payout created:', payout.id);
-          } catch (instantErr: any) {
-            console.warn('Instant payout failed:', instantErr.message);
-            payoutError = instantErr.message;
+          if (eligibleForInstant) {
+            // Large payout: try instant, fall back to standard if instant fails.
+            try {
+              const payout = await createPayout('instant');
+              payoutOk = true;
+              payoutId = payout.id;
+              payoutMethod = 'instant';
+              console.log('Instant payout created:', payout.id);
+            } catch (instantErr: any) {
+              console.warn('Instant payout failed, falling back to standard:', instantErr.message);
+              payoutError = instantErr.message;
+              try {
+                const payout = await createPayout('standard');
+                payoutOk = true;
+                payoutId = payout.id;
+                payoutMethod = 'standard';
+                payoutError = null;
+                console.log('Standard payout created:', payout.id);
+              } catch (stdErr: any) {
+                console.error('Standard payout also failed:', stdErr.message);
+                payoutError = `instant: ${instantErr.message} | standard: ${stdErr.message}`;
+              }
+            }
+          } else {
+            // Small payout: skip the instant fee entirely, use the free standard payout.
             try {
               const payout = await createPayout('standard');
               payoutOk = true;
               payoutId = payout.id;
               payoutMethod = 'standard';
-              payoutError = null;
-              console.log('Standard payout created:', payout.id);
+              console.log('Standard payout created (below instant threshold):', payout.id);
             } catch (stdErr: any) {
-              console.error('Standard payout also failed:', stdErr.message);
-              payoutError = `instant: ${instantErr.message} | standard: ${stdErr.message}`;
+              console.error('Standard payout failed:', stdErr.message);
+              payoutError = `standard: ${stdErr.message}`;
             }
           }
 
@@ -303,13 +328,24 @@ serve(async (req) => {
               if (pi.metadata?.connectedAccountId !== account.id) continue;
               const amt = parseInt(pi.metadata.instantPayoutAmount || '0');
               if (!amt) continue;
+              // Match the live payout policy: instant only above the threshold,
+              // free standard payout below it.
+              const INSTANT_PAYOUT_THRESHOLD_CENTS = 2500; // A$25
+              const preferInstant = amt >= INSTANT_PAYOUT_THRESHOLD_CENTS;
               let payout: Stripe.Payout | null = null;
-              try {
-                payout = await stripe.payouts.create(
-                  { amount: amt, currency: 'aud', method: 'instant', description: 'ZapSplit retry' },
-                  { stripeAccount: account.id }
-                );
-              } catch {
+              if (preferInstant) {
+                try {
+                  payout = await stripe.payouts.create(
+                    { amount: amt, currency: 'aud', method: 'instant', description: 'ZapSplit retry' },
+                    { stripeAccount: account.id }
+                  );
+                } catch {
+                  payout = await stripe.payouts.create(
+                    { amount: amt, currency: 'aud', method: 'standard', description: 'ZapSplit retry' },
+                    { stripeAccount: account.id }
+                  );
+                }
+              } else {
                 payout = await stripe.payouts.create(
                   { amount: amt, currency: 'aud', method: 'standard', description: 'ZapSplit retry' },
                   { stripeAccount: account.id }

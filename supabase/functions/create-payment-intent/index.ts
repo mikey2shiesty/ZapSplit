@@ -186,7 +186,13 @@ serve(async (req) => {
     }
 
     const amountCents = Math.round(amount * 100);
-    const fee = (0.80 + 0.0175 * amount) / 0.9825;
+    // Platform service fee: $1.05 fixed + 1.75% of the split amount, grossed
+    // up by /0.9825 to offset the 1.75% Stripe takes on the fee portion too.
+    // After Stripe's processing fee (1.75% + $0.30) this nets the platform a
+    // flat ~$0.75 per transaction, which covers Connect per-account/payout
+    // costs. (Was $0.80 fixed -> ~$0.50 net, too thin to cover the $2/active
+    // account fee without many splits per user.)
+    const fee = (1.05 + 0.0175 * amount) / 0.9825;
     const feeCents = Math.round(fee * 100);
     const payerTotal = amountCents + feeCents;
     const applicationFee = feeCents;
