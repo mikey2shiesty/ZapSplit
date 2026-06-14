@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "340162944736",
+    "project_id": "zapsplit-9070a",
+    "storage_bucket": "zapsplit-9070a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:340162944736:android:fc7b33dbd07ceedba63a85",
+        "android_client_info": {
+          "package_name": "com.zapsplit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsHJvySUDY3RqbEIbSKewWWTSJtlXvo1A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

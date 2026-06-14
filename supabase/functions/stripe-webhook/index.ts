@@ -80,7 +80,29 @@ serve(async (req) => {
           // payout instead. The money still reaches the bank, just not instantly.
           const INSTANT_PAYOUT_THRESHOLD_CENTS = 2500; // A$25
           const payoutAmountCents = parseInt(instantPayoutAmount);
+
+          // FRAUD GUARD: instant payouts are exactly how stolen-card cash-out
+          // works — the money leaves to the fraudster's bank before the real
+          // cardholder's chargeback surfaces, and then we eat the loss. A
+          // brand-new connected account hasn't earned trust, so for its first
+          // week we force the (free) standard payout, which settles with enough
+          // delay for a dispute to reverse the funds while they're still in
+          // Stripe. Established accounts keep instant payouts as normal. If we
+          // can't determine the account's age, we fail safe (no instant).
+          const NEW_ACCOUNT_INSTANT_HOLD_DAYS = 7;
+          let accountIsEstablished = false;
+          try {
+            const acct = await stripe.accounts.retrieve(connectedAccountId);
+            if (acct.created) {
+              const ageDays = (Date.now() / 1000 - acct.created) / 86400;
+              accountIsEstablished = ageDays >= NEW_ACCOUNT_INSTANT_HOLD_DAYS;
+            }
+          } catch (ageErr: any) {
+            console.warn('Could not check account age, defaulting to standard payout:', ageErr?.message);
+          }
+
           const eligibleForInstant =
+            accountIsEstablished &&
             Number.isFinite(payoutAmountCents) &&
             payoutAmountCents >= INSTANT_PAYOUT_THRESHOLD_CENTS;
 
@@ -119,13 +141,14 @@ serve(async (req) => {
               }
             }
           } else {
-            // Small payout: skip the instant fee entirely, use the free standard payout.
+            // Standard payout: either below the instant threshold, or the
+            // account is too new to be trusted with an instant cash-out.
             try {
               const payout = await createPayout('standard');
               payoutOk = true;
               payoutId = payout.id;
               payoutMethod = 'standard';
-              console.log('Standard payout created (below instant threshold):', payout.id);
+              console.log('Standard payout created (below threshold or new account):', payout.id, JSON.stringify({ accountIsEstablished, payoutAmountCents }));
             } catch (stdErr: any) {
               console.error('Standard payout failed:', stdErr.message);
               payoutError = `standard: ${stdErr.message}`;
@@ -328,10 +351,14 @@ serve(async (req) => {
               if (pi.metadata?.connectedAccountId !== account.id) continue;
               const amt = parseInt(pi.metadata.instantPayoutAmount || '0');
               if (!amt) continue;
-              // Match the live payout policy: instant only above the threshold,
-              // free standard payout below it.
+              // Match the live payout policy: instant only above the threshold
+              // AND for accounts past the new-account hold window; otherwise the
+              // free standard payout. (Fraud guard — see payment_intent.succeeded.)
               const INSTANT_PAYOUT_THRESHOLD_CENTS = 2500; // A$25
-              const preferInstant = amt >= INSTANT_PAYOUT_THRESHOLD_CENTS;
+              const NEW_ACCOUNT_INSTANT_HOLD_DAYS = 7;
+              const ageDays = account.created ? (Date.now() / 1000 - account.created) / 86400 : 0;
+              const accountIsEstablished = ageDays >= NEW_ACCOUNT_INSTANT_HOLD_DAYS;
+              const preferInstant = accountIsEstablished && amt >= INSTANT_PAYOUT_THRESHOLD_CENTS;
               let payout: Stripe.Payout | null = null;
               if (preferInstant) {
                 try {

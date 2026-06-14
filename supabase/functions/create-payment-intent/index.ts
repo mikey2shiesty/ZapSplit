@@ -61,6 +61,20 @@ serve(async (req) => {
       );
     }
 
+    // Anti-fraud: hard ceiling on a single person's payment. Real bill-split
+    // shares are small; card-testing/cash-out fraud needs large amounts to be
+    // worth it. Rejecting big charges here (before they reach Stripe) makes our
+    // public checkout useless to fraudsters. Bump MAX_PAYMENT_AUD if a genuine
+    // use case ever needs more.
+    const MAX_PAYMENT_AUD = 500;
+    if (amount > MAX_PAYMENT_AUD) {
+      console.warn('Rejected over-limit payment attempt:', JSON.stringify({ amount, fromUserId, toUserId, splitId }));
+      return new Response(
+        JSON.stringify({ error: `For security, single payments are capped at $${MAX_PAYMENT_AUD}. Contact support if you need to split a larger bill.` }),
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
     if (fromUserId === toUserId) {
       return new Response(
         JSON.stringify({ error: "You can't pay yourself for a split you created." }),

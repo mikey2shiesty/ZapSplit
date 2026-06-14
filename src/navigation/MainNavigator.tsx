@@ -1,10 +1,17 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { createStackNavigator } from '@react-navigation/stack';
 // `/unstable` is the real native UITabBarController. The default export at
 // the package root is the JS-side tab bar — that one will NOT render iOS 26
 // Liquid Glass, no matter how it's styled. Do not switch this import.
+// iOS ONLY: the native bar uses SF Symbols, which don't exist on Android
+// (the lib returns `android: undefined` for sfSymbol icons), so on Android
+// the native bar collapses into an empty pill. Android uses the standard JS
+// tab bar below instead.
 import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/main/HomeScreen';
 import ScanScreen from '../screens/main/ScanScreen';
 import SplitsScreen from '../screens/main/SplitsScreen';
@@ -44,6 +51,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createNativeBottomTabNavigator<MainTabParamList>();
+const AndroidTab = createBottomTabNavigator<MainTabParamList>();
 
 // MainTabs — real iOS 26 native tab bar via UITabBarController.
 //
@@ -59,6 +67,55 @@ const Tab = createNativeBottomTabNavigator<MainTabParamList>();
 //   • tabPress haptic via screenListeners.
 function MainTabs() {
   const { colors } = useTheme();
+
+  // Android: SF Symbols don't exist, so the native bar renders no icons and
+  // collapses. Use the standard JS tab bar with Ionicons + theme-aware styling
+  // that respects the Android navigation-bar inset (safe area handled by RN).
+  if (Platform.OS === 'android') {
+    const icons: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
+      Home: { active: 'home', inactive: 'home-outline' },
+      Scan: { active: 'scan', inactive: 'scan-outline' },
+      Splits: { active: 'list', inactive: 'list-outline' },
+      Profile: { active: 'person-circle', inactive: 'person-circle-outline' },
+    };
+    return (
+      <AndroidTab.Navigator
+        screenListeners={{
+          tabPress: () => {
+            Haptics.selectionAsync().catch(() => {});
+          },
+        }}
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          sceneStyle: { backgroundColor: colors.background },
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarStyle: {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+            borderTopWidth: 1,
+          },
+          tabBarLabelStyle: { fontSize: 11 },
+          tabBarIcon: ({ color, size, focused }) => {
+            const set = icons[route.name];
+            return (
+              <Ionicons
+                name={focused ? set.active : set.inactive}
+                size={size}
+                color={color}
+              />
+            );
+          },
+        })}
+      >
+        <AndroidTab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
+        <AndroidTab.Screen name="Scan" component={ScanScreen} options={{ title: 'Scan' }} />
+        <AndroidTab.Screen name="Splits" component={SplitsScreen} options={{ title: 'Splits' }} />
+        <AndroidTab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      </AndroidTab.Navigator>
+    );
+  }
+
   return (
     <Tab.Navigator
       screenListeners={{
