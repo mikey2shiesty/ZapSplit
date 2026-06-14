@@ -92,15 +92,18 @@ export interface Payment {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
- * Calculate dynamic fee per payer that guarantees $0.50 profit after Stripe fees.
- * Formula: fee = (0.80 + 0.0175 * amount) / 0.9825
- * This covers Stripe processing (1.75% + $0.30) and nets $0.50 per transaction.
+ * Calculate dynamic fee per payer that nets ~$0.75 profit after Stripe fees.
+ * Formula: fee = (1.05 + 0.0175 * amount) / 0.9825
+ * This covers Stripe processing (1.75% + $0.30) and nets ~$0.75 per transaction,
+ * which covers Stripe Connect's per-account/payout costs.
+ * MUST stay in sync with the create-payment-intent edge function (server is
+ * authoritative — it recomputes the fee; this is for display only).
  *
  * @param amount - The amount this payer owes
  * @param participantCount - Not used anymore (kept for backwards compat)
  */
 export function calculateFees(amount: number, participantCount: number = 1): PaymentFeeBreakdown {
-  const fee = amount > 0 ? (0.80 + 0.0175 * amount) / 0.9825 : 0;
+  const fee = amount > 0 ? (1.05 + 0.0175 * amount) / 0.9825 : 0;
   const total = amount + fee;
 
   return {

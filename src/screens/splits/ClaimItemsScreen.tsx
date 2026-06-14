@@ -125,9 +125,11 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
     }
   };
 
-  // Service fee constants (3.5% + $0.50)
-  const SERVICE_FEE_PERCENT = 0.035;
-  const SERVICE_FEE_FIXED = 0.50;
+  // Service fee: must match the create-payment-intent edge function and
+  // stripeService.calculateFees -> fee = (1.05 + 0.0175 * amount) / 0.9825,
+  // which covers Stripe processing (1.75% + $0.30) and nets ~$0.75/transaction.
+  const calculateServiceFee = (amount: number) =>
+    amount > 0 ? (1.05 + 0.0175 * amount) / 0.9825 : 0;
 
   // Calculate totals
   const { itemsTotal, serviceFee, total } = useMemo(() => {
@@ -146,9 +148,9 @@ export default function ClaimItemsScreen({ navigation, route }: ClaimItemsScreen
       return sum + (itemTotal / shareCount);
     }, 0);
 
-    // Service fee: 3.5% + $0.50 (only for non-creators and if items selected)
+    // Service fee (only for non-creators and if items selected)
     const calcServiceFee = (!isCreator && selectedItemsTotal > 0)
-      ? (selectedItemsTotal * SERVICE_FEE_PERCENT) + SERVICE_FEE_FIXED
+      ? calculateServiceFee(selectedItemsTotal)
       : 0;
 
     const calcTotal = selectedItemsTotal + calcServiceFee;

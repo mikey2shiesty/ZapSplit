@@ -61,6 +61,20 @@ serve(async (req) => {
       );
     }
 
+    // Anti-fraud: hard ceiling on a single person's payment. Real bill-split
+    // shares are small; card-testing/cash-out fraud needs large amounts to be
+    // worth it. Rejecting big charges here (before they reach Stripe) makes our
+    // public checkout useless to fraudsters. Bump MAX_PAYMENT_AUD if a genuine
+    // use case ever needs more.
+    const MAX_PAYMENT_AUD = 500;
+    if (amount > MAX_PAYMENT_AUD) {
+      console.warn('Rejected over-limit payment attempt:', JSON.stringify({ amount, fromUserId, toUserId, splitId }));
+      return new Response(
+        JSON.stringify({ error: `For security, single payments are capped at $${MAX_PAYMENT_AUD}. Contact support if you need to split a larger bill.` }),
+        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
     if (fromUserId === toUserId) {
       return new Response(
         JSON.stringify({ error: "You can't pay yourself for a split you created." }),
@@ -186,7 +200,13 @@ serve(async (req) => {
     }
 
     const amountCents = Math.round(amount * 100);
-    const fee = (0.80 + 0.0175 * amount) / 0.9825;
+    // Platform service fee: $1.05 fixed + 1.75% of the split amount, grossed
+    // up by /0.9825 to offset the 1.75% Stripe takes on the fee portion too.
+    // After Stripe's processing fee (1.75% + $0.30) this nets the platform a
+    // flat ~$0.75 per transaction, which covers Connect per-account/payout
+    // costs. (Was $0.80 fixed -> ~$0.50 net, too thin to cover the $2/active
+    // account fee without many splits per user.)
+    const fee = (1.05 + 0.0175 * amount) / 0.9825;
     const feeCents = Math.round(fee * 100);
     const payerTotal = amountCents + feeCents;
     const applicationFee = feeCents;

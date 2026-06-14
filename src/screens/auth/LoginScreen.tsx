@@ -140,7 +140,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             hitSlop={12}
             activeOpacity={0.6}
           >
-            <Text style={[styles.topLink, { color: colors.primary }]}>Sign up</Text>
+            <Text style={[styles.topLink, { color: colors.primary }]} numberOfLines={1}>Sign up</Text>
           </TouchableOpacity>
         </View>
 
