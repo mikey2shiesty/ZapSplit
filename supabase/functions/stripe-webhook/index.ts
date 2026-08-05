@@ -73,6 +73,15 @@ serve(async (req) => {
           let payoutMethod: 'instant' | 'standard' | null = null;
           let payoutError: string | null = null;
 
+          // KILL SWITCH: instant payouts are disabled while transaction volume is
+          // low. Each instant payout costs a per-payout fee (~1% + the standard
+          // 0.25%+$0.25) that wipes out our ~$0.75/txn margin and keeps pushing
+          // the platform balance negative. With standard (free, next-business-day)
+          // payouts, Stripe batches everything into one daily payout and there is
+          // no instant fee to leak. Flip this back to `true` once volume is high
+          // enough that the ~1% instant fee is comfortably covered.
+          const INSTANT_PAYOUTS_ENABLED = false;
+
           // Instant payouts cost a per-payout fee (~$0.50-$1.50) that wipes out
           // our margin on small splits and pushes the platform balance negative.
           // Only pay the instant fee when the payout is large enough to justify
@@ -102,6 +111,7 @@ serve(async (req) => {
           }
 
           const eligibleForInstant =
+            INSTANT_PAYOUTS_ENABLED &&
             accountIsEstablished &&
             Number.isFinite(payoutAmountCents) &&
             payoutAmountCents >= INSTANT_PAYOUT_THRESHOLD_CENTS;
@@ -354,11 +364,15 @@ serve(async (req) => {
               // Match the live payout policy: instant only above the threshold
               // AND for accounts past the new-account hold window; otherwise the
               // free standard payout. (Fraud guard — see payment_intent.succeeded.)
+              // KILL SWITCH: instant payouts are disabled while volume is low —
+              // keep this in sync with INSTANT_PAYOUTS_ENABLED in the
+              // payment_intent.succeeded handler above.
+              const INSTANT_PAYOUTS_ENABLED = false;
               const INSTANT_PAYOUT_THRESHOLD_CENTS = 2500; // A$25
               const NEW_ACCOUNT_INSTANT_HOLD_DAYS = 7;
               const ageDays = account.created ? (Date.now() / 1000 - account.created) / 86400 : 0;
               const accountIsEstablished = ageDays >= NEW_ACCOUNT_INSTANT_HOLD_DAYS;
-              const preferInstant = accountIsEstablished && amt >= INSTANT_PAYOUT_THRESHOLD_CENTS;
+              const preferInstant = INSTANT_PAYOUTS_ENABLED && accountIsEstablished && amt >= INSTANT_PAYOUT_THRESHOLD_CENTS;
               let payout: Stripe.Payout | null = null;
               if (preferInstant) {
                 try {
