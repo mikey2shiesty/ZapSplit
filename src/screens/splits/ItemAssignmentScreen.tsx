@@ -22,6 +22,7 @@ import { uploadReceiptToStorage } from '../../services/receiptService';
 import { supabase } from '../../services/supabase';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
+import { useReceiveGate } from '../../hooks/useReceiveGate';
 import Avatar from '../../components/common/Avatar';
 
 interface FriendData {
@@ -39,6 +40,7 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
   const { receipt, imageUri, selectedFriends } = route.params;
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { ensureCanReceive, gate } = useReceiveGate();
   const { allFriends } = useFriends();
   const { colors } = useTheme();
 
@@ -160,6 +162,10 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
       );
       return;
     }
+
+    // Verification gate: only require ID at the moment the split (and its
+    // payable link) is actually created — after the user has built everything.
+    if (!ensureCanReceive()) return;
 
     try {
       setSaving(true);
@@ -383,6 +389,8 @@ export default function ItemAssignmentScreen({ navigation, route }: ItemAssignme
           )}
         </TouchableOpacity>
       </View>
+
+      {gate}
     </View>
   );
 }
