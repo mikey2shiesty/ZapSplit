@@ -83,12 +83,9 @@ export default function ConnectStripeScreen() {
         return;
       }
 
-      const can = await Linking.canOpenURL(link.url);
-      if (!can) {
-        Alert.alert('Hmm', 'Couldn\'t open Stripe in your browser.');
-        return;
-      }
-
+      // Do NOT gate on Linking.canOpenURL(): it returns false for https:// URLs
+      // on iOS in many cases even when the link opens fine, which silently
+      // blocked Stripe onboarding. openURL() handles https on its own.
       await Linking.openURL(link.url);
       // Drop them back to overview so when they return, refresh shows the new state.
       setStage('overview');

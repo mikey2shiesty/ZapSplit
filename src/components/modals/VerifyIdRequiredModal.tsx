@@ -61,13 +61,18 @@ export default function VerifyIdRequiredModal({ visible, onClose, title, message
         Alert.alert('Hmm', 'Couldn’t open Stripe right now. Please try again in a moment.');
         return;
       }
-      const can = await Linking.canOpenURL(link.url);
-      if (can) {
+      // NOTE: We intentionally do NOT gate on Linking.canOpenURL() here.
+      // On iOS canOpenURL() frequently returns false for https:// URLs even
+      // when the link opens fine — which was silently blocking Stripe
+      // onboarding ("the verification page wasn't opening"). openURL() handles
+      // https reliably on its own; we just catch a genuine failure.
+      try {
         await Linking.openURL(link.url);
         setTimeout(() => refresh(), 3000);
         onClose();
-      } else {
-        Alert.alert('Hmm', 'Couldn’t open Stripe in your browser.');
+      } catch (e) {
+        console.error('Error opening Stripe onboarding link:', e);
+        Alert.alert('Hmm', 'Couldn’t open Stripe in your browser. Please try again.');
       }
     } finally {
       setOpening(false);
