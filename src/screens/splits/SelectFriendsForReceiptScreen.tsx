@@ -118,7 +118,7 @@ export default function SelectFriendsForReceiptScreen({
         title: receipt.merchant || 'Receipt Split',
         description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
         total_amount: receipt.total,
-        currency: 'USD',
+        currency: 'AUD',
         split_method: 'receipt' as const,
         participants: participantsData,
         image_url: receiptImageUrl,
@@ -178,7 +178,7 @@ export default function SelectFriendsForReceiptScreen({
         title: receipt.merchant || 'Receipt Split',
         description: receipt.date ? `Receipt from ${receipt.date}` : undefined,
         total_amount: receipt.total,
-        currency: 'USD',
+        currency: 'AUD',
         split_method: 'receipt' as const,
         participants: [], // No other participants
         image_url: receiptImageUrl,
