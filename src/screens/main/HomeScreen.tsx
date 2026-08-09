@@ -77,11 +77,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const handleStartSplit = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!stripeStatus.loading && !canReceive) {
-      setVerifyContext('split');
-      setShowVerifyModal(true);
-      return;
-    }
+    // No verify gate here anymore — users build the whole split first and only
+    // verify at the final "Create split" step (see useReceiveGate in the
+    // create screens). The money-request flow below stays gated because it has
+    // no build step to lose.
     navigation.navigate('SplitFlow');
   };
 

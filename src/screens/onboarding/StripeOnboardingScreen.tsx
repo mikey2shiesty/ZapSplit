@@ -64,11 +64,9 @@ export default function StripeOnboardingScreen({ onComplete }: StripeOnboardingS
         throw new Error('Could not generate Stripe onboarding link');
       }
 
-      const canOpen = await Linking.canOpenURL(link.url);
-      if (!canOpen) {
-        throw new Error('Cannot open Stripe in your browser');
-      }
-
+      // Do NOT gate on Linking.canOpenURL(): it returns false for https:// URLs
+      // on iOS in many cases even when the link opens fine, which silently
+      // blocked Stripe onboarding. openURL() handles https on its own.
       await Linking.openURL(link.url);
       // Hide the gate immediately. When Stripe redirects back via
       // `zapsplit://stripe-return`, the user lands in MainNavigator and the

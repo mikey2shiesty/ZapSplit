@@ -24,6 +24,7 @@ import { useFriends } from '../../hooks/useFriends';
 import { supabase } from '../../services/supabase';
 import { createReceiptSplit, getOrCreatePaymentLink } from '../../services/splitService';
 import { uploadReceiptToStorage } from '../../services/receiptService';
+import { useReceiveGate } from '../../hooks/useReceiveGate';
 
 interface ExternalPerson {
   id: string;
@@ -39,6 +40,7 @@ export default function SelectFriendsForReceiptScreen({
   const { receipt, imageUri } = route.params;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { ensureCanReceive, gate } = useReceiveGate();
 
   // Load real friends from Supabase
   const { friends, loading, error } = useFriends();
@@ -82,6 +84,9 @@ export default function SelectFriendsForReceiptScreen({
   // Create split and generate payment link (skip item assignment)
   const handleContinue = async () => {
     if (selectedFriendIds.length === 0 && externalPeople.length === 0) return;
+
+    // Verify ID only now — at the moment the split + payable link is created.
+    if (!ensureCanReceive()) return;
 
     try {
       setSaving(true);
@@ -157,6 +162,9 @@ export default function SelectFriendsForReceiptScreen({
 
   const handleSkip = async () => {
     // Solo receipt tracking - create split just for yourself
+    // Verify ID only now — at the moment the split + payable link is created.
+    if (!ensureCanReceive()) return;
+
     try {
       setSaving(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -424,6 +432,8 @@ export default function SelectFriendsForReceiptScreen({
           </Text>
         </TouchableOpacity>
       </View>
+
+      {gate}
     </View>
   );
 }

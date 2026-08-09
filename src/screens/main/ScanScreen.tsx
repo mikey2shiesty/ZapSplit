@@ -15,8 +15,6 @@ import * as Haptics from 'expo-haptics';
 import DocumentScanner, { ResponseType } from 'react-native-document-scanner-plugin';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, radius, layout } from '../../constants/theme';
-import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
-import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
 
 // Receipt capture screen. iOS-26-Liquid-Glass tab bar overlays content, so we
 // pad the bottom by tab bar height + safe area inset.
@@ -38,19 +36,9 @@ export default function ScanScreen() {
   const { colors } = useTheme();
   const [busy, setBusy] = useState(false);
 
-  const stripeStatus = useStripeAccountStatus();
-  const canReceive = stripeStatus.payoutsEnabled && stripeStatus.currentlyDue.length === 0;
-  const [showVerifyGate, setShowVerifyGate] = useState(false);
-
-  const guardCanReceive = (): boolean => {
-    if (stripeStatus.loading) return true; // optimistic — let the action proceed; the gate will catch them downstream if needed
-    if (!canReceive) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      setShowVerifyGate(true);
-      return false;
-    }
-    return true;
-  };
+  // The Stripe "verify to receive" gate no longer blocks scanning — users can
+  // scan and build the whole split first, then verify at the final create step
+  // (see useReceiveGate in the receipt create screens).
 
   const goToReview = (imageUri: string) => {
     navigation.navigate('SplitFlow', {
@@ -60,7 +48,6 @@ export default function ScanScreen() {
   };
 
   const handleScan = async () => {
-    if (!guardCanReceive()) return;
     try {
       setBusy(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -89,7 +76,6 @@ export default function ScanScreen() {
   };
 
   const handlePickFromGallery = async () => {
-    if (!guardCanReceive()) return;
     try {
       setBusy(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -184,12 +170,6 @@ export default function ScanScreen() {
         </View>
       </View>
 
-      <VerifyIdRequiredModal
-        visible={showVerifyGate}
-        onClose={() => setShowVerifyGate(false)}
-        title="Verify ID to scan receipts"
-        message="Scanning a receipt creates a split where friends pay you. Finish verifying your ID with Stripe so the money can reach your bank."
-      />
     </View>
   );
 }

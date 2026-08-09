@@ -18,8 +18,6 @@ import * as Haptics from 'expo-haptics';
 import { CreateSplitScreenProps } from '../../types/navigation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { spacing, typography, radius } from '../../constants/theme';
-import { useStripeAccountStatus } from '../../hooks/useStripeAccountStatus';
-import VerifyIdRequiredModal from '../../components/modals/VerifyIdRequiredModal';
 
 // Cash App / Venmo-style amount-first split creation.
 //   • Top bar: close (X) on left, scan-receipt camera icon on the right.
@@ -46,19 +44,12 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
   const titleRef = useRef<TextInput>(null);
   const noteRef = useRef<TextInput>(null);
 
-  // Gate the entire split-creation flow on Stripe payout readiness — every
-  // entry point (Home, Splits FAB, FriendProfile, Scan tab) routes through
-  // this screen, so checking once here covers them all.
-  const stripeStatus = useStripeAccountStatus();
-  const canReceive = stripeStatus.payoutsEnabled && stripeStatus.currentlyDue.length === 0;
-  const [showVerifyGate, setShowVerifyGate] = useState(false);
-
-  useEffect(() => {
-    // Mirror the gate state to canReceive. If a stale "can't receive" briefly
-    // showed the gate, it auto-clears the moment we confirm the user is fine.
-    if (stripeStatus.loading) return;
-    setShowVerifyGate(!canReceive);
-  }, [stripeStatus.loading, canReceive]);
+  // NOTE: The Stripe "verify to receive" gate used to fire here, on mount —
+  // blocking brand-new users before they'd built anything, which killed
+  // activation. The gate now lives at the actual split-CREATE step (see
+  // useReceiveGate in ReviewSplitScreen / ItemAssignmentScreen /
+  // SelectFriendsForReceiptScreen), so users can build the whole split first
+  // and only verify at the final "Create split" tap.
 
   useEffect(() => {
     // Focus the amount on mount so the keypad is up immediately.
@@ -326,16 +317,6 @@ export default function CreateSplitScreen({ navigation, route }: CreateSplitScre
         </View>
       </KeyboardAvoidingView>
 
-      {/* Gate: dismissing without verifying pops the user back out of the flow. */}
-      <VerifyIdRequiredModal
-        visible={showVerifyGate}
-        onClose={() => {
-          setShowVerifyGate(false);
-          handleClose();
-        }}
-        title="Verify your ID to create splits"
-        message="Splits send payments to you. Before creating one, finish setting up your bank account so funds can land safely."
-      />
     </View>
   );
 }

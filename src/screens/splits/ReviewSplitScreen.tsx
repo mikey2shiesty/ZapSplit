@@ -17,6 +17,7 @@ import { SplitSummary, Participant } from '../../components/splits';
 import { createSplit, calculateEqualSplitAmounts } from '../../services/splitService';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../hooks/useAuth';
+import { useReceiveGate } from '../../hooks/useReceiveGate';
 
 export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScreenProps) {
   const { amount, title, description, selectedFriends, splitMethod, customAmounts, externalPeople, groupId } = route.params;
@@ -25,6 +26,7 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
 
   const { user } = useAuth();
   const { allFriends } = useFriends();
+  const { ensureCanReceive, gate } = useReceiveGate();
   const [loading, setLoading] = useState(false);
 
   // Build participants list from real friends
@@ -117,6 +119,10 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
       Alert.alert('Error', 'You must be logged in to create a split');
       return;
     }
+
+    // Verification gate moved here (from flow-entry): only require ID at the
+    // moment the split — and its payable link — is actually created.
+    if (!ensureCanReceive()) return;
 
     try {
       setLoading(true);
@@ -222,6 +228,8 @@ export default function ReviewSplitScreen({ navigation, route }: ReviewSplitScre
           Participants will be notified after you create this split
         </Text>
       </View>
+
+      {gate}
     </View>
   );
 }
