@@ -25,7 +25,9 @@
         "NSCameraUsageDescription": "ZapSplit needs camera access to scan receipts and automatically split bills.",
         "NSPhotoLibraryUsageDescription": "ZapSplit needs access to your photos to upload receipt images.",
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "entitlements": {
         "aps-environment": "production"
@@ -50,8 +52,6 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
       ],
-      "targetSdkVersion": 35,
-      "compileSdkVersion": 35,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -111,7 +111,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.721298532681-23u9e6stdpjjf0v3do9fcqraj96ekca8"
         }
       ],
-      "react-native-document-scanner-plugin"
+      "react-native-document-scanner-plugin",
+      "expo-font"
     ],
     "extra": {
       "eas": {
