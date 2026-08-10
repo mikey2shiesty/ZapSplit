@@ -112,7 +112,8 @@
         }
       ],
       "react-native-document-scanner-plugin",
-      "expo-font"
+      "expo-font",
+      "./plugins/withGoogleModularHeaders"
     ],
     "extra": {
       "eas": {
